@@ -19,9 +19,9 @@ class TagManager {
   BooruTagging get excluded => _excluded;
   BooruTagging get latest => _latest;
 
-  void onTagPressed(BuildContext context, Tag t, Booru booru, bool restore) {
+  void onTagPressed(BuildContext context, String t, Booru booru, bool restore) {
     t = t.trim();
-    if (t.tag.isEmpty) {
+    if (t.isEmpty) {
       return;
     }
 
@@ -31,24 +31,27 @@ class TagManager {
       Navigator.push(context, MaterialPageRoute(builder: (context) {
         final instance = DbsOpen.secondaryGrid(temporary: false);
 
-        return SecondaryBooruGrid(
-          tagManager: this,
-          noRestoreOnBack: true,
-          api: BooruAPI.fromEnum(booru, page: null),
-          restore: _parent.insert(
-              tags: t.tag,
-              name: instance.name,
-              safeMode: Settings.fromDb().safeMode),
-          instance: instance,
-        );
+        return Placeholder();
+        // SecondaryBooruGrid(
+        //   tagManager: this,
+        //   noRestoreOnBack: true,
+        //   api: BooruAPI.fromEnum(booru, page: null),
+        //   restore: _parent.insert(
+        //       tags: t.tag,
+        //       name: instance.name,
+        //       safeMode: Settings.fromDb().safeMode),
+        //   instance: instance,
+        // );
       }));
     } else {
       Navigator.push(context, MaterialPageRoute(builder: (context) {
-        return RandomBooruGrid(
-          tagManager: this,
-          api: BooruAPI.fromEnum(booru, page: null),
-          tags: t.tag,
-        );
+        return Placeholder();
+
+        // RandomBooruGrid(
+        //   tagManager: this,
+        //   api: BooruAPI.fromEnum(booru, page: null),
+        //   tags: t.tag,
+        // );
       }));
     }
   }

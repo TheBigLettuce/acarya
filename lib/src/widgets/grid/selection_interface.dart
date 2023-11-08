@@ -5,106 +5,109 @@
 // This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
-part of 'callback_grid.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:gallery/src/interfaces/cell.dart';
+import 'package:gallery/src/widgets/notifiers/get_cell.dart';
+import 'package:gallery/src/widgets/notifiers/selection_glue.dart';
 
 class SelectionInterface<T extends Cell> {
-  final selected = <int, T>{};
-  final List<GridAction<T>> addActions;
-  int? lastSelected;
+  final _selected = <int, T>{};
+  int? _lastSelected;
 
-  final void Function(Function()) _setState;
-  final SelectionGlue<T> glue;
-  final ScrollController controller;
+  final void Function(int) tickSelectionCount;
 
-  void reset() {
-    selected.clear();
-    glue.close();
-    lastSelected = null;
-
-    _setState(() {});
+  void use(void Function(List<T> l) f) {
+    f(_selected.values.toList());
+    reset();
   }
 
-  bool isSelected(int indx) =>
-      indx.isNegative ? false : selected.containsKey(indx);
+  void reset() {
+    tickSelectionCount(0);
+    _selected.clear();
+    _lastSelected = null;
+  }
 
-  void add(BuildContext context, int id, T selection,
-      double systemNavigationInsets) {
+  bool isSelected(BuildContext context, int indx) =>
+      indx.isNegative ? false : _selected.containsKey(indx);
+
+  void add(BuildContext context, int id, T selection, [bool tick = true]) {
     if (id.isNegative) {
       return;
     }
 
-    if (selected.isEmpty) {
-      glue.open(addActions, this);
+    if (_selected.isEmpty) {
+      SelectionGlueNotifier.of<T>(context).open(this);
     }
 
-    _setState(() {
-      selected[id] = selection;
-      lastSelected = id;
-    });
+    _selected[id] = selection;
+    _lastSelected = id;
+
+    if (tick) {
+      tickSelectionCount(_selected.length);
+    }
   }
 
-  void remove(int id) {
-    _setState(() {
-      selected.remove(id);
-      if (selected.isEmpty) {
-        glue.close();
-        lastSelected = null;
-      }
-    });
+  void remove(BuildContext context, int id, [bool tick = true]) {
+    _selected.remove(id);
+    if (_selected.isEmpty) {
+      SelectionGlueNotifier.of<T>(context).close();
+      _lastSelected = null;
+    }
+
+    if (tick) {
+      tickSelectionCount(_selected.length);
+    }
   }
 
-  void selectUnselectUntil(int indx, GridMutationInterface<T> state,
+  void selectUnselectUntil(BuildContext context, int indx,
       {List<int>? selectFrom}) {
-    if (lastSelected != null) {
-      final last = selectFrom?.indexOf(lastSelected!) ?? lastSelected!;
+    if (_lastSelected != null) {
+      final last = selectFrom?.indexOf(_lastSelected!) ?? _lastSelected!;
       indx = selectFrom?.indexOf(indx) ?? indx;
-      if (lastSelected == indx) {
+      if (_lastSelected == indx) {
         return;
       }
 
-      final selection = !isSelected(indx);
+      final selection = !isSelected(context, indx);
+      final getCell = CellProvider.of<T, int>(context);
 
       if (indx < last) {
         for (var i = last; i >= indx; i--) {
           if (selection) {
-            selected[selectFrom?[i] ?? i] = state.getCell(selectFrom?[i] ?? i);
+            _selected[selectFrom?[i] ?? i] = getCell(selectFrom?[i] ?? i)!;
           } else {
-            remove(selectFrom?[i] ?? i);
+            remove(context, selectFrom?[i] ?? i, false);
           }
-          lastSelected = selectFrom?[i] ?? i;
+          _lastSelected = selectFrom?[i] ?? i;
         }
-        _setState(() {});
+        tickSelectionCount(_selected.length);
       } else if (indx > last) {
         for (var i = last; i <= indx; i++) {
           if (selection) {
-            selected[selectFrom?[i] ?? i] = state.getCell(selectFrom?[i] ?? i);
+            _selected[selectFrom?[i] ?? i] = getCell(selectFrom?[i] ?? i)!;
           } else {
-            remove(selectFrom?[i] ?? i);
+            remove(context, selectFrom?[i] ?? i, false);
           }
-          lastSelected = selectFrom?[i] ?? i;
+          _lastSelected = selectFrom?[i] ?? i;
         }
-        _setState(() {});
+        tickSelectionCount(_selected.length);
       }
     }
   }
 
-  void selectOrUnselect(BuildContext context, int index, T selection,
-      double systemNavigationInsets) {
-    if (addActions.isEmpty) {
-      return;
-    }
-
-    if (!isSelected(index)) {
-      add(context, index, selection, systemNavigationInsets);
+  void selectOrUnselect(BuildContext context, int index) {
+    if (!isSelected(context, index)) {
+      add(context, index, CellProvider.getOf<T, int>(context, index));
     } else {
-      remove(index);
+      remove(context, index);
     }
 
     HapticFeedback.selectionClick();
   }
 
-  SelectionInterface._(
-      this._setState, this.addActions, this.glue, this.controller);
+  SelectionInterface(this.tickSelectionCount);
 }
 
 class WrapGridActionButton extends StatefulWidget {

@@ -9,126 +9,128 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:gallery/src/db/post_tags.dart';
+import 'package:gallery/src/interfaces/grid_mutation_interface.dart';
 import 'package:gallery/src/interfaces/search_mixin.dart';
 import 'package:gallery/src/widgets/search_bar/autocomplete/autocomplete_widget.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../interfaces/cell.dart';
 import '../../interfaces/filtering/filtering_mode.dart';
+// import '../notifiers/grid_mutation_interface.dart';
 import '../skeletons/grid_skeleton_state_filter.dart';
 import 'autocomplete/autocomplete_bar_decoration.dart';
 
 part 'search_widget.dart';
 
 /// Search mixin which filters the elements on a grid.
-mixin SearchFilterGrid<T extends Cell>
-    implements SearchMixin<GridSkeletonStateFilter<T>> {
-  @override
-  final TextEditingController searchTextController = TextEditingController();
-  @override
-  final FocusNode searchFocus = FocusNode();
+// mixin SearchFilterGrid<T extends Cell>
+//     implements SearchMixin<GridSkeletonStateFilter<T>> {
+//   @override
+//   final TextEditingController searchTextController = TextEditingController();
+//   @override
+//   final FocusNode searchFocus = FocusNode();
 
-  late final List<Widget>? addItems;
-  final GlobalKey<__SearchWidgetState> _key = GlobalKey();
+//   late final List<Widget>? addItems;
+//   final GlobalKey<__SearchWidgetState> _key = GlobalKey();
 
-  late final GridSkeletonStateFilter<T> _state;
+//   late final GridSkeletonStateFilter<T> _state;
 
-  @override
-  void searchHook(state, [List<Widget>? items]) {
-    addItems = items;
-    _state = state;
-  }
+//   @override
+//   void searchHook(state, [List<Widget>? items]) {
+//     addItems = items;
+//     _state = state;
+//   }
 
-  @override
-  void disposeSearch() {
-    searchTextController.dispose();
-    searchFocus.dispose();
-  }
+//   @override
+//   void disposeSearch() {
+//     searchTextController.dispose();
+//     searchFocus.dispose();
+//   }
 
-  late FilteringMode _currentFilterMode = _state.defaultMode;
-  bool _searchVirtual = false;
-  Future<List<String>> Function(String string) _localTagCompleteFunc =
-      PostTags.g.completeLocalTag;
+//   late FilteringMode _currentFilterMode = _state.defaultMode;
+//   bool _searchVirtual = false;
+//   Future<List<String>> Function(String string) _localTagCompleteFunc =
+//       PostTags.g.completeLocalTag;
 
-  void _onChanged(String value, bool direct) {
-    var interf = _state.gridKey.currentState?.mutationInterface;
-    if (interf != null) {
-      final sorting = _state.hook(_currentFilterMode);
-      // if (!direct) {
-      //   value = value.trim();
-      //   if (value.isEmpty) {
-      //     interf.restore();
-      //     widget.instance._state.filter.resetFilter();
-      //     setState(() {});
-      //     return;
-      //   }
-      // }
+//   void _onChanged(String value, bool direct) {
+//     var interf = _state.gridKey.currentState?.mutationInterface;
+//     if (interf != null) {
+//       final sorting = _state.hook(_currentFilterMode);
+//       // if (!direct) {
+//       //   value = value.trim();
+//       //   if (value.isEmpty) {
+//       //     interf.restore();
+//       //     widget.instance._state.filter.resetFilter();
+//       //     setState(() {});
+//       //     return;
+//       //   }
+//       // }
 
-      _state.filter.setSortingMode(sorting);
+//       _state.filter.setSortingMode(sorting);
 
-      var res =
-          _state.filter.filter(_searchVirtual ? "" : value, _currentFilterMode);
+//       var res =
+//           _state.filter.filter(_searchVirtual ? "" : value, _currentFilterMode);
 
-      interf.setSource(res.count, (i) {
-        final cell = res.cell(i);
-        return _state.transform(cell, sorting);
-      });
-      _key.currentState?.update();
-    }
-  }
+//       interf.setSource(res.count, (i) {
+//         final cell = res.cell(i);
+//         return _state.transform(cell, sorting);
+//       });
+//       _key.currentState?.update();
+//     }
+//   }
 
-  void performSearch(String s) {
-    searchTextController.text = s;
-    _onChanged(s, true);
-  }
+//   void performSearch(String s) {
+//     searchTextController.text = s;
+//     _onChanged(s, true);
+//   }
 
-  FilteringMode currentFilteringMode() {
-    return _currentFilterMode;
-  }
+//   FilteringMode currentFilteringMode() {
+//     return _currentFilterMode;
+//   }
 
-  void setFilteringMode(FilteringMode f) {
-    if (_state.filteringModes.contains(f)) {
-      _currentFilterMode = f;
-    }
-  }
+//   void setFilteringMode(FilteringMode f) {
+//     if (_state.filteringModes.contains(f)) {
+//       _currentFilterMode = f;
+//     }
+//   }
 
-  void setLocalTagCompleteF(Future<List<String>> Function(String string) f) {
-    _localTagCompleteFunc = f;
-  }
+//   void setLocalTagCompleteF(Future<List<String>> Function(String string) f) {
+//     _localTagCompleteFunc = f;
+//   }
 
-  void _reset(bool resetFilterMode) {
-    searchTextController.clear();
-    _state.gridKey.currentState?.mutationInterface?.restore();
-    if (_state.filteringModes.isNotEmpty) {
-      _searchVirtual = false;
-      if (resetFilterMode) {
-        _currentFilterMode = _state.defaultMode;
-      }
-    }
-    _onChanged(searchTextController.text, true);
+//   void _reset(bool resetFilterMode) {
+//     searchTextController.clear();
+//     _state.gridKey.currentState?.mutationInterface?.restore();
+//     if (_state.filteringModes.isNotEmpty) {
+//       _searchVirtual = false;
+//       if (resetFilterMode) {
+//         _currentFilterMode = _state.defaultMode;
+//       }
+//     }
+//     _onChanged(searchTextController.text, true);
 
-    _key.currentState?.update();
-  }
+//     _key.currentState?.update();
+//   }
 
-  void markSearchVirtual() {
-    _searchVirtual = true;
-  }
+//   void markSearchVirtual() {
+//     _searchVirtual = true;
+//   }
 
-  void resetSearch() {
-    _reset(true);
-  }
+//   void resetSearch() {
+//     _reset(true);
+//   }
 
-  @override
-  Widget searchWidget(BuildContext context, {String? hint, int? count}) =>
-      _SearchWidget<T>(
-        key: _key,
-        instance: this,
-        hint: hint,
-        count: count,
-      );
-}
+//   @override
+//   Widget searchWidget(BuildContext context, {String? hint, int? count}) =>
+//       _SearchWidget<T>(
+//         key: _key,
+//         instance: this,
+//         hint: hint,
+//         count: count,
+//       );
+// }
 
-class _ScrollHack extends ScrollController {
-  @override
-  bool get hasClients => false;
-}
+// class _ScrollHack extends ScrollController {
+//   @override
+//   bool get hasClients => false;
+// }

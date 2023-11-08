@@ -7,14 +7,14 @@
 
 import 'package:gallery/src/db/schemas/tags.dart';
 import 'package:isar/isar.dart';
+import 'package:meta/meta.dart';
 
 part 'pinned_directories.g.dart';
 
+@immutable
 @collection
 class PinnedDirectories {
-  Id get isarId => fastHash(categoryName);
-
-  @Index(unique: true, replace: true)
+  @Id()
   final String categoryName;
   @Index()
   final DateTime time;

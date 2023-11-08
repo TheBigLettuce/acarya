@@ -14,6 +14,7 @@ import 'package:gallery/src/db/schemas/system_gallery_directory.dart';
 import 'package:gallery/src/db/schemas/system_gallery_directory_file.dart';
 import 'package:gallery/src/db/schemas/blacklisted_directory.dart';
 import 'package:gallery/src/db/schemas/favorite_media.dart';
+import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
 import 'package:isar/isar.dart';
 import 'package:logging/logging.dart';
 import 'package:gallery/src/plugs/gallery/android/api.g.dart';
@@ -33,16 +34,12 @@ class _GalleryExtra implements GalleryDirectoriesExtra {
   final _AndroidGallery _impl;
 
   @override
-  FilterInterface<SystemGalleryDirectory> get filter => _impl.filter;
-
-  @override
-  Isar get db => _impl.db;
-
-  @override
   GalleryAPIFiles joinedDir(List<String> directoriesId) {
-    final db = DbsOpen.androidGalleryFiles();
-    final instance =
-        _JoinedDirectories(directoriesId, db, () => _impl.currentImages = null);
+    // final db = DbsOpen.androidGalleryFiles();
+    final instance = _JoinedDirectories(
+      directoriesId,
+      // db, () => _impl.currentImages = null
+    );
     _impl.currentImages = instance;
 
     return instance;
@@ -50,12 +47,14 @@ class _GalleryExtra implements GalleryDirectoriesExtra {
 
   @override
   GalleryAPIFiles trash() {
-    final db = DbsOpen.androidGalleryFiles();
-    final instance = _AndroidGalleryFiles(db, () => _impl.currentImages = null,
-        isTrash: true,
-        bucketId: "trash",
-        target: "trash",
-        getElems: defaultGetElemsFiles(db));
+    // final db = DbsOpen.androidGalleryFiles();
+    final instance = _AndroidGalleryFiles(
+      // db, () => _impl.currentImages = null,
+      isTrash: true,
+      bucketId: "trash",
+      target: "trash",
+      // getElems: defaultGetElemsFiles(db)
+    );
     _impl.currentImages = instance;
 
     return instance;
@@ -63,12 +62,14 @@ class _GalleryExtra implements GalleryDirectoriesExtra {
 
   @override
   GalleryAPIFiles favorites() {
-    final db = DbsOpen.androidGalleryFiles();
-    final instance = _AndroidGalleryFiles(db, () => _impl.currentImages = null,
-        isFavorites: true,
-        bucketId: "favorites",
-        target: "favorites",
-        getElems: defaultGetElemsFiles(db));
+    // final db = DbsOpen.androidGalleryFiles();
+    final instance = _AndroidGalleryFiles(
+      // db, () => _impl.currentImages = null,
+      isFavorites: true,
+      bucketId: "favorites",
+      target: "favorites",
+      // getElems: defaultGetElemsFiles(db)
+    );
     _impl.currentImages = instance;
 
     return instance;
@@ -76,34 +77,12 @@ class _GalleryExtra implements GalleryDirectoriesExtra {
 
   @override
   void addBlacklisted(List<BlacklistedDirectory> bucketIds) {
-    Dbs.g.blacklisted.writeTxnSync(
-        () => Dbs.g.blacklisted.blacklistedDirectorys.putAllSync(bucketIds));
-    _impl.refreshGrid?.call();
+    Dbs.g.blacklisted.write((i) => i.blacklistedDirectorys.putAll(bucketIds));
+    // _impl.refreshGrid?.call();
   }
 
   @override
-  void setRefreshGridCallback(void Function() callback) {
-    _impl.refreshGrid = callback;
-  }
-
-  @override
-  void setRefreshingStatusCallback(
-      void Function(int i, bool inRefresh, bool empty) callback) {
-    _impl.callback = callback;
-  }
-
-  @override
-  void setTemporarySet(void Function(int, bool) callback) {
-    _impl.temporarySet = callback;
-  }
-
-  @override
-  void setPassFilter(
-      (Iterable<SystemGalleryDirectory>, dynamic) Function(
-              Iterable<SystemGalleryDirectory>, dynamic, bool)?
-          filter) {
-    _impl.filter.passFilter = filter;
-  }
+  BackgroundCellLoader<SystemGalleryDirectory, int> get loader => _impl.loader;
 
   const _GalleryExtra._(this._impl);
 }
@@ -111,38 +90,22 @@ class _GalleryExtra implements GalleryDirectoriesExtra {
 class _AndroidGallery implements GalleryAPIDirectories {
   final bool? temporary;
   final time = DateTime.now();
+  final loader = BackgroundCellLoader<SystemGalleryDirectory, int>.cached(
+      kAndroidGalleryLoaderKey,
+      () => ((db, id) => null, _global!.db, [SystemGalleryDirectorySchema]));
 
-  void Function(int i, bool inRefresh, bool empty)? callback;
-  void Function()? refreshGrid;
-  void Function(int, bool)? temporarySet;
+  // void Function(int, bool)? temporarySet;
 
   _AndroidGalleryFiles? currentImages;
-
-  bool isThumbsLoading = false;
-
-  final filter = IsarFilter<SystemGalleryDirectory>(
-      _global!.db, DbsOpen.androidGalleryDirectories(temporary: true),
-      (offset, limit, v, _, __) {
-    return _global!.db.systemGalleryDirectorys
-        .filter()
-        .nameContains(v, caseSensitive: false)
-        .or()
-        .tagContains(v, caseSensitive: false)
-        .offset(offset)
-        .limit(limit)
-        .findAllSync();
-  });
-
-  Isar get db => _global!.db;
 
   @override
   GalleryDirectoriesExtra getExtra() => _GalleryExtra._(this);
 
   @override
   void close() {
-    filter.dispose();
-    refreshGrid = null;
-    callback = null;
+    // filter.dispose();
+    // refreshGrid = null;
+    // callback = null;
     currentImages = null;
     if (temporary == false) {
       _global!._unsetCurrentApi();
@@ -152,30 +115,14 @@ class _AndroidGallery implements GalleryAPIDirectories {
   }
 
   @override
-  SystemGalleryDirectory directCell(int i) =>
-      _global!.db.systemGalleryDirectorys.getSync(i + 1)!;
-
-  @override
-  Future<int> refresh() {
-    try {
-      db.writeTxnSync(() => db.systemGalleryDirectorys.clearSync());
-
-      PlatformFunctions.refreshGallery();
-    } catch (e, trace) {
-      log("android gallery",
-          level: Level.SEVERE.value, error: e, stackTrace: trace);
-    }
-
-    return Future.value(db.systemGalleryDirectorys.countSync());
-  }
-
-  @override
   GalleryAPIFiles files(SystemGalleryDirectory d) {
-    final db = DbsOpen.androidGalleryFiles();
-    final instance = _AndroidGalleryFiles(db, () => currentImages = null,
-        bucketId: d.bucketId,
-        target: d.name,
-        getElems: defaultGetElemsFiles(db));
+    // final db = DbsOpen.androidGalleryFiles();
+    final instance = _AndroidGalleryFiles(
+      // db, () => currentImages = null,
+      bucketId: d.bucketId,
+      target: d.name,
+      // getElems: defaultGetElemsFiles(db),
+    );
 
     currentImages = instance;
 
@@ -184,3 +131,41 @@ class _AndroidGallery implements GalleryAPIDirectories {
 
   _AndroidGallery({this.temporary});
 }
+
+  // @override
+  // void setRefreshGridCallback(void Function() callback) {
+  //   _impl.refreshGrid = callback;
+  // }
+
+  // @override
+  // void setRefreshingStatusCallback(
+  //     void Function(int i, bool inRefresh, bool empty) callback) {
+  //   _impl.callback = callback;
+  // }
+
+  // @override
+  // void setTemporarySet(void Function(int, bool) callback) {
+  //   _impl.temporarySet = callback;
+  // }
+
+  // @override
+  // void setPassFilter(
+  //     (Iterable<SystemGalleryDirectory>, dynamic) Function(
+  //             Iterable<SystemGalleryDirectory>, dynamic, bool)?
+  //         filter) {
+  //   _impl.filter.passFilter = filter;
+  // }
+
+
+  // final filter = IsarFilter<SystemGalleryDirectory>(
+  //     _global!.db, DbsOpen.androidGalleryDirectories(temporary: true),
+  //     (offset, limit, v, _, __) {
+  //   return _global!.db.systemGalleryDirectorys
+  //       .filter()
+  //       .nameContains(v, caseSensitive: false)
+  //       .or()
+  //       .tagContains(v, caseSensitive: false)
+  //       .offset(offset)
+  //       .limit(limit)
+  //       .findAllSync();
+  // });

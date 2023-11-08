@@ -6,6 +6,7 @@
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 import 'package:gallery/src/db/schemas/blacklisted_directory.dart';
+import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
 import 'package:isar/isar.dart';
 
 import '../db/schemas/system_gallery_directory.dart';
@@ -13,8 +14,8 @@ import '../db/schemas/system_gallery_directory_file.dart';
 import 'filtering/filtering_interface.dart';
 
 abstract class GalleryDirectoriesExtra {
-  FilterInterface<SystemGalleryDirectory> get filter;
-  Isar get db;
+  // FilterInterface<SystemGalleryDirectory> get filter;
+  // Isar get db;
 
   GalleryAPIFiles joinedDir(List<String> bucketIds);
   GalleryAPIFiles trash();
@@ -22,50 +23,48 @@ abstract class GalleryDirectoriesExtra {
 
   void addBlacklisted(List<BlacklistedDirectory> bucketIds);
 
-  void setRefreshGridCallback(void Function() callback);
-  void setTemporarySet(void Function(int, bool) callback);
-  void setRefreshingStatusCallback(
-      void Function(int i, bool inRefresh, bool empty) callback);
+  // void setRefreshGridCallback(void Function() callback);
+  // void setTemporarySet(void Function(int, bool) callback);
+  // void setRefreshingStatusCallback(
+  // void Function(int i, bool inRefresh, bool empty) callback);
 
-  void setPassFilter(
-      (Iterable<SystemGalleryDirectory>, dynamic) Function(
-              Iterable<SystemGalleryDirectory>, dynamic, bool)?
-          filter);
+  // void setPassFilter(
+  //     (Iterable<SystemGalleryDirectory>, dynamic) Function(
+  //             Iterable<SystemGalleryDirectory>, dynamic, bool)?
+  //         filter);
+
+  BackgroundDataLoader<SystemGalleryDirectory, int> get loader;
 }
 
 abstract class GalleryFilesExtra {
-  FilterInterface<SystemGalleryDirectoryFile> get filter;
-  Isar get db;
+  // FilterInterface<SystemGalleryDirectoryFile> get filter;
+  // Isar get db;
 
-  bool get supportsDirectRefresh;
+  // bool get supportsDirectRefresh;
   bool get isTrash;
   bool get isFavorites;
 
-  void setRefreshGridCallback(void Function() callback);
-  Future<void> loadNextThumbnails(void Function() callback);
-  void setRefreshingStatusCallback(
-      void Function(int i, bool inRefresh, bool empty) callback);
-  void setPassFilter(
-      (Iterable<SystemGalleryDirectoryFile>, dynamic) Function(
-              Iterable<SystemGalleryDirectoryFile> cells,
-              dynamic data,
-              bool end)
-          f);
+  // void setRefreshGridCallback(void Function() callback);
+  // Future<void> loadNextThumbnails(void Function() callback);
+  // void setRefreshingStatusCallback(
+  //     void Function(int i, bool inRefresh, bool empty) callback);
+  // void setPassFilter(
+  //     (Iterable<SystemGalleryDirectoryFile>, dynamic) Function(
+  //             Iterable<SystemGalleryDirectoryFile> cells,
+  //             dynamic data,
+  //             bool end)
+  //         f);
+
+  BackgroundDataLoader<SystemGalleryDirectoryFile, int> get loader;
 }
 
 abstract class GalleryAPIFiles {
-  SystemGalleryDirectoryFile directCell(int i);
-
-  Future<int> refresh();
   GalleryFilesExtra getExtra();
 
   void close();
 }
 
 abstract class GalleryAPIDirectories {
-  SystemGalleryDirectory directCell(int i);
-
-  Future<int> refresh();
   GalleryDirectoriesExtra getExtra();
   GalleryAPIFiles files(SystemGalleryDirectory d);
 

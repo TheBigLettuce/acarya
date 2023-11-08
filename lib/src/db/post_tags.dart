@@ -69,8 +69,7 @@ class PostTags {
         return [];
       }
 
-      tagsDb.writeTxnSync(
-          () => tagsDb.localTags.putSync(LocalTags(filename, post.tags)));
+      tagsDb.write((i) => i.localTags.put(LocalTags(filename, post.tags)));
 
       api.close();
 
@@ -158,17 +157,17 @@ class PostTags {
       }
     }
 
-    tagsDb.writeTxnSync(() {
-      _putTagsAndIncreaseFreq(tags);
-      tagsDb.localTags.putSync(LocalTags(filename, tags));
+    tagsDb.write((i) {
+      _putTagsAndIncreaseFreq(i, tags);
+      i.localTags.put(LocalTags(filename, tags));
     });
   }
 
   /// Doesn't dissassemble.
   void addTagsPostAll(Iterable<(String, List<String>)> tags) {
-    tagsDb.writeTxnSync(() {
-      tagsDb.localTags.putAllSync(tags.map((e) {
-        _putTagsAndIncreaseFreq(e.$2);
+    tagsDb.write((i) {
+      i.localTags.putAll(tags.map((e) {
+        _putTagsAndIncreaseFreq(i, e.$2);
 
         return LocalTags(e.$1, e.$2);
       }).toList());
@@ -178,16 +177,15 @@ class PostTags {
   /// Rebuilds the tag suggestions dictionary.
   /// [rebuildTagDictionary] shouldn't be frequently run, as it might take minutes to complete.
   void rebuildTagDictionary() {
-    tagsDb.writeTxnSync(() => tagsDb.localTagDictionarys.clearSync());
+    tagsDb.write((i) => i.localTagDictionarys.clear());
 
     var offset = 0;
     for (;;) {
-      final tags =
-          tagsDb.localTags.where().offset(offset).limit(40).findAllSync();
+      final tags = tagsDb.localTags.where().findAll(offset: offset, limit: 40);
       offset += tags.length;
 
       for (final e in tags) {
-        tagsDb.writeTxnSync(() => _putTagsAndIncreaseFreq(e.tags));
+        tagsDb.write((i) => _putTagsAndIncreaseFreq(i, e.tags));
       }
 
       if (tags.length != 40) {
@@ -196,21 +194,19 @@ class PostTags {
     }
   }
 
-  void _putTagsAndIncreaseFreq(List<String> tags) {
-    tagsDb.localTagDictionarys.putAllSync(tags
-        .map((e) => LocalTagDictionary(
-            HtmlUnescape().convert(e),
-            (tagsDb.localTagDictionarys.getSync(fastHash(e))?.frequency ?? 0) +
-                1))
+  void _putTagsAndIncreaseFreq(Isar i, List<String> tags) {
+    i.localTagDictionarys.putAll(tags
+        .map((e) => LocalTagDictionary(HtmlUnescape().convert(e),
+            (tagsDb.localTagDictionarys.get(e)?.frequency ?? 0) + 1))
         .toList());
   }
 
   /// Saves all the tags from the posts.
   void addAllPostTags(List<Post> p) {
-    tagsDb.writeTxnSync(() {
-      tagsDb.localTags.putAllSync(p.map((e) {
+    tagsDb.write((i) {
+      i.localTags.putAll(p.map((e) {
         final ret = LocalTags(e.filename(), e.tags);
-        _putTagsAndIncreaseFreq(ret.tags);
+        _putTagsAndIncreaseFreq(i, ret.tags);
         return ret;
       }).toList());
     });
@@ -218,21 +214,20 @@ class PostTags {
 
   /// Returns tags for the [filename], or empty list if there are none.
   List<String> getTagsPost(String filename) {
-    return tagsDb.localTags.getSync(fastHash(filename))?.tags ?? [];
+    return tagsDb.localTags.get(filename)?.tags ?? [];
   }
 
   /// Returns true if tags for the [filename] includes [tag],
   /// or false if there are no tags for [filename].
   bool containsTag(String filename, String tag) {
-    return tagsDb.localTags.getSync(fastHash(filename))?.tags.contains(tag) ??
-        false;
+    return tagsDb.localTags.get(filename)?.tags.contains(tag) ?? false;
   }
 
   /// Returns true if tags for the [filename] includes all the [tags].
   /// [Tags] should be a string with tags separated by a space.
   /// Or false if there are no tags for the [filename].
   bool containsTagMultiple(String filename, String tags) {
-    final localTags = tagsDb.localTags.getSync(fastHash(filename))?.tags;
+    final localTags = tagsDb.localTags.get(filename)?.tags;
     if (localTags == null || localTags.isEmpty) {
       return false;
     }
@@ -248,22 +243,17 @@ class PostTags {
   /// Returns true if the tags for the [filename] have "original",
   /// or false if there are no tags for [filename].
   bool isOriginal(String filename) {
-    return tagsDb.localTags
-            .getSync(fastHash(filename))
-            ?.tags
-            .contains("original") ??
-        false;
+    return tagsDb.localTags.get(filename)?.tags.contains("original") ?? false;
   }
 
-  int savedTagsCount() => tagsDb.localTags.countSync();
+  int savedTagsCount() => tagsDb.localTags.count();
 
   Future<List<String>> completeLocalTag(String string) async {
     final result = tagsDb.localTagDictionarys
-        .filter()
+        .where()
         .tagContains(string)
         .sortByFrequencyDesc()
-        .limit(10)
-        .findAllSync();
+        .findAll(limit: 10);
 
     return result.map((e) => e.tag).toList();
   }
@@ -283,7 +273,7 @@ class PostTags {
   }
 
   void deletePostTags(String filename) {
-    tagsDb.writeTxnSync(() => tagsDb.localTags.deleteSync(fastHash(filename)));
+    tagsDb.write((i) => i.localTags.delete(filename));
   }
 
   /// Restore local tags from the backup.
@@ -296,16 +286,20 @@ class PostTags {
     try {
       final outputFile =
           await PlatformFunctions.pickFileAndCopy(Dbs.g.appStorageDir);
-      await Isar.openSync(
-              [LocalTagsSchema, LocalTagDictionarySchema, DirectoryTagSchema],
+      Isar.open(
+              schemas: [
+            LocalTagsSchema,
+            LocalTagDictionarySchema,
+            DirectoryTagSchema
+          ],
               directory: Dbs.g.appStorageDir,
               inspector: false,
               name: outputFile.split("/").last)
           .close();
 
-      await tagsDb.copyToFile(tagsBakFile);
+      tagsDb.copyToFile(tagsBakFile);
 
-      await tagsDb.close();
+      tagsDb.close();
 
       io.File("$tagsFile.isar").deleteSync();
       io.File(outputFile).renameSync("$tagsFile.isar");
@@ -329,17 +323,16 @@ class PostTags {
   }
 
   String? directoryTag(String bucketId) {
-    return tagsDb.directoryTags.getSync(fastHash(bucketId))?.tag;
+    return tagsDb.directoryTags.get(bucketId)?.tag;
   }
 
   void setDirectoriesTag(Iterable<String> bucketIds, String tag) {
-    tagsDb.writeTxnSync(() => tagsDb.directoryTags
-        .putAllSync(bucketIds.map((e) => DirectoryTag(e, tag)).toList()));
+    tagsDb.write((i) => i.directoryTags
+        .putAll(bucketIds.map((e) => DirectoryTag(e, tag)).toList()));
   }
 
   void removeDirectoriesTag(Iterable<String> buckedIds) {
-    tagsDb.writeTxnSync(() => tagsDb.directoryTags
-        .deleteAllSync(buckedIds.map((e) => fastHash(e)).toList()));
+    tagsDb.write((i) => i.directoryTags.deleteAll(buckedIds.toList()));
   }
 
   /// Make a copy of the tags DB.
@@ -354,7 +347,7 @@ class PostTags {
         "${DateTime.now().microsecondsSinceEpoch.toString()}_savedtags.bin"
       ]);
 
-      await tagsDb.copyToFile(output);
+      tagsDb.copyToFile(output);
 
       plug.move(MoveOp(
           source: output,

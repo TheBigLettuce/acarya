@@ -6,14 +6,16 @@
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 import 'package:isar/isar.dart';
+import 'package:meta/meta.dart';
 
 import 'settings.dart';
 
 part 'grid_state.g.dart';
 
+@immutable
 @collection
 class GridState extends GridStateBase {
-  GridState(
+  const GridState(
       {required super.tags,
       required super.scrollPositionTags,
       required super.selectedPost,
@@ -23,7 +25,8 @@ class GridState extends GridStateBase {
       required super.time,
       required super.page});
 
-  GridState.empty(String name, String tags, SafeMode safeMode)
+  const GridState.empty(
+      String name, String tags, SafeMode safeMode, DateTime time)
       : super(
             tags: tags,
             name: name,
@@ -32,7 +35,7 @@ class GridState extends GridStateBase {
             selectedPost: null,
             scrollPositionTags: null,
             page: null,
-            time: DateTime.now());
+            time: time);
 
   GridState copy(bool replaceScrollTagsSelectedPost,
           {String? name,
@@ -58,10 +61,9 @@ class GridState extends GridStateBase {
           name: name ?? this.name);
 }
 
+@immutable
 class GridStateBase {
-  Id? id;
-
-  @Index(unique: true, replace: true)
+  @Id()
   final String name;
   @Index()
   final DateTime time;
@@ -74,10 +76,9 @@ class GridStateBase {
   final double? scrollPositionTags;
   final int? page;
 
-  @enumerated
   final SafeMode safeMode;
 
-  GridStateBase(
+  const GridStateBase(
       {required this.tags,
       required this.scrollPositionTags,
       required this.selectedPost,

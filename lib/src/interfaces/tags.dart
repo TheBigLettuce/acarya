@@ -16,10 +16,10 @@ abstract class BooruTagging {
 
   /// Add the [tag] to the DB.
   /// Updates the added time if already exist.
-  void add(Tag tag);
+  void add(String tag);
 
   /// Delete the [tag] from the DB.
-  void delete(Tag tag);
+  void delete(String tag);
 
   /// Delete all the tags from the DB.
   void clear();

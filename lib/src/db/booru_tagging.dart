@@ -17,41 +17,41 @@ class IsarBooruTagging implements BooruTagging {
   @override
   List<Tag> get() {
     return isarCurrent.tags
-        .filter()
+        .where()
         .isExcludedEqualTo(excludedMode)
         .sortByTimeDesc()
-        .findAllSync();
+        .findAll();
   }
 
   @override
-  void add(Tag t) {
+  void add(String t) {
     final instance = isarCurrent;
 
-    instance.writeTxnSync(() => instance.tags.putByTagIsExcludedSync(
-        t.copyWith(isExcluded: excludedMode, time: DateTime.now())));
+    instance.write((i) => i.tags.put(Tag(
+          instance.tags.autoIncrement(),
+          tag: t,
+          isExcluded: excludedMode,
+          time: DateTime.now(),
+        )));
   }
 
   @override
-  void delete(Tag t) {
+  void delete(String t) {
     final instance = isarCurrent;
 
-    instance.writeTxnSync(
-        () => instance.tags.deleteByTagIsExcludedSync(t.tag, excludedMode));
+    instance.write((i) => i.tags
+        .where()
+        .tagEqualTo(t)
+        .isExcludedEqualTo(excludedMode)
+        .deleteFirst());
   }
 
   @override
   void clear() {
     final instance = isarCurrent;
 
-    instance.writeTxnSync(() {
-      instance.tags.deleteAllSync(
-        instance.tags
-            .filter()
-            .isExcludedEqualTo(excludedMode)
-            .findAllSync()
-            .map((e) => e.isarId!)
-            .toList(),
-      );
+    instance.write((i) {
+      i.tags.where().isExcludedEqualTo(excludedMode).deleteAll();
     });
   }
 

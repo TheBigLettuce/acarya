@@ -24,5 +24,5 @@ class CurrentCellNotifier<T extends Cell> extends InheritedWidget {
 
   @override
   bool updateShouldNotify(CurrentCellNotifier<T> oldWidget) =>
-      cell.isarId != oldWidget.cell.isarId;
+      cell.uniqueKey() != oldWidget.cell.uniqueKey();
 }

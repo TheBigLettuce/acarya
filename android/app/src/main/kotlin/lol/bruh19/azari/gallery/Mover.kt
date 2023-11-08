@@ -195,21 +195,22 @@ internal class Mover(
                             ?: throw Exception("could not get an output stream")
                         val fileSrc = FileSystem.SYSTEM.openReadOnly(op.source.toPath())
 
-                        val docStream = FileOutputStream(docFd.fileDescriptor)
+                        docFd.use { fd ->
+                            FileOutputStream(fd.fileDescriptor).use { stream ->
+                                val buffer = stream.sink().buffer()
 
-                        val buffer = docStream.sink().buffer()
-                        val src = fileSrc.source()
-                        buffer.writeAll(src)
-                        buffer.flush()
-                        docStream.flush()
+                                fileSrc.source().use { src ->
+                                    buffer.writeAll(src)
+                                    buffer.flush()
 
-                        docStream.fd.sync()
+                                    stream.fd.sync()
 
-                        src.close()
-                        buffer.close()
+                                    stream.flush()
+                                }
+                            }
+                        }
+
                         fileSrc.close()
-                        docStream.close()
-                        docFd.close()
                     } catch (e: Exception) {
                         Log.e("downloader", e.toString())
                     }
@@ -633,7 +634,7 @@ internal class Mover(
         if (locker.exist(id)) {
             return Pair("", 0)
         }
-
+        
         val thumb = if (network) Glide.with(context).asBitmap().load(uri).submit()
             .get() else context.contentResolver.loadThumbnail(uri, Size(320, 320), null)
         val stream = ByteArrayOutputStream()

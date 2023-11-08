@@ -6,12 +6,16 @@
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 import 'package:isar/isar.dart';
+import 'package:meta/meta.dart';
 
 part 'favorite_media.g.dart';
 
+@immutable
 @collection
 class FavoriteMedia {
-  final Id id;
+  @Id()
+  final int id;
+
   @Index()
   final DateTime time;
   FavoriteMedia(this.id) : time = DateTime.now();

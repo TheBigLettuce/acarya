@@ -7,7 +7,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:gallery/src/widgets/grid/callback_grid.dart';
+import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
 
 import 'contentable.dart';
 import '../widgets/grid/cell_data.dart';
@@ -25,16 +25,16 @@ class AddInfoColorData {
 }
 
 /// Cells on a grid.
-/// Implementations of this interface can be presented on the [CallbackGrid].
+/// Implementations of this interface can be presented on the [CallbackGridShell].
 /// This can be not only a cell on a grid, it can be also an element in a list.
-/// [CallbackGrid] decides how this gets displayed.
+/// [CallbackGridShell] decides how this gets displayed.
 abstract class Cell {
   /// Common pattern of the implementations of [Cell] is that they are all an Isar schema.
   /// However, this property can be ignored, together with the setter.
-  /// This is only useful for the internal implementations, not used in the [CallbackGrid].
+  /// This is only useful for the internal implementations, not used in the [CallbackGridShell].
   /// No asumptions can be made about this property.
-  int? get isarId;
-  set isarId(int? i);
+  // int? get isarId;
+  // set isarId(int? i);
 
   /// The name of the cell, displayed on top of the cell.
   /// If [isList] is true, it means the cell gets displayed as a list entry,
@@ -54,13 +54,13 @@ abstract class Cell {
   /// File that gets displayed in the image view.
   /// This can be unimplemented.
   /// Not implementing this assumes that clicking on the grid will take to an other page,
-  /// requires [CallbackGrid.overrideOnPress] to be not null, which makes [fileDisplay] never to be called.
+  /// requires [CallbackGridShell.overrideOnPress] to be not null, which makes [fileDisplay] never to be called.
   Contentable fileDisplay();
 
   /// Url to the file to download.
   /// This can be unimplemented.
   /// Not implementing this assumes that clicking on the grid will take to an other page,
-  /// requires [CallbackGrid.overrideOnPress] to be not null, which makes [fileDownloadUrl] never to be called.
+  /// requires [CallbackGridShell.overrideOnPress] to be not null, which makes [fileDownloadUrl] never to be called.
   String fileDownloadUrl();
 
   /// The thumbnail and additional information for the cell.

@@ -28,29 +28,35 @@ import 'settings.dart';
 
 part 'note.g.dart';
 
+@immutable
 @collection
 class NoteBooru extends NoteBase implements Cell {
   @override
-  Id? isarId;
-
-  @override
   Key uniqueKey() => ValueKey((postId, booru));
 
-  @Index(unique: true, replace: true, composite: [CompositeIndex("booru")])
+  @Index(unique: true, composite: ["booru"])
   final int postId;
-  @enumerated
   final Booru booru;
 
+  @Id()
   final String fileUrl;
   final String previewUrl;
   final String sampleUrl;
+
+  static NoteBooru? get(int postId, Booru booru) {
+    return Dbs.g.blacklisted.noteBoorus
+        .where()
+        .postIdEqualTo(postId)
+        .booruEqualTo(booru)
+        .findFirst();
+  }
 
   static void reorder(
       {required int postId,
       required Booru booru,
       required int from,
       required int to}) {
-    final n = Dbs.g.blacklisted.noteBoorus.getByPostIdBooruSync(postId, booru);
+    final n = get(postId, booru);
     if (n == null || from == to) {
       return;
     }
@@ -64,15 +70,14 @@ class NoteBooru extends NoteBase implements Cell {
       newText.insert(to - 1, e1);
     }
 
-    Dbs.g.blacklisted.writeTxnSync(() => Dbs.g.blacklisted.noteBoorus
-        .putByPostIdBooruSync(NoteBooru(newText, n.time,
-            postId: postId,
-            booru: booru,
-            backgroundColor: n.backgroundColor,
-            textColor: n.textColor,
-            fileUrl: n.fileUrl,
-            sampleUrl: n.sampleUrl,
-            previewUrl: n.previewUrl)));
+    Dbs.g.blacklisted.write((i) => i.noteBoorus.put(NoteBooru(newText, n.time,
+        postId: postId,
+        booru: booru,
+        backgroundColor: n.backgroundColor,
+        textColor: n.textColor,
+        fileUrl: n.fileUrl,
+        sampleUrl: n.sampleUrl,
+        previewUrl: n.previewUrl)));
   }
 
   static bool add(int pid, Booru booru,
@@ -82,53 +87,54 @@ class NoteBooru extends NoteBase implements Cell {
       required Color? backgroundColor,
       required Color? textColor,
       required previewUrl}) {
-    final n = Dbs.g.blacklisted.noteBoorus.getByPostIdBooruSync(pid, booru);
+    final n = get(pid, booru);
 
-    Dbs.g.blacklisted.writeTxnSync(() => Dbs.g.blacklisted.noteBoorus
-        .putByPostIdBooruSync(NoteBooru(
-            [...n?.text ?? [], text], DateTime.now(),
-            postId: pid,
-            booru: booru,
-            backgroundColor: backgroundColor?.value,
-            textColor: textColor?.value,
-            fileUrl: fileUrl,
-            sampleUrl: sampleUrl,
-            previewUrl: previewUrl)));
+    Dbs.g.blacklisted.write((i) => i.noteBoorus.put(NoteBooru(
+        [...n?.text ?? [], text], DateTime.now(),
+        postId: pid,
+        booru: booru,
+        backgroundColor: backgroundColor?.value,
+        textColor: textColor?.value,
+        fileUrl: fileUrl,
+        sampleUrl: sampleUrl,
+        previewUrl: previewUrl)));
 
     return n == null;
   }
 
   static void replace(int pid, Booru booru, int idx, String newText) {
-    final n = Dbs.g.blacklisted.noteBoorus.getByPostIdBooruSync(pid, booru);
+    final n = get(pid, booru);
     if (n == null) {
       return;
     }
     final t = n.text.toList();
     t[idx] = newText;
 
-    Dbs.g.blacklisted.writeTxnSync(() => Dbs.g.blacklisted.noteBoorus
-        .putByPostIdBooruSync(NoteBooru(t, n.time,
-            postId: n.postId,
-            booru: n.booru,
-            backgroundColor: n.backgroundColor,
-            textColor: n.textColor,
-            fileUrl: n.fileUrl,
-            sampleUrl: n.sampleUrl,
-            previewUrl: n.previewUrl)));
+    Dbs.g.blacklisted.write((i) => i.noteBoorus.put(NoteBooru(t, n.time,
+        postId: n.postId,
+        booru: n.booru,
+        backgroundColor: n.backgroundColor,
+        textColor: n.textColor,
+        fileUrl: n.fileUrl,
+        sampleUrl: n.sampleUrl,
+        previewUrl: n.previewUrl)));
   }
 
   static bool remove(int pid, Booru booru, int indx) {
-    final n = Dbs.g.blacklisted.noteBoorus.getByPostIdBooruSync(pid, booru);
+    final n = get(pid, booru);
     if (n == null) {
       return false;
     }
     final t = n.text.toList()..removeAt(indx);
-    return Dbs.g.blacklisted.writeTxnSync(() {
+    return Dbs.g.blacklisted.write((i) {
       if (t.isEmpty) {
-        return Dbs.g.blacklisted.noteBoorus.deleteByPostIdBooruSync(pid, booru);
+        return i.noteBoorus
+            .where()
+            .postIdEqualTo(pid)
+            .booruEqualTo(booru)
+            .deleteFirst();
       } else {
-        Dbs.g.blacklisted.noteBoorus.putByPostIdBooruSync(NoteBooru(
-            t, DateTime.now(),
+        i.noteBoorus.put(NoteBooru(t, DateTime.now(),
             postId: pid,
             booru: booru,
             backgroundColor: n.backgroundColor,
@@ -143,22 +149,15 @@ class NoteBooru extends NoteBase implements Cell {
   }
 
   static bool hasNotes(int pid, Booru booru) {
-    return Dbs.g.blacklisted.noteBoorus.getByPostIdBooruSync(pid, booru) !=
-        null;
+    return get(pid, booru) != null;
   }
 
   static List<NoteBooru> load() {
-    return Dbs.g.blacklisted.noteBoorus.where().findAllSync();
+    return Dbs.g.blacklisted.noteBoorus.where().findAll();
   }
 
   List<String> currentText() {
-    if (isarId == null) {
-      return const [];
-    }
-
-    return Dbs.g.blacklisted.noteBoorus
-        .getByPostIdBooruSync(postId, booru)!
-        .text;
+    return get(postId, booru)!.text;
   }
 
   static NoteInterface<NoteBooru> interfaceSelf(void Function() onDelete) {
@@ -183,8 +182,7 @@ class NoteBooru extends NoteBase implements Cell {
         }
       },
       load: (cell) {
-        return Dbs.g.blacklisted.noteBoorus
-            .getByPostIdBooruSync(cell.postId, cell.booru);
+        return get(cell.postId, cell.booru);
       },
       replace: (cell, indx, newText) {
         NoteBooru.replace(cell.postId, cell.booru, indx, newText);
@@ -198,13 +196,13 @@ class NoteBooru extends NoteBase implements Cell {
       reorder: (cell, from, to) {
         reorder(
             booru: Booru.fromPrefix(cell.prefix)!,
-            postId: cell.id,
+            postId: cell.postId,
             from: from,
             to: to);
       },
       addNote: (text, cell, backgroundColor, textColor) {
         NoteBooru.add(
-          cell.id,
+          cell.postId,
           Booru.fromPrefix(cell.prefix)!,
           text: text,
           backgroundColor: backgroundColor,
@@ -219,22 +217,21 @@ class NoteBooru extends NoteBase implements Cell {
       },
       replace: (cell, indx, newText) {
         NoteBooru.replace(
-            cell.id, Booru.fromPrefix(cell.prefix)!, indx, newText);
+            cell.postId, Booru.fromPrefix(cell.prefix)!, indx, newText);
       },
       delete: (cell, indx) {
-        NoteBooru.remove(cell.id, Booru.fromPrefix(cell.prefix)!, indx);
+        NoteBooru.remove(cell.postId, Booru.fromPrefix(cell.prefix)!, indx);
         try {
           setState(() {});
         } catch (_) {}
       },
       load: (cell) {
-        return Dbs.g.blacklisted.noteBoorus
-            .getByPostIdBooruSync(cell.id, Booru.fromPrefix(cell.prefix)!);
+        return get(cell.postId, Booru.fromPrefix(cell.prefix)!);
       },
     );
   }
 
-  NoteBooru(super.text, super.time,
+  const NoteBooru(super.text, super.time,
       {required this.postId,
       required this.booru,
       required super.backgroundColor,
@@ -339,7 +336,7 @@ class NoteBooru extends NoteBase implements Cell {
 }
 
 class NoteBase {
-  @Index(caseSensitive: false, type: IndexType.hash)
+  // @Index(caseSensitive: false, type: IndexType.hash)
   final List<String> text;
   @Index()
   final DateTime time;

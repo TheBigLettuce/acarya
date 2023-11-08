@@ -5,15 +5,12 @@
 // This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
-import 'package:flutter/widgets.dart';
-
 import '../../db/schemas/settings.dart';
 import '../../interfaces/cell.dart';
-import '../grid/callback_grid.dart';
 import 'skeleton_state.dart';
 
 class GridSkeletonState<T extends Cell> extends SkeletonState {
-  final GlobalKey<CallbackGridState<T>> gridKey = GlobalKey();
+  // final GlobalKey<CallbackGridShellState> gridKey = GlobalKey();
   Settings settings = Settings.fromDb();
   // final Future<bool> Function() onWillPop;
 

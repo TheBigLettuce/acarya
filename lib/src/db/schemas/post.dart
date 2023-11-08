@@ -39,11 +39,12 @@ import 'tags.dart';
 
 part 'post.g.dart';
 
+@immutable
 @collection
 class Post extends PostBase {
-  Post(
+  const Post(
       {required super.height,
-      required super.id,
+      required super.postId,
       required super.md5,
       required super.tags,
       required super.width,
@@ -58,16 +59,17 @@ class Post extends PostBase {
       required super.createdAt});
 }
 
+@immutable
 class PostBase implements Cell {
-  @override
-  Id? isarId;
+  // @Id()
+  // final int isarId;
 
   @Index()
-  final int id;
+  final int postId;
 
   final String md5;
 
-  @Index(caseSensitive: false, type: IndexType.hashElements)
+  // @Index(caseSensitive: false, type: IndexType.hashElements)
   final List<String> tags;
 
   final int width;
@@ -76,7 +78,7 @@ class PostBase implements Cell {
   @override
   Key uniqueKey() => ValueKey(fileUrl);
 
-  @Index(unique: true, replace: true)
+  @Id()
   final String fileUrl;
   final String previewUrl;
   final String sampleUrl;
@@ -125,7 +127,7 @@ class PostBase implements Cell {
         onPressed: () {
           final booru =
               BooruAPI.fromEnum(Booru.fromPrefix(prefix)!, page: null);
-          launchUrl(booru.browserLink(id),
+          launchUrl(booru.browserLink(postId),
               mode: LaunchMode.externalApplication);
           booru.close();
         },
@@ -133,7 +135,7 @@ class PostBase implements Cell {
       if (Platform.isAndroid)
         GestureDetector(
           onLongPress: () {
-            showQr(context, prefix, id);
+            showQr(context, prefix, postId);
           },
           child: IconButton(
               onPressed: () {
@@ -144,7 +146,7 @@ class PostBase implements Cell {
       else
         IconButton(
             onPressed: () {
-              showQr(context, prefix, id);
+              showQr(context, prefix, postId);
             },
             icon: const Icon(Icons.qr_code_rounded))
     ];
@@ -168,7 +170,7 @@ class PostBase implements Cell {
                       context: context,
                       builder: (context) {
                         return TranslationNotes(
-                          postId: id,
+                          postId: postId,
                           api: BooruAPI.fromEnum(Booru.fromPrefix(prefix)!,
                               page: null),
                         );
@@ -245,21 +247,17 @@ class PostBase implements Cell {
           subtitle: Text(score.toString()),
         ),
         if (tags.contains("translated"))
-          TranslationNotes.tile(context, colors.foregroundColor, id,
+          TranslationNotes.tile(context, colors.foregroundColor, postId,
               () => BooruAPI.fromEnum(Booru.fromPrefix(prefix)!, page: null)),
       ],
       filename(),
       supplyTags: tags,
       addExcluded: (t) {
-        tagManager.excluded
-            .add(Tag(tag: t, isExcluded: true, time: DateTime.now()));
+        tagManager.excluded.add(t);
       },
       launchGrid: (t) {
-        tagManager.onTagPressed(
-            context,
-            Tag.string(tag: HtmlUnescape().convert(t)),
-            Booru.fromPrefix(prefix)!,
-            true);
+        tagManager.onTagPressed(context, HtmlUnescape().convert(t),
+            Booru.fromPrefix(prefix)!, true);
       },
     );
   }
@@ -327,7 +325,7 @@ class PostBase implements Cell {
             backgroundColor: Colors.redAccent.shade100
                 .harmonizeWith(Theme.of(context).colorScheme.primary),
             right: true),
-      if (NoteBooru.hasNotes(id, Booru.fromPrefix(prefix)!))
+      if (NoteBooru.hasNotes(postId, Booru.fromPrefix(prefix)!))
         const Sticker(Icons.sticky_note_2_outlined, right: true),
       ..._stickers(content, context).map((e) => Sticker(e.$1))
     ]);
@@ -366,20 +364,20 @@ class PostBase implements Cell {
     ];
   }
 
-  PostBase(
-      {required this.id,
-      required this.height,
-      required this.md5,
-      required this.tags,
-      required this.width,
-      required this.fileUrl,
-      required this.prefix,
-      required this.previewUrl,
-      required this.sampleUrl,
-      required this.ext,
-      required this.sourceUrl,
-      required this.rating,
-      required this.score,
-      required this.createdAt,
-      this.isarId});
+  const PostBase({
+    required this.postId,
+    required this.height,
+    required this.md5,
+    required this.tags,
+    required this.width,
+    required this.fileUrl,
+    required this.prefix,
+    required this.previewUrl,
+    required this.sampleUrl,
+    required this.ext,
+    required this.sourceUrl,
+    required this.rating,
+    required this.score,
+    required this.createdAt,
+  });
 }

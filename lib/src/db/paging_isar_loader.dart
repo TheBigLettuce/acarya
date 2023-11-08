@@ -10,74 +10,74 @@ import 'package:isar/isar.dart';
 import '../interfaces/cell.dart';
 import 'initalize_db.dart';
 
-class PagingIsarLoader<T extends Cell> {
-  final Isar _instance;
-  final Iterable<T> Function(int count) loadNext;
-  bool _reachedEnd = false;
+// class PagingIsarLoader<T extends Cell> {
+//   final Isar _instance;
+//   final Iterable<T> Function(int count) loadNext;
+//   bool _reachedEnd = false;
 
-  Future<int> next() {
-    final elems = loadNext(_instance.collection<T>().countSync()).map((e) {
-      e.isarId = null;
+//   Future<int> next() {
+//     final elems = loadNext(_instance.collection<T>().countSync()).map((e) {
+//       e.isarId = null;
 
-      return e;
-    }).toList();
+//       return e;
+//     }).toList();
 
-    if (elems.isEmpty) {
-      _reachedEnd = true;
-    } else {
-      _instance.writeTxnSync(() => _instance.collection<T>().putAllSync(elems));
-    }
+//     if (elems.isEmpty) {
+//       _reachedEnd = true;
+//     } else {
+//       _instance.writeTxnSync(() => _instance.collection<T>().putAllSync(elems));
+//     }
 
-    return _instance.collection<T>().count();
-  }
+//     return _instance.collection<T>().count();
+//   }
 
-  Future<int> refresh() {
-    _instance.writeTxnSync(() => _instance.clearSync());
-    _reachedEnd = false;
+//   Future<int> refresh() {
+//     _instance.writeTxnSync(() => _instance.clearSync());
+//     _reachedEnd = false;
 
-    return next();
-  }
+//     return next();
+//   }
 
-  Future<int> loadUntil(int count) async {
-    _instance.writeTxnSync(() => _instance.clearSync());
-    _reachedEnd = false;
+//   Future<int> loadUntil(int count) async {
+//     _instance.writeTxnSync(() => _instance.clearSync());
+//     _reachedEnd = false;
 
-    int stepCount = 0;
+//     int stepCount = 0;
 
-    while (true) {
-      final elems = loadNext(stepCount).map((e) {
-        e.isarId = null;
+//     while (true) {
+//       final elems = loadNext(stepCount).map((e) {
+//         e.isarId = null;
 
-        return e;
-      }).toList();
+//         return e;
+//       }).toList();
 
-      _instance.writeTxnSync(() => _instance.collection<T>().putAllSync(elems),
-          silent: elems.isEmpty || elems.length >= count);
+//       _instance.writeTxnSync(() => _instance.collection<T>().putAllSync(elems),
+//           silent: elems.isEmpty || elems.length >= count);
 
-      if (elems.isEmpty) {
-        _reachedEnd = true;
-        break;
-      } else if (elems.length >= count) {
-        break;
-      }
-      stepCount += elems.length;
-    }
+//       if (elems.isEmpty) {
+//         _reachedEnd = true;
+//         break;
+//       } else if (elems.length >= count) {
+//         break;
+//       }
+//       stepCount += elems.length;
+//     }
 
-    return this.count();
-  }
+//     return this.count();
+//   }
 
-  T get(int indx) {
-    return _instance.collection<T>().getSync(indx + 1)!;
-  }
+//   T get(int indx) {
+//     return _instance.collection<T>().getSync(indx + 1)!;
+//   }
 
-  int count() => _instance.collection<T>().countSync();
+//   int count() => _instance.collection<T>().countSync();
 
-  bool reachedEnd() => _reachedEnd;
+//   bool reachedEnd() => _reachedEnd;
 
-  Future<bool> dispose({bool force = false}) {
-    return _instance.close(deleteFromDisk: force);
-  }
+//   Future<bool> dispose({bool force = false}) {
+//     return _instance.close(deleteFromDisk: force);
+//   }
 
-  PagingIsarLoader(List<CollectionSchema> schemas, this.loadNext)
-      : _instance = DbsOpen.temporarySchemas(schemas);
-}
+//   PagingIsarLoader(List<CollectionSchema> schemas, this.loadNext)
+//       : _instance = DbsOpen.temporarySchemas(schemas);
+// }

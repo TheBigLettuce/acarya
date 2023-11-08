@@ -13,38 +13,38 @@ import '../interfaces/filtering/sorting_mode.dart';
 import 'initalize_db.dart';
 import 'isar_filter.dart';
 
-class LinearIsarLoader<T extends Cell> {
-  final Isar instance;
+// class LinearIsarLoader<T extends Cell> {
+//   final Isar instance;
 
-  final IsarFilter<T> filter;
+//   final IsarFilter<T> filter;
 
-  T getCell(int i) {
-    return filter.to.collection<T>().getSync(i + 1)!;
-  }
+//   T getCell(int i) {
+//     return filter.to.collection<T>().getSync(i + 1)!;
+//   }
 
-  int count() {
-    return filter.to.collection<T>().countSync();
-  }
+//   int count() {
+//     return filter.to.collection<T>().countSync();
+//   }
 
-  void dispose({bool closeInstance = true}) {
-    filter.dispose();
-    if (closeInstance) {
-      instance.close(deleteFromDisk: true);
-    }
-  }
+//   void dispose({bool closeInstance = true}) {
+//     filter.dispose();
+//     if (closeInstance) {
+//       instance.close(deleteFromDisk: true);
+//     }
+//   }
 
-  void init(void Function(Isar instance) loader,
-      {FilteringMode d = FilteringMode.noFilter}) {
-    loader(instance);
-    filter.filter("", d);
-  }
+//   void init(void Function(Isar instance) loader,
+//       {FilteringMode d = FilteringMode.noFilter}) {
+//     loader(instance);
+//     filter.filter("", d);
+//   }
 
-  LinearIsarLoader(
-      CollectionSchema schema,
-      this.instance,
-      Iterable<T> Function(int offset, int limit, String s, SortingMode sort,
-              FilteringMode mode)
-          passFilter)
-      : filter = IsarFilter(
-            instance, DbsOpen.temporarySchemas([schema]), passFilter);
-}
+//   LinearIsarLoader(
+//       CollectionSchema schema,
+//       this.instance,
+//       Iterable<T> Function(int offset, int limit, String s, SortingMode sort,
+//               FilteringMode mode)
+//           passFilter)
+//       : filter = IsarFilter(
+//             instance, DbsOpen.temporarySchemas([schema]), passFilter);
+// }

@@ -11,7 +11,8 @@ part 'thumbnail.g.dart';
 
 @collection
 class Thumbnail {
-  final Id id;
+  @Id()
+  final int id;
   @Index()
   final String path;
   @Index()

@@ -6,6 +6,7 @@
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 import 'package:isar/isar.dart';
+import 'package:meta/meta.dart';
 
 import '../../interfaces/booru.dart';
 import 'grid_state.dart';
@@ -13,12 +14,12 @@ import 'settings.dart';
 
 part 'grid_state_booru.g.dart';
 
+@immutable
 @collection
 class GridStateBooru extends GridStateBase {
-  @enumerated
   final Booru booru;
 
-  GridStateBooru(this.booru,
+  const GridStateBooru(this.booru,
       {required super.tags,
       required super.scrollPositionTags,
       required super.selectedPost,

@@ -7,19 +7,19 @@
 
 import 'package:gallery/src/db/schemas/tags.dart';
 import 'package:isar/isar.dart';
+import 'package:meta/meta.dart';
 
 part 'local_tags.g.dart';
 
+@immutable
 @collection
 class LocalTags {
-  Id get isarId => fastHash(filename);
-
-  @Index(unique: true, replace: true)
+  @Id()
   final String filename;
 
-  @Index(caseSensitive: false, type: IndexType.hashElements)
+  // @Index(caseSensitive: false, type: IndexType.hashElements)
   final List<String> tags;
 
-  LocalTags(
+  const LocalTags(
       this.filename, this.tags); //: isOriginal = tags.contains("original")
 }

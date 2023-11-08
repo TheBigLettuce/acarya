@@ -22,119 +22,119 @@ class _GalleryImpl implements GalleryApi {
   @override
   void updatePictures(List<DirectoryFile?> f, String bucketId, int startTime,
       bool inRefresh, bool empty) {
-    final st = _currentApi?.currentImages?.startTime;
+    // final st = _currentApi?.currentImages?.startTime;
 
-    if (st == null || st > startTime) {
-      return;
-    }
+    // if (st == null || st > startTime) {
+    //   return;
+    // }
 
-    if (_currentApi?.currentImages?.isBucketId(bucketId) != true) {
-      return;
-    }
+    // if (_currentApi?.currentImages?.isBucketId(bucketId) != true) {
+    //   return;
+    // }
 
-    final db = _currentApi?.currentImages?.db;
-    if (db == null) {
-      return;
-    }
+    // final db = _currentApi?.currentImages?.db;
+    // if (db == null) {
+    //   return;
+    // }
 
-    if (empty) {
-      _currentApi?.currentImages?.callback
-          ?.call(db.systemGalleryDirectoryFiles.countSync(), inRefresh, true);
-      return;
-    }
+    // if (empty) {
+    //   _currentApi?.currentImages?.callback
+    //       ?.call(db.systemGalleryDirectoryFiles.countSync(), inRefresh, true);
+    //   return;
+    // }
 
-    if (f.isEmpty) {
-      return;
-    }
+    // if (f.isEmpty) {
+    //   return;
+    // }
 
-    try {
-      final out = f
-          .cast<DirectoryFile>()
-          .map((e) => SystemGalleryDirectoryFile(
-              id: e.id,
-              bucketId: e.bucketId,
-              notesFlat: Dbs.g.main.noteGallerys
-                      .getByIdSync(e.id)
-                      ?.text
-                      .join()
-                      .toLowerCase() ??
-                  "",
-              name: e.name,
-              size: e.size,
-              isDuplicate:
-                  RegExp(r'[(][0-9].*[)][.][a-zA-Z0-9].*').hasMatch(e.name),
-              isFavorite:
-                  Dbs.g.blacklisted.favoriteMedias.getSync(e.id) != null,
-              lastModified: e.lastModified,
-              height: e.height,
-              width: e.width,
-              isGif: e.isGif,
-              isOriginal: PostTags.g.isOriginal(e.name),
-              originalUri: e.originalUri,
-              isVideo: e.isVideo,
-              tagsFlat: PostTags.g.getTagsPost(e.name).join(" ")))
-          .toList();
+    // try {
+    //   final out = f
+    //       .cast<DirectoryFile>()
+    //       .map((e) => SystemGalleryDirectoryFile(
+    //           id: e.id,
+    //           bucketId: e.bucketId,
+    //           notesFlat: Dbs.g.main.noteGallerys
+    //                   .getByIdSync(e.id)
+    //                   ?.text
+    //                   .join()
+    //                   .toLowerCase() ??
+    //               "",
+    //           name: e.name,
+    //           size: e.size,
+    //           isDuplicate:
+    //               RegExp(r'[(][0-9].*[)][.][a-zA-Z0-9].*').hasMatch(e.name),
+    //           isFavorite:
+    //               Dbs.g.blacklisted.favoriteMedias.getSync(e.id) != null,
+    //           lastModified: e.lastModified,
+    //           height: e.height,
+    //           width: e.width,
+    //           isGif: e.isGif,
+    //           isOriginal: PostTags.g.isOriginal(e.name),
+    //           originalUri: e.originalUri,
+    //           isVideo: e.isVideo,
+    //           tagsFlat: PostTags.g.getTagsPost(e.name).join(" ")))
+    //       .toList();
 
-      db.writeTxnSync(() => db.systemGalleryDirectoryFiles.putAllSync(out));
-    } catch (e) {
-      log("updatePictures", level: Level.WARNING.value, error: e);
-    }
+    //   db.writeTxnSync(() => db.systemGalleryDirectoryFiles.putAllSync(out));
+    // } catch (e) {
+    //   log("updatePictures", level: Level.WARNING.value, error: e);
+    // }
 
-    _currentApi?.currentImages?.callback
-        ?.call(db.systemGalleryDirectoryFiles.countSync(), inRefresh, false);
+    // _currentApi?.currentImages?.callback
+    //     ?.call(db.systemGalleryDirectoryFiles.countSync(), inRefresh, false);
   }
 
   @override
   void updateDirectories(List<Directory?> d, bool inRefresh, bool empty) {
-    if (empty) {
-      _currentApi?.callback
-          ?.call(db.systemGalleryDirectorys.countSync(), inRefresh, true);
-      for (final api in _temporaryApis) {
-        api.temporarySet?.call(db.systemGalleryDirectorys.countSync(), true);
-      }
-      return;
-    }
-    final blacklisted = Dbs.g.blacklisted.blacklistedDirectorys
-        .where()
-        .anyOf(d.cast<Directory>(),
-            (q, element) => q.bucketIdEqualTo(element.bucketId))
-        .findAllSync();
-    final map = <String, void>{for (var i in blacklisted) i.bucketId: Null};
-    d = List.from(d);
-    d.removeWhere((element) => map.containsKey(element!.bucketId));
+    // if (empty) {
+    //   _currentApi?.callback
+    //       ?.call(db.systemGalleryDirectorys.countSync(), inRefresh, true);
+    //   for (final api in _temporaryApis) {
+    //     api.temporarySet?.call(db.systemGalleryDirectorys.countSync(), true);
+    //   }
+    //   return;
+    // }
+    // final blacklisted = Dbs.g.blacklisted.blacklistedDirectorys
+    //     .where()
+    //     .anyOf(d.cast<Directory>(),
+    //         (q, element) => q.bucketIdEqualTo(element.bucketId))
+    //     .findAllSync();
+    // final map = <String, void>{for (var i in blacklisted) i.bucketId: Null};
+    // d = List.from(d);
+    // d.removeWhere((element) => map.containsKey(element!.bucketId));
 
-    final out = d
-        .cast<Directory>()
-        .map((e) => SystemGalleryDirectory(
-            bucketId: e.bucketId,
-            name: e.name,
-            tag: PostTags.g.directoryTag(e.bucketId) ?? "",
-            volumeName: e.volumeName,
-            relativeLoc: e.relativeLoc,
-            thumbFileId: e.thumbFileId,
-            lastModified: e.lastModified))
-        .toList();
+    // final out = d
+    //     .cast<Directory>()
+    //     .map((e) => SystemGalleryDirectory(
+    //         bucketId: e.bucketId,
+    //         name: e.name,
+    //         tag: PostTags.g.directoryTag(e.bucketId) ?? "",
+    //         volumeName: e.volumeName,
+    //         relativeLoc: e.relativeLoc,
+    //         thumbFileId: e.thumbFileId,
+    //         lastModified: e.lastModified))
+    //     .toList();
 
-    db.writeTxnSync(() {
-      db.systemGalleryDirectorys.putAllSync(out);
-    });
+    // db.writeTxnSync(() {
+    //   db.systemGalleryDirectorys.putAllSync(out);
+    // });
 
-    _currentApi?.callback
-        ?.call(db.systemGalleryDirectorys.countSync(), inRefresh, false);
-    for (final api in _temporaryApis) {
-      api.temporarySet?.call(db.systemGalleryDirectorys.countSync(), false);
-    }
+    // _currentApi?.callback
+    //     ?.call(db.systemGalleryDirectorys.countSync(), inRefresh, false);
+    // for (final api in _temporaryApis) {
+    //   api.temporarySet?.call(db.systemGalleryDirectorys.countSync(), false);
+    // }
   }
 
   @override
   void notify(String? target) {
-    if (target == null || target == _currentApi?.currentImages?.target) {
-      _currentApi?.currentImages?.refreshGrid?.call();
-    }
-    _currentApi?.refreshGrid?.call();
-    for (final api in _temporaryApis) {
-      api.refreshGrid?.call();
-    }
+    // if (target == null || target == _currentApi?.currentImages?.target) {
+    //   _currentApi?.currentImages?.refreshGrid?.call();
+    // }
+    // _currentApi?.refreshGrid?.call();
+    // for (final api in _temporaryApis) {
+    //   api.refreshGrid?.call();
+    // }
   }
 
   // static GalleryImpl get g => _global!;

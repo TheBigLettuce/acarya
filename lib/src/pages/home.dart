@@ -48,7 +48,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
   @override
   void dispose() {
-    mainGrid.close().then((value) => restartOver());
+    mainGrid.close();
+    restartOver();
     state.dispose();
 
     controller.dispose();

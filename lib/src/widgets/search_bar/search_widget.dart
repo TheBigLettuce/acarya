@@ -7,96 +7,95 @@
 
 part of 'search_filter_grid.dart';
 
-class _SearchWidget<T extends Cell> extends StatefulWidget {
-  final SearchFilterGrid<T> instance;
-  final String? hint;
-  final int? count;
+// class _SearchWidget<T extends Cell> extends StatefulWidget {
+//   final SearchFilterGrid<T> instance;
+//   final String? hint;
+//   final int? count;
 
-  const _SearchWidget(
-      {super.key,
-      required this.instance,
-      required this.count,
-      required this.hint});
+//   const _SearchWidget(
+//       {super.key,
+//       required this.instance,
+//       required this.count,
+//       required this.hint});
 
-  @override
-  State<_SearchWidget<T>> createState() => __SearchWidgetState();
-}
+//   @override
+//   State<_SearchWidget<T>> createState() => __SearchWidgetState();
+// }
 
-class __SearchWidgetState<T extends Cell> extends State<_SearchWidget<T>> {
-  void update() {
-    setState(() {});
-  }
+// class __SearchWidgetState<T extends Cell> extends State<_SearchWidget<T>> {
+//   void update() {
+//     setState(() {});
+//   }
 
-  List<Widget> _addItems() => [
-        if (widget.instance._state.filteringModes.isNotEmpty)
-          PopupMenuButton<FilteringMode>(
-            itemBuilder: (context) {
-              return widget.instance._state.filteringModes
-                  .map((e) => PopupMenuItem(value: e, child: Text(e.string)))
-                  .toList();
-            },
-            initialValue: widget.instance._currentFilterMode,
-            onSelected: (value) {
-              widget.instance._searchVirtual = false;
-              widget.instance._currentFilterMode = value;
-              widget.instance
-                  ._onChanged(widget.instance.searchTextController.text, true);
-            },
-            icon: Icon(
-              widget.instance._currentFilterMode.icon,
-            ),
-            padding: EdgeInsets.zero,
-          ),
-        if (widget.instance.addItems != null) ...widget.instance.addItems!
-      ];
+//   List<Widget> _addItems() => [
+//         if (widget.instance._state.filteringModes.isNotEmpty)
+//           PopupMenuButton<FilteringMode>(
+//             itemBuilder: (context) {
+//               return widget.instance._state.filteringModes
+//                   .map((e) => PopupMenuItem(value: e, child: Text(e.string)))
+//                   .toList();
+//             },
+//             initialValue: widget.instance._currentFilterMode,
+//             onSelected: (value) {
+//               widget.instance._searchVirtual = false;
+//               widget.instance._currentFilterMode = value;
+//               widget.instance
+//                   ._onChanged(widget.instance.searchTextController.text, true);
+//             },
+//             icon: Icon(
+//               widget.instance._currentFilterMode.icon,
+//             ),
+//             padding: EdgeInsets.zero,
+//           ),
+//         if (widget.instance.addItems != null) ...widget.instance.addItems!
+//       ];
 
-  String _makeHint(BuildContext context) =>
-      "${AppLocalizations.of(context)!.filterHint}${widget.hint != null ? ' ${widget.hint}' : ''}";
+//   String _makeHint(BuildContext context) =>
+//       "${AppLocalizations.of(context)!.filterHint}${widget.hint != null ? ' ${widget.hint}' : ''}";
 
-  Widget _autocompleteWidget() => AutocompleteWidget(
-        widget.instance.searchTextController,
-        (p0) {},
-        (p0) {},
-        () {
-          widget.instance._state.mainFocus.requestFocus();
-        },
-        widget.instance._localTagCompleteFunc,
-        widget.instance.searchFocus,
-        showSearch: !Platform.isAndroid,
-        roundBorders: false,
-        ignoreFocusNotifier: Platform.isAndroid,
-        searchCount: widget
-            .instance._state.gridKey.currentState?.mutationInterface?.cellCount,
-        addItems: _addItems(),
-        onChanged: () {
-          widget.instance
-              ._onChanged(widget.instance.searchTextController.text, true);
-        },
-        customHint: _makeHint(context),
-        noUnfocus: true,
-        scrollHack: _ScrollHack(),
-      );
+//   Widget _autocompleteWidget() => AutocompleteWidget(
+//         widget.instance.searchTextController,
+//         (p0) {},
+//         (p0) {},
+//         () {
+//           widget.instance._state.mainFocus.requestFocus();
+//         },
+//         widget.instance._localTagCompleteFunc,
+//         widget.instance.searchFocus,
+//         showSearch: !Platform.isAndroid,
+//         roundBorders: false,
+//         ignoreFocusNotifier: Platform.isAndroid,
+//         searchCount: GridMutationInterfaceProvider.of<T>(context).cellCount,
+//         addItems: _addItems(),
+//         onChanged: () {
+//           widget.instance
+//               ._onChanged(widget.instance.searchTextController.text, true);
+//         },
+//         customHint: _makeHint(context),
+//         noUnfocus: true,
+//         scrollHack: _ScrollHack(),
+//       );
 
-  @override
-  Widget build(BuildContext context) {
-    return switch (widget.instance._currentFilterMode) {
-      FilteringMode.tag || FilteringMode.tagReversed => _autocompleteWidget(),
-      FilteringMode() => TextField(
-          focusNode: widget.instance.searchFocus,
-          controller: widget.instance.searchTextController,
-          decoration: autocompleteBarDecoration(
-              context,
-              () => widget.instance
-                  ._reset(widget.instance._state.unsetFilteringModeOnReset),
-              _addItems(),
-              searchCount: widget.instance._state.gridKey.currentState
-                  ?.mutationInterface?.cellCount,
-              roundBorders: false,
-              ignoreFocusNotifier: Platform.isAndroid,
-              showSearch: !Platform.isAndroid,
-              hint: _makeHint(context)),
-          onChanged: (s) => widget.instance._onChanged(s, false),
-        ),
-    };
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return switch (widget.instance._currentFilterMode) {
+//       FilteringMode.tag || FilteringMode.tagReversed => _autocompleteWidget(),
+//       FilteringMode() => TextField(
+//           focusNode: widget.instance.searchFocus,
+//           controller: widget.instance.searchTextController,
+//           decoration: autocompleteBarDecoration(
+//               context,
+//               () => widget.instance
+//                   ._reset(widget.instance._state.unsetFilteringModeOnReset),
+//               _addItems(),
+//               searchCount:
+//                   GridMutationInterfaceProvider.of<T>(context).cellCount,
+//               roundBorders: false,
+//               ignoreFocusNotifier: Platform.isAndroid,
+//               showSearch: !Platform.isAndroid,
+//               hint: _makeHint(context)),
+//           onChanged: (s) => widget.instance._onChanged(s, false),
+//         ),
+//     };
+//   }
+// }

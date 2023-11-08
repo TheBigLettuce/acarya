@@ -181,12 +181,12 @@ class _TagsPageState extends State<TagsPage> with TickerProviderStateMixin {
             ),
             deleteTag: (t) {
               deleteAllController.forward(from: 0).then((value) {
-                widget.tagManager.latest.delete(t);
+                widget.tagManager.latest.delete(t.tag);
                 deleteAllController.reverse(from: 1);
               });
             },
-            onPress: (t) => widget.tagManager
-                .onTagPressed(context, t, widget.booru.booru, true)).animate(
+            onPress: (t) => widget.tagManager.onTagPressed(
+                context, t.tag, widget.booru.booru, true)).animate(
             controller: deleteAllController,
             effects: [
               FadeEffect(
@@ -214,7 +214,7 @@ class _TagsPageState extends State<TagsPage> with TickerProviderStateMixin {
                 ),
                 deleteTag: (t) {
                   deleteAllExcludedController.forward(from: 0).then((value) {
-                    widget.tagManager.excluded.delete(t);
+                    widget.tagManager.excluded.delete(t.tag);
                     deleteAllExcludedController.reverse(from: 1);
                   });
                 },

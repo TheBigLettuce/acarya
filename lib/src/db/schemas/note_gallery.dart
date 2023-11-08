@@ -19,15 +19,16 @@ import 'system_gallery_directory_file.dart';
 
 part 'note_gallery.g.dart';
 
+@immutable
 @collection
 class NoteGallery extends NoteBase implements Cell {
-  @override
-  Id? isarId;
+  // @override
+  // Id? isarId;
 
   @override
   Key uniqueKey() => ValueKey(id);
 
-  @Index(unique: true, replace: true)
+  @Id()
   final int id;
   final String originalUri;
 
@@ -48,77 +49,82 @@ class NoteGallery extends NoteBase implements Cell {
       required Color? backgroundColor,
       required Color? textColor,
       required String originalUri}) {
-    final n = Dbs.g.main.noteGallerys.getByIdSync(id);
+    // final n = Dbs.g.main.noteGallerys.getByIdSync(id);
 
-    Dbs.g.main.writeTxnSync(() => Dbs.g.main.noteGallerys.putByIdSync(
-        NoteGallery([...n?.text ?? [], ...text], DateTime.now(),
-            id: id,
-            backgroundColor: backgroundColor?.value,
-            textColor: textColor?.value,
-            originalUri: originalUri,
-            height: height,
-            width: width,
-            isGif: isGif,
-            isVideo: isVideo)));
+    // Dbs.g.main.writeTxnSync(() => Dbs.g.main.noteGallerys.putByIdSync(
+    //     NoteGallery([...n?.text ?? [], ...text], DateTime.now(),
+    //         id: id,
+    //         backgroundColor: backgroundColor?.value,
+    //         textColor: textColor?.value,
+    //         originalUri: originalUri,
+    //         height: height,
+    //         width: width,
+    //         isGif: isGif,
+    //         isVideo: isVideo)));
 
-    return n == null;
+    return false;
   }
 
   static bool hasNotes(int id) {
-    return Dbs.g.main.noteGallerys.getByIdSync(id) != null;
+    return false;
+    // return Dbs.g.main.noteGallerys.getByIdSync(id) != null;
   }
 
   static bool removeAll(int id) {
-    return Dbs.g.main
-        .writeTxnSync(() => Dbs.g.main.noteGallerys.deleteByIdSync(id));
+    // return Dbs.g.main
+    //     .writeTxnSync(() => Dbs.g.main.noteGallerys.deleteByIdSync(id));
+
+    return false;
   }
 
   static bool remove(int id, int indx) {
-    final n = Dbs.g.main.noteGallerys.getByIdSync(id);
-    if (n == null) {
-      return false;
-    }
+    // final n = Dbs.g.main.noteGallerys.getByIdSync(id);
+    // if (n == null) {
+    //   return false;
+    // }
 
-    final newText = n.text.toList()..removeAt(indx);
+    // final newText = n.text.toList()..removeAt(indx);
 
-    return Dbs.g.main.writeTxnSync(() {
-      if (newText.isEmpty) {
-        Dbs.g.main.noteGallerys.deleteByIdSync(id);
-        return true;
-      } else {
-        Dbs.g.main.noteGallerys.putByIdSync(NoteGallery(newText, n.time,
-            id: id,
-            backgroundColor: n.backgroundColor,
-            textColor: n.textColor,
-            originalUri: n.originalUri,
-            height: n.height,
-            width: n.width,
-            isGif: n.isGif,
-            isVideo: n.isVideo));
-        return false;
-      }
-    });
+    // return Dbs.g.main.writeTxnSync(() {
+    //   if (newText.isEmpty) {
+    //     Dbs.g.main.noteGallerys.deleteByIdSync(id);
+    //     return true;
+    //   } else {
+    //     Dbs.g.main.noteGallerys.putByIdSync(NoteGallery(newText, n.time,
+    //         id: id,
+    //         backgroundColor: n.backgroundColor,
+    //         textColor: n.textColor,
+    //         originalUri: n.originalUri,
+    //         height: n.height,
+    //         width: n.width,
+    //         isGif: n.isGif,
+    //         isVideo: n.isVideo));
+    //     return false;
+    //   }
+    // });
+
+    return false;
   }
 
   static void replace(int id, int tidx, String newText) {
-    final n = Dbs.g.main.noteGallerys.getByIdSync(id);
-    if (n == null) {
-      return;
-    }
+    // final n = Dbs.g.main.noteGallerys.getByIdSync(id);
+    // if (n == null) {
+    //   return;
+    // }
 
-    final t = n.text.toList();
-    t[tidx] = newText;
+    // final t = n.text.toList();
+    // t[tidx] = newText;
 
-    Dbs.g.main.writeTxnSync(() => Dbs.g.main.noteGallerys.putByIdSync(
-        NoteGallery(t, n.time,
-            id: n.id,
-            backgroundColor: n.backgroundColor,
-            textColor: n.textColor,
-            originalUri: n.originalUri,
-            height: n.height,
-            width: n.width,
-            isGif: n.isGif,
-            isVideo: n.isVideo)));
+    // Dbs.g.main.writeTxnSync(() => Dbs.g.main.noteGallerys.putByIdSync(
+    //     NoteGallery(t, n.time,
+    //         id: n.id,
+    //         backgroundColor: n.backgroundColor,
+    //         textColor: n.textColor,
+    //         originalUri: n.originalUri,
+    //         height: n.height,
+    //         width: n.width,
+    //         isGif: n.isGif,
+    //         isVideo: n.isVideo)));
   }
 
   static NoteInterface<NoteGallery> interfaceSelf(void Function() onDelete) {
@@ -145,7 +151,8 @@ class NoteGallery extends NoteBase implements Cell {
         }
       },
       load: (cell) {
-        return Dbs.g.main.noteGallerys.getByIdSync(cell.id);
+        return null;
+        // return Dbs.g.main.noteGallerys.getByIdSync(cell.id);
       },
       replace: (cell, indx, newText) {
         NoteGallery.replace(cell.id, indx, newText);
@@ -178,7 +185,8 @@ class NoteGallery extends NoteBase implements Cell {
         refresh(removeNote: indx);
       },
       load: (cell) {
-        return Dbs.g.main.noteGallerys.getByIdSync(cell.id);
+        return null;
+        // return Dbs.g.main.noteGallerys.getByIdSync(cell.id);
       },
       replace: (cell, indx, newText) {
         NoteGallery.replace(cell.id, indx, newText);
@@ -188,18 +196,21 @@ class NoteGallery extends NoteBase implements Cell {
   }
 
   static List<NoteGallery> load() {
-    return Dbs.g.main.noteGallerys.where().findAllSync();
+    // return Dbs.g.main.noteGallerys.where().findAllSync();
+
+    return const [];
   }
 
   List<String> currentText() {
-    if (isarId == null) {
-      return const [];
-    }
+    // if (isarId == null) {
+    //   return const [];
+    // }
 
-    return Dbs.g.main.noteGallerys.getByIdSync(id)!.text;
+    // return Dbs.g.main.noteGallerys.getByIdSync(id)!.text;
+    return const [];
   }
 
-  NoteGallery(super.text, super.time,
+  const NoteGallery(super.text, super.time,
       {required this.id,
       required this.originalUri,
       required this.height,

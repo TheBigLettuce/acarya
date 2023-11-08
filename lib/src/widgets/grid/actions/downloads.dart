@@ -7,12 +7,12 @@
 
 import 'package:gallery/src/db/schemas/download_file.dart';
 import 'package:gallery/src/db/schemas/settings.dart';
-import 'package:gallery/src/widgets/grid/callback_grid.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../../net/downloader.dart';
+import '../grid_action.dart';
 
 class DownloadsActions {
   static GridAction<DownloadFile> retryOrDelete(BuildContext context) {

@@ -87,75 +87,75 @@ class Filters {
     );
   }
 
-  static (Iterable<SystemGalleryDirectoryFile>, dynamic) same(
-      BuildContext context,
-      Iterable<SystemGalleryDirectoryFile> cells,
-      SameFilterAccumulator? accu,
-      GalleryFilesExtra extra,
-      {required bool end,
-      required SystemGalleryDirectoryFile Function(int i) getCell,
-      required void Function() performSearch}) {
-    accu ??= SameFilterAccumulator.empty();
+  // static (Iterable<SystemGalleryDirectoryFile>, dynamic) same(
+  //     BuildContext context,
+  //     Iterable<SystemGalleryDirectoryFile> cells,
+  //     SameFilterAccumulator? accu,
+  //     GalleryFilesExtra extra,
+  //     {required bool end,
+  //     required SystemGalleryDirectoryFile Function(int i) getCell,
+  //     required void Function() performSearch}) {
+  //   accu ??= SameFilterAccumulator.empty();
 
-    Iterable<(int isarId, int? h)> getDifferenceHash(
-        Iterable<SystemGalleryDirectoryFile> cells) sync* {
-      for (final cell in cells) {
-        yield (cell.isarId!, cell.getThumbnail()?.differenceHash);
-      }
-    }
+  //   Iterable<(int isarId, int? h)> getDifferenceHash(
+  //       Iterable<SystemGalleryDirectoryFile> cells) sync* {
+  //     for (final cell in cells) {
+  //       yield (cell.isarId!, cell.getThumbnail()?.differenceHash);
+  //     }
+  //   }
 
-    for (final (isarId, hash) in getDifferenceHash(cells)) {
-      if (hash == null) {
-        accu.skipped++;
-        continue;
-      } else if (hash == 0) {
-        continue;
-      }
+  //   for (final (isarId, hash) in getDifferenceHash(cells)) {
+  //     if (hash == null) {
+  //       accu.skipped++;
+  //       continue;
+  //     } else if (hash == 0) {
+  //       continue;
+  //     }
 
-      final prev = accu.data[hash] ?? {};
+  //     final prev = accu.data[hash] ?? {};
 
-      accu.data[hash] = {...prev, isarId};
-    }
+  //     accu.data[hash] = {...prev, isarId};
+  //   }
 
-    if (end) {
-      if (accu.skipped != 0) {
-        ScaffoldMessenger.of(context).removeCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(AppLocalizations.of(context)!.resultsIncomplete),
-          duration: const Duration(seconds: 20),
-          action: SnackBarAction(
-              label: AppLocalizations.of(context)!.loadMoreLabel,
-              onPressed: () {
-                extra.loadNextThumbnails(() {
-                  try {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        duration: 4.seconds,
-                        content: Text(AppLocalizations.of(context)!.loaded)));
-                    performSearch();
-                  } catch (_) {}
-                });
-              }),
-        ));
-      }
+  //   if (end) {
+  //     if (accu.skipped != 0) {
+  //       ScaffoldMessenger.of(context).removeCurrentSnackBar();
+  //       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+  //         content: Text(AppLocalizations.of(context)!.resultsIncomplete),
+  //         duration: const Duration(seconds: 20),
+  //         action: SnackBarAction(
+  //             label: AppLocalizations.of(context)!.loadMoreLabel,
+  //             onPressed: () {
+  //               // extra.loadNextThumbnails(() {
+  //               //   try {
+  //               //     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+  //               //         duration: 4.seconds,
+  //               //         content: Text(AppLocalizations.of(context)!.loaded)));
+  //               //     performSearch();
+  //               //   } catch (_) {}
+  //               // });
+  //             }),
+  //       ));
+  //     }
 
-      return (
-        () sync* {
-          for (final i in accu!.data.values) {
-            if (i.length > 1) {
-              for (final v in i) {
-                var file = getCell(v);
-                file.isarId = null;
-                yield file;
-              }
-            }
-          }
-        }(),
-        accu
-      );
-    }
+  //     return (
+  //       () sync* {
+  //         for (final i in accu!.data.values) {
+  //           if (i.length > 1) {
+  //             for (final v in i) {
+  //               var file = getCell(v);
+  //               file.isarId = null;
+  //               yield file;
+  //             }
+  //           }
+  //         }
+  //       }(),
+  //       accu
+  //     );
+  //   }
 
-    return ([], accu);
-  }
+  //   return ([], accu);
+  // }
 
   static int hammingDistance(int first, int second) => bitCount(first ^ second);
 

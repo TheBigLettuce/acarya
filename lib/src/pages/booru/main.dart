@@ -16,6 +16,10 @@ import 'package:gallery/src/db/schemas/grid_state_booru.dart';
 import 'package:gallery/src/db/schemas/note.dart';
 import 'package:gallery/src/db/schemas/tags.dart';
 import 'package:gallery/src/pages/booru/random.dart';
+import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
+import 'package:gallery/src/widgets/grid/grid_metadata.dart';
+import 'package:gallery/src/widgets/grid/layouts/grid/grid.dart';
+import 'package:gallery/src/widgets/notifiers/selection_glue.dart';
 import 'package:isar/isar.dart';
 import 'package:logging/logging.dart';
 
@@ -28,6 +32,7 @@ import '../../db/state_restoration.dart';
 import '../../db/schemas/download_file.dart';
 import '../../db/schemas/post.dart';
 import '../../db/schemas/settings.dart';
+import '../../widgets/grid/selection_glue.dart';
 import '../../widgets/search_bar/search_launch_grid_data.dart';
 import '../../widgets/skeletons/grid_skeleton_state.dart';
 import '../../widgets/notifiers/booru_api.dart';
@@ -37,7 +42,7 @@ import '../../widgets/search_bar/search_launch_grid.dart';
 
 import '../../widgets/skeletons/grid_skeleton.dart';
 
-import 'package:gallery/src/widgets/grid/callback_grid.dart';
+import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../widgets/time_label.dart';
@@ -154,7 +159,7 @@ class MainBooruGrid extends StatefulWidget {
             "Bookmarked", // TODO: change
           )));
           glue.close();
-          state.gridKey.currentState?.selection.selected.clear();
+          // state.gridKey.currentState?.selection.selected.clear();
           Navigator.pop(context);
         },
         icon: const Icon(Icons.bookmark_add));
@@ -181,7 +186,8 @@ class MainBooruGrid extends StatefulWidget {
 }
 
 class _MainBooruGridState extends State<MainBooruGrid>
-    with SearchLaunchGrid<Post> {
+// with SearchLaunchGrid<Post>
+{
   late final StreamSubscription<Settings?> settingsWatcher;
   late final StreamSubscription favoritesWatcher;
 
@@ -212,19 +218,19 @@ class _MainBooruGridState extends State<MainBooruGrid>
       });
     });
 
-    searchHook(SearchLaunchGridData(
-        mainFocus: state.mainFocus,
-        searchText: "",
-        addItems: null,
-        restorable: true));
+    // searchHook(SearchLaunchGridData(
+    //     mainFocus: state.mainFocus,
+    //     searchText: "",
+    //     addItems: null,
+    //     restorable: true));
 
     if (api.wouldBecomeStale &&
         state.settings.autoRefresh &&
         state.settings.autoRefreshMicroseconds != 0 &&
         restore.copy.time.isBefore(DateTime.now()
             .subtract(state.settings.autoRefreshMicroseconds.microseconds))) {
-      widget.mainGrid.writeTxnSync(() => widget.mainGrid.posts.clearSync());
-      restore.updateTime();
+      // widget.mainGrid.writeTxnSync(() => widget.mainGrid.posts.clearSync());
+      // restore.updateTime();
     }
 
     settingsWatcher = Settings.watch((s) {
@@ -236,7 +242,7 @@ class _MainBooruGridState extends State<MainBooruGrid>
     favoritesWatcher = Dbs.g.main.favoriteBoorus
         .watchLazy(fireImmediately: false)
         .listen((event) {
-      state.gridKey.currentState?.imageViewKey.currentState?.setState(() {});
+      // state.gridKey.currentState?.imageViewKey.currentState?.setState(() {});
       setState(() {});
     });
   }
@@ -246,197 +252,129 @@ class _MainBooruGridState extends State<MainBooruGrid>
     settingsWatcher.cancel();
     favoritesWatcher.cancel();
 
-    disposeSearch();
+    // disposeSearch();
 
     state.dispose();
 
     super.dispose();
   }
 
-  Future<int> _clearAndRefresh() async {
-    try {
-      restore.updateTime();
+  // Future<int> _clearAndRefresh() async {
+  //   try {
+  //     restore.updateTime();
 
-      final list = await api.page(0, "", tagManager.excluded);
-      restore.updateScrollPosition(0, page: api.currentPage);
-      currentSkipped = list.$2;
-      widget.mainGrid.writeTxnSync(() {
-        widget.mainGrid.posts.clearSync();
-        return widget.mainGrid.posts.putAllByFileUrlSync(list.$1);
-      });
+  //     final list = await api.page(0, "", tagManager.excluded);
+  //     restore.updateScrollPosition(0, page: api.currentPage);
+  //     currentSkipped = list.$2;
+  //     widget.mainGrid.writeTxnSync(() {
+  //       widget.mainGrid.posts.clearSync();
+  //       return widget.mainGrid.posts.putAllByFileUrlSync(list.$1);
+  //     });
 
-      reachedEnd = false;
-    } catch (e) {
-      rethrow;
-    }
+  //     reachedEnd = false;
+  //   } catch (e) {
+  //     rethrow;
+  //   }
 
-    return widget.mainGrid.posts.count();
-  }
+  //   return widget.mainGrid.posts.count();
+  // }
 
-  Future<void> _download(int i) async {
-    final p = widget.mainGrid.posts.getSync(i + 1);
-    if (p == null) {
-      return Future.value();
-    }
+  // Future<void> _download(int i) async {
+  //   final p = widget.mainGrid.posts.getSync(i + 1);
+  //   if (p == null) {
+  //     return Future.value();
+  //   }
 
-    PostTags.g.addTagsPost(p.filename(), p.tags, true);
+  //   PostTags.g.addTagsPost(p.filename(), p.tags, true);
 
-    return Downloader.g.add(
-        DownloadFile.d(
-            url: p.fileDownloadUrl(),
-            site: api.booru.url,
-            name: p.filename(),
-            thumbUrl: p.previewUrl),
-        state.settings);
-  }
+  //   return Downloader.g.add(
+  //       DownloadFile.d(
+  //           url: p.fileDownloadUrl(),
+  //           site: api.booru.url,
+  //           name: p.filename(),
+  //           thumbUrl: p.previewUrl),
+  //       state.settings);
+  // }
 
-  Future<int> _addLast() async {
-    if (reachedEnd) {
-      return widget.mainGrid.posts.countSync();
-    }
-    final p = widget.mainGrid.posts.getSync(widget.mainGrid.posts.countSync());
-    if (p == null) {
-      return widget.mainGrid.posts.countSync();
-    }
+  // Future<int> _addLast() async {
+  //   if (reachedEnd) {
+  //     return widget.mainGrid.posts.countSync();
+  //   }
+  //   final p = widget.mainGrid.posts.getSync(widget.mainGrid.posts.countSync());
+  //   if (p == null) {
+  //     return widget.mainGrid.posts.countSync();
+  //   }
 
-    try {
-      final list = await api.fromPost(
-          currentSkipped != null && currentSkipped! < p.id
-              ? currentSkipped!
-              : p.id,
-          "",
-          tagManager.excluded);
-      if (list.$1.isEmpty && currentSkipped == null) {
-        reachedEnd = true;
-      } else {
-        currentSkipped = list.$2;
-        final oldCount = widget.mainGrid.posts.countSync();
-        widget.mainGrid.writeTxnSync(
-            () => widget.mainGrid.posts.putAllByFileUrlSync(list.$1));
-        restore.updateTime();
-        if (widget.mainGrid.posts.countSync() - oldCount < 3) {
-          return await _addLast();
-        }
-      }
-    } catch (e, trace) {
-      log("_addLast on grid ${state.settings.selectedBooru.string}",
-          level: Level.WARNING.value, error: e, stackTrace: trace);
-    }
+  //   try {
+  //     final list = await api.fromPost(
+  //         currentSkipped != null && currentSkipped! < p.id
+  //             ? currentSkipped!
+  //             : p.id,
+  //         "",
+  //         tagManager.excluded);
+  //     if (list.$1.isEmpty && currentSkipped == null) {
+  //       reachedEnd = true;
+  //     } else {
+  //       currentSkipped = list.$2;
+  //       final oldCount = widget.mainGrid.posts.countSync();
+  //       widget.mainGrid.writeTxnSync(
+  //           () => widget.mainGrid.posts.putAllByFileUrlSync(list.$1));
+  //       restore.updateTime();
+  //       if (widget.mainGrid.posts.countSync() - oldCount < 3) {
+  //         return await _addLast();
+  //       }
+  //     }
+  //   } catch (e, trace) {
+  //     log("_addLast on grid ${state.settings.selectedBooru.string}",
+  //         level: Level.WARNING.value, error: e, stackTrace: trace);
+  //   }
 
-    return widget.mainGrid.posts.count();
-  }
+  //   return widget.mainGrid.posts.count();
+  // }
 
   @override
   Widget build(BuildContext context) {
     return BooruAPINotifier(
-        api: api,
+      api: api,
+      child: GlueHolder(
         child: TagManagerNotifier(
             tagManager: tagManager,
             child: GridSkeleton(
               state,
-              (context) => CallbackGrid<Post>(
-                key: state.gridKey,
-                systemNavigationInsets: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).systemGestureInsets.bottom +
-                        (Scaffold.of(context).widget.bottomNavigationBar !=
-                                    null &&
-                                !widget.glue.keyboardVisible()
-                            ? 80
-                            : 0)),
-                selectionGlue: widget.glue,
+              CallbackGridShell(
+                keybinds: const {},
                 registerNotifiers: (child) => TagManagerNotifier(
                     tagManager: tagManager,
                     child: BooruAPINotifier(api: api, child: child)),
-                inlineMenuButtonItems: true,
-                addFabPadding:
-                    Scaffold.of(context).widget.bottomNavigationBar == null,
-                menuButtonItems: [
-                  const BookmarkButton(),
-                  MainBooruGrid.gridButton(state.settings)
-                ],
-                addIconsImage: (post) => [
-                  BooruGridActions.favorites(context, post),
-                  BooruGridActions.download(context, api)
-                ],
-                onExitImageView: () => restore.removeScrollTagsSelectedPost(),
-                description: GridDescription([
-                  BooruGridActions.download(context, api),
-                  BooruGridActions.favorites(context, null,
-                      showDeleteSnackbar: true)
-                ],
-                    keybindsDescription:
-                        AppLocalizations.of(context)!.booruGridPageName,
-                    layout: state.settings.booru.listView
-                        ? const ListLayout()
-                        : GridLayout(state.settings.booru.columns,
-                            state.settings.booru.aspectRatio)),
-                hasReachedEnd: () => reachedEnd,
                 mainFocus: state.mainFocus,
-                scaffoldKey: state.scaffoldKey,
-                noteInterface: NoteBooru.interface(setState),
-                onError: (error) {
-                  return OutlinedButton(
-                    onPressed: () {
-                      launchUrl(Uri.https(api.booru.url),
-                          mode: LaunchMode.externalApplication);
-                    },
-                    child: Text(AppLocalizations.of(context)!.openInBrowser),
-                  );
-                },
-                getCell: (i) => widget.mainGrid.posts.getSync(i + 1)!,
-                loadNext: _addLast,
-                refresh: _clearAndRefresh,
-                hideAlias: true,
-                download: _download,
-                updateScrollPosition: (pos, {infoPos, selectedCell}) =>
-                    restore.updateScrollPosition(pos,
-                        infoPos: infoPos,
-                        selectedCell: selectedCell,
-                        page: api.currentPage),
-                initalScrollPosition: restore.copy.scrollPositionGrid,
-                initalCellCount: widget.mainGrid.posts.countSync(),
-                beforeImageViewRestore: () {
-                  final last = restore.last();
-                  if (last != null) {
-                    WidgetsBinding.instance.scheduleFrameCallback((timeStamp) {
-                      Navigator.push(context, MaterialPageRoute(
-                        builder: (context) {
-                          return SecondaryBooruGrid(
-                            restore: last,
-                            noRestoreOnBack: false,
-                            api: BooruAPI.fromEnum(api.booru,
-                                page: last.copy.page),
-                            tagManager: tagManager,
-                            instance: DbsOpen.secondaryGridName(last.copy.name),
-                          );
-                        },
-                      ));
-                    });
-                  }
-                },
-                searchWidget: SearchAndFocus(
-                    searchWidget(context, hint: api.booru.name), searchFocus,
-                    onPressed: () {
-                  if (currentlyHighlightedTag != "") {
-                    state.mainFocus.unfocus();
-                    tagManager.onTagPressed(
-                        context,
-                        Tag.string(tag: currentlyHighlightedTag),
-                        api.booru,
-                        true);
-                  }
-                }),
-                pageViewScrollingOffset: restore.copy.scrollPositionTags,
-                initalCell: restore.copy.selectedPost,
+                child: GridLayout<Post>(
+                  aspectRatio: state.settings.booru.aspectRatio,
+                  columns: state.settings.booru.columns,
+                  download: null,
+                  loader: DummyBackgroundLoader(),
+                  metadata: GridMetadata(
+                    hideAlias: true,
+                    appBarActions: [
+                      const BookmarkButton(),
+                      MainBooruGrid.gridButton(state.settings)
+                    ],
+                    gridActions: [
+                      BooruGridActions.download(context, api),
+                      BooruGridActions.favorites(context, null,
+                          showDeleteSnackbar: true)
+                    ],
+                  ),
+                ),
               ),
               overrideBooru: api.booru,
-              canPop: !widget.glue.isOpen() &&
-                  state.gridKey.currentState?.showSearchBar != true,
+              canPop: true,
+              // !widget.glue.isOpen() &&
+              //     state.gridKey.currentState?.showSearchBar != true,
               overrideOnPop: (pop, hideAppBar) {
-                if (widget.glue.isOpen()) {
-                  state.gridKey.currentState?.selection.reset();
-                  return;
-                }
+                // if (widget.glue.isOpen()) {
+                //   state.gridKey.currentState?.selection.reset();
+                //   return;
+                // }
 
                 if (hideAppBar()) {
                   setState(() {});
@@ -445,7 +383,119 @@ class _MainBooruGridState extends State<MainBooruGrid>
 
                 widget.procPop(pop);
               },
-            )));
+            )),
+      ),
+    );
+  }
+}
+
+// systemNavigationInsets: EdgeInsets.only(
+//     bottom: MediaQuery.of(context).systemGestureInsets.bottom +
+//         (Scaffold.of(context).widget.bottomNavigationBar !=
+//                     null &&
+//                 !widget.glue.keyboardVisible()
+//             ? 80
+//             : 0)),
+// selectionGlue: widget.glue,
+
+// inlineMenuButtonItems: true,
+// addFabPadding:
+//     Scaffold.of(context).widget.bottomNavigationBar == null,
+// menuButtonItems: [
+//   const BookmarkButton(),
+//   MainBooruGrid.gridButton(state.settings)
+// ],
+// addIconsImage: (post) => [
+//   BooruGridActions.favorites(context, post),
+//   BooruGridActions.download(context, api)
+// ],
+// onExitImageView: () => restore.removeScrollTagsSelectedPost(),
+// description: GridDescription([
+//   BooruGridActions.download(context, api),
+//   BooruGridActions.favorites(context, null,
+//       showDeleteSnackbar: true)
+// ],
+//     keybindsDescription:
+//         AppLocalizations.of(context)!.booruGridPageName,
+//     layout: state.settings.booru.listView
+//         ? const ListLayout()
+//         : GridLayout(state.settings.booru.columns,
+//             state.settings.booru.aspectRatio)),
+// hasReachedEnd: () => reachedEnd,
+
+// scaffoldKey: state.scaffoldKey,
+// noteInterface: NoteBooru.interface(setState),
+// onError: (error) {
+//   return OutlinedButton(
+//     onPressed: () {
+//       launchUrl(Uri.https(api.booru.url),
+//           mode: LaunchMode.externalApplication);
+//     },
+//     child: Text(AppLocalizations.of(context)!.openInBrowser),
+//   );
+// },
+// getCell: (i) => widget.mainGrid.posts.getSync(i + 1)!,
+// loadNext: _addLast,
+// refresh: _clearAndRefresh,
+// hideAlias: true,
+// download: _download,
+// updateScrollPosition: (pos, {infoPos, selectedCell}) =>
+//     restore.updateScrollPosition(pos,
+//         infoPos: infoPos,
+//         selectedCell: selectedCell,
+//         page: api.currentPage),
+// initalScrollPosition: restore.copy.scrollPositionGrid,
+// initalCellCount: widget.mainGrid.posts.countSync(),
+// beforeImageViewRestore: () {
+//   final last = restore.last();
+//   if (last != null) {
+//     WidgetsBinding.instance.scheduleFrameCallback((timeStamp) {
+//       Navigator.push(context, MaterialPageRoute(
+//         builder: (context) {
+//           return SecondaryBooruGrid(
+//             restore: last,
+//             noRestoreOnBack: false,
+//             api: BooruAPI.fromEnum(api.booru,
+//                 page: last.copy.page),
+//             tagManager: tagManager,
+//             instance: DbsOpen.secondaryGridName(last.copy.name),
+//           );
+//         },
+//       ));
+//     });
+//   }
+// },
+// searchWidget: SearchAndFocus(
+//     searchWidget(context, hint: api.booru.name), searchFocus,
+//     onPressed: () {
+//   if (currentlyHighlightedTag != "") {
+//     state.mainFocus.unfocus();
+//     tagManager.onTagPressed(
+//         context,
+//         Tag.string(tag: currentlyHighlightedTag),
+//         api.booru,
+//         true);
+//   }
+// }),
+// pageViewScrollingOffset: restore.copy.scrollPositionTags,
+// initalCell: restore.copy.selectedPost,
+
+class GlueHolder extends StatefulWidget {
+  final Widget child;
+
+  const GlueHolder({super.key, required this.child});
+
+  @override
+  State<GlueHolder> createState() => _GlueHolderState();
+}
+
+class _GlueHolderState extends State<GlueHolder> {
+  @override
+  Widget build(BuildContext context) {
+    return SelectionGlueNotifier(
+      glue: SelectionGlue.empty(context),
+      child: widget.child,
+    );
   }
 }
 
@@ -464,7 +514,7 @@ class _BookmarkButtonState extends State<BookmarkButton> {
           final timeNow = DateTime.now();
           final list = <PopupMenuEntry>[];
           final l =
-              Dbs.g.main.gridStateBoorus.where().sortByTimeDesc().findAllSync();
+              Dbs.g.main.gridStateBoorus.where().sortByTimeDesc().findAll();
 
           if (l.isEmpty) {
             ScaffoldMessenger.of(context)
@@ -518,18 +568,17 @@ class _BookmarkButtonState extends State<BookmarkButton> {
                               actions: [
                                 TextButton(
                                     onPressed: () {
-                                      DbsOpen.secondaryGridName(e.name)
-                                          .close(deleteFromDisk: true)
-                                          .then((value) {
-                                        if (value) {
-                                          Dbs.g.main.writeTxnSync(() => Dbs
-                                              .g.main.gridStateBoorus
-                                              .deleteByNameSync(e.name));
-                                        }
+                                      // .then((value) {
+                                      if (DbsOpen.secondaryGridName(e.name)
+                                          .close(deleteFromDisk: true)) {
+                                        Dbs.g.main.write((i) =>
+                                            i.gridStateBoorus.delete(e.name));
+                                      }
 
-                                        Navigator.pop(context);
-                                        Navigator.pop(context);
-                                      });
+                                      Navigator.pop(context);
+                                      Navigator.pop(context);
+                                      // }
+                                      // );
                                     },
                                     child: Text(
                                         AppLocalizations.of(context)!.yes)),
@@ -545,17 +594,18 @@ class _BookmarkButtonState extends State<BookmarkButton> {
                   onTap: () {
                     Navigator.pop(context);
 
-                    Dbs.g.main.writeTxnSync(() => Dbs.g.main.gridStateBoorus
-                        .putByNameSync(e.copy(false, time: DateTime.now())));
+                    Dbs.g.main.write((i) => i.gridStateBoorus
+                        .put(e.copy(false, time: DateTime.now())));
 
                     Navigator.push(context, MaterialPageRoute(
                       builder: (context) {
-                        return RandomBooruGrid(
-                          api: BooruAPI.fromEnum(e.booru, page: e.page),
-                          tagManager: TagManager.fromEnum(e.booru, true),
-                          tags: e.tags,
-                          state: e,
-                        );
+                        return Placeholder();
+                        // RandomBooruGrid(
+                        //   api: BooruAPI.fromEnum(e.booru, page: e.page),
+                        //   tagManager: TagManager.fromEnum(e.booru, true),
+                        //   tags: e.tags,
+                        //   state: e,
+                        // );
                       },
                     ));
                   },

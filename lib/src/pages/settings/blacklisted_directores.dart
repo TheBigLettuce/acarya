@@ -11,8 +11,13 @@ import 'package:flutter/material.dart';
 import 'package:gallery/src/db/initalize_db.dart';
 import 'package:gallery/src/plugs/gallery.dart';
 import 'package:gallery/src/db/schemas/blacklisted_directory.dart';
-import 'package:gallery/src/widgets/grid/callback_grid.dart';
+import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
+import 'package:gallery/src/widgets/grid/grid_action.dart';
+import 'package:gallery/src/widgets/grid/grid_metadata.dart';
+import 'package:gallery/src/widgets/grid/layouts/list/list.dart';
+import 'package:gallery/src/widgets/grid/search_and_focus.dart';
 import 'package:gallery/src/widgets/search_bar/search_filter_grid.dart';
+import 'package:gallery/src/widgets/skeletons/grid_skeleton_state.dart';
 import 'package:isar/isar.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -29,31 +34,30 @@ class BlacklistedDirectories extends StatefulWidget {
 }
 
 class _BlacklistedDirectoriesState extends State<BlacklistedDirectories>
-    with SearchFilterGrid<BlacklistedDirectory> {
+// with SearchFilterGrid<BlacklistedDirectory>
+{
   late final StreamSubscription blacklistedWatcher;
-  final loader = LinearIsarLoader<BlacklistedDirectory>(
-      BlacklistedDirectorySchema,
-      Dbs.g.blacklisted,
-      (offset, limit, s, sort, mode) => Dbs.g.blacklisted.blacklistedDirectorys
-          .filter()
-          .nameContains(s, caseSensitive: false)
-          .offset(offset)
-          .limit(limit)
-          .findAllSync());
-  late final state = GridSkeletonStateFilter<BlacklistedDirectory>(
-    filter: loader.filter,
-    transform: (cell, sort) => cell,
-  );
+  // final loader = LinearIsarLoader<BlacklistedDirectory>(
+  //     BlacklistedDirectorySchema,
+  //     Dbs.g.blacklisted,
+  //     (offset, limit, s, sort, mode) => Dbs.g.blacklisted.blacklistedDirectorys
+  //         .where()
+  //         .nameContains(s, caseSensitive: false)
+  //         .findAll(offset: offset, limit: limit));
+  late final state = GridSkeletonState<BlacklistedDirectory>(
+      // filter: loader.filter,
+      // transform: (cell, sort) => cell,
+      );
 
   @override
   void initState() {
     super.initState();
-    searchHook(state);
+    // searchHook(state);
 
     blacklistedWatcher = Dbs.g.blacklisted.blacklistedDirectorys
         .watchLazy(fireImmediately: true)
         .listen((event) {
-      performSearch(searchTextController.text);
+      // performSearch(searchTextController.text);
       setState(() {});
     });
   }
@@ -62,7 +66,7 @@ class _BlacklistedDirectoriesState extends State<BlacklistedDirectories>
   void dispose() {
     blacklistedWatcher.cancel();
     state.dispose();
-    disposeSearch();
+    // disposeSearch();
 
     super.dispose();
   }
@@ -73,63 +77,67 @@ class _BlacklistedDirectoriesState extends State<BlacklistedDirectories>
         scaffoldKey: state.scaffoldKey,
         f: (glue) => GridSkeleton(
               state,
-              (context) => CallbackGrid<BlacklistedDirectory>(
-                  key: state.gridKey,
-                  getCell: loader.getCell,
-                  initalScrollPosition: 0,
-                  scaffoldKey: state.scaffoldKey,
-                  systemNavigationInsets:
-                      MediaQuery.systemGestureInsetsOf(context),
-                  hasReachedEnd: () => true,
-                  onBack: () => Navigator.pop(context),
-                  immutable: false,
-                  addFabPadding: true,
-                  selectionGlue: glue,
-                  searchWidget: SearchAndFocus(
-                      searchWidget(
-                        context,
-                        hint: AppLocalizations.of(context)!
-                            .blacklistedDirectoriesPageName
-                            .toLowerCase(),
-                      ),
-                      searchFocus),
-                  mainFocus: state.mainFocus,
-                  unpressable: true,
-                  showCount: true,
-                  menuButtonItems: [
-                    IconButton(
-                        onPressed: () {
-                          Dbs.g.blacklisted.writeTxnSync(() => Dbs
-                              .g.blacklisted.blacklistedDirectorys
-                              .clearSync());
-                          chooseGalleryPlug().notify(null);
-                        },
-                        icon: const Icon(Icons.delete))
-                  ],
-                  refresh: () => Future.value(loader.count()),
-                  description: GridDescription([
+              CallbackGridShell(
+                // key: state.gridKey,
+                // scaffoldKey: state.scaffoldKey,
+                // hasReachedEnd: () => true,
+                // onBack: () => Navigator.pop(context),
+                // addFabPadding: true,
+                // selectionGlue: glue,
+                mainFocus: state.mainFocus,
+                // unpressable: true,
+                // showCount: true,
+
+                // refresh: () => Future.value(loader.count()),
+
+                // keybindsDescription: AppLocalizations.of(context)!
+                // .blacklistedDirectoriesPageName,
+
+                keybinds: const {},
+                child: ListLayout<BlacklistedDirectory>(
+                    // getOriginalCell: loader.getCell,
+                    metadata: GridMetadata(
+                  gridActions: [
                     GridAction(
                       Icons.restore_page,
                       (selected) {
-                        Dbs.g.blacklisted.writeTxnSync(() {
-                          return Dbs.g.blacklisted.blacklistedDirectorys
-                              .deleteAllByBucketIdSync(
-                                  selected.map((e) => e.bucketId).toList());
+                        Dbs.g.blacklisted.write((i) {
+                          return i.blacklistedDirectorys.deleteAll(
+                              selected.map((e) => e.bucketId).toList());
                         });
                       },
                       true,
                     )
                   ],
-                      keybindsDescription: AppLocalizations.of(context)!
-                          .blacklistedDirectoriesPageName,
-                      layout: const ListLayout())),
-              canPop: !glue.isOpen() &&
-                  state.gridKey.currentState?.showSearchBar != true,
+                  // search: SearchAndFocus(
+                  //     searchWidget(
+                  //       context,
+                  //       hint: AppLocalizations.of(context)!
+                  //           .blacklistedDirectoriesPageName
+                  //           .toLowerCase(),
+                  //     ),
+                  //     searchFocus)
+                  // ,
+                  appBarActions: [
+                    IconButton(
+                        onPressed: () {
+                          Dbs.g.blacklisted
+                              .write((i) => i.blacklistedDirectorys.clear());
+                          chooseGalleryPlug().notify(null);
+                        },
+                        icon: const Icon(Icons.delete))
+                  ],
+                )),
+              ),
+              canPop: true,
+              // !glue.isOpen() &&
+              // state.gridKey.currentState?.showSearchBar != true,
+
               overrideOnPop: (pop, hideAppBar) {
-                if (glue.isOpen()) {
-                  state.gridKey.currentState?.selection.reset();
-                  return;
-                }
+                // if (glue.isOpen()) {
+                //   state.gridKey.currentState?.selection.reset();
+                //   return;
+                // }
 
                 if (hideAppBar()) {
                   setState(() {});

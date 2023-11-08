@@ -8,7 +8,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:gallery/src/db/schemas/note.dart';
 import 'package:gallery/src/widgets/grid/actions/favorites.dart';
 import 'package:gallery/src/net/downloader.dart';
 import 'package:gallery/src/interfaces/booru.dart';
@@ -17,8 +16,12 @@ import 'package:gallery/src/db/initalize_db.dart';
 import 'package:gallery/src/pages/booru/main.dart';
 import 'package:gallery/src/db/schemas/favorite_booru.dart';
 import 'package:gallery/src/db/schemas/local_tag_dictionary.dart';
-import 'package:gallery/src/widgets/grid/callback_grid.dart';
+import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
+import 'package:gallery/src/widgets/grid/grid_metadata.dart';
+import 'package:gallery/src/widgets/grid/layouts/grid/grid.dart';
+import 'package:gallery/src/widgets/grid/segments.dart';
 import 'package:gallery/src/widgets/search_bar/search_filter_grid.dart';
+import 'package:gallery/src/widgets/skeletons/grid_skeleton_state.dart';
 import 'package:isar/isar.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -29,6 +32,9 @@ import '../widgets/grid/actions/booru_grid.dart';
 import '../db/post_tags.dart';
 import '../db/schemas/download_file.dart';
 import '../db/schemas/settings.dart';
+import '../widgets/grid/grid_action.dart';
+import '../widgets/grid/search_and_focus.dart';
+import '../widgets/grid/selection_glue.dart';
 import '../widgets/skeletons/grid_skeleton_state_filter.dart';
 import '../widgets/skeletons/grid_skeleton.dart';
 
@@ -43,7 +49,8 @@ class FavoritesPage extends StatefulWidget {
 }
 
 class _FavoritesPageState extends State<FavoritesPage>
-    with SearchFilterGrid<FavoriteBooru> {
+// with SearchFilterGrid<FavoriteBooru>
+{
   final booru = BooruAPI.fromSettings();
   late final StreamSubscription<Settings?> settingsWatcher;
   late final StreamSubscription favoritesWatcher;
@@ -52,178 +59,178 @@ class _FavoritesPageState extends State<FavoritesPage>
 
   bool segmented = false;
 
-  late final loader = LinearIsarLoader<FavoriteBooru>(
-      FavoriteBooruSchema, Dbs.g.main, (offset, limit, s, sort, mode) {
-    if (mode == FilteringMode.group) {
-      if (s.isEmpty) {
-        return Dbs.g.main.favoriteBoorus
-            .where()
-            .sortByGroupDesc()
-            .thenByCreatedAtDesc()
-            .offset(offset)
-            .limit(limit)
-            .findAllSync();
-      }
+  // late final loader = LinearIsarLoader<FavoriteBooru>(
+  //     FavoriteBooruSchema, Dbs.g.main, (offset, limit, s, sort, mode) {
+  //   if (mode == FilteringMode.group) {
+  //     if (s.isEmpty) {
+  //       return Dbs.g.main.favoriteBoorus
+  //           .where()
+  //           .sortByGroupDesc()
+  //           .thenByCreatedAtDesc()
+  //           .offset(offset)
+  //           .limit(limit)
+  //           .findAllSync();
+  //     }
 
-      return Dbs.g.main.favoriteBoorus
-          .filter()
-          .groupContains(s)
-          .sortByGroupDesc()
-          .thenByCreatedAtDesc()
-          .offset(offset)
-          .limit(limit)
-          .findAllSync();
-    } else if (mode == FilteringMode.same) {
-      return Dbs.g.main.favoriteBoorus
-          .filter()
-          .allOf(s.split(" "), (q, element) => q.tagsElementContains(element))
-          .sortByMd5()
-          .thenByCreatedAtDesc()
-          .offset(offset)
-          .limit(limit)
-          .findAllSync();
-    }
+  //     return Dbs.g.main.favoriteBoorus
+  //         .filter()
+  //         .groupContains(s)
+  //         .sortByGroupDesc()
+  //         .thenByCreatedAtDesc()
+  //         .offset(offset)
+  //         .limit(limit)
+  //         .findAllSync();
+  //   } else if (mode == FilteringMode.same) {
+  //     return Dbs.g.main.favoriteBoorus
+  //         .filter()
+  //         .allOf(s.split(" "), (q, element) => q.tagsElementContains(element))
+  //         .sortByMd5()
+  //         .thenByCreatedAtDesc()
+  //         .offset(offset)
+  //         .limit(limit)
+  //         .findAllSync();
+  //   }
 
-    return Dbs.g.main.favoriteBoorus
-        .filter()
-        .allOf(s.split(" "), (q, element) => q.tagsElementContains(element))
-        .sortByCreatedAtDesc()
-        .offset(offset)
-        .limit(limit)
-        .findAllSync();
-  })
-    ..filter.passFilter = (cells, data, end) {
-      final filterMode = currentFilteringMode();
+  //   return Dbs.g.main.favoriteBoorus
+  //       .filter()
+  //       .allOf(s.split(" "), (q, element) => q.tagsElementContains(element))
+  //       .sortByCreatedAtDesc()
+  //       .offset(offset)
+  //       .limit(limit)
+  //       .findAllSync();
+  // })
+  //   ..filter.passFilter = (cells, data, end) {
+  //     final filterMode = currentFilteringMode();
 
-      if (filterMode == FilteringMode.group) {
-        segments = segments ?? {};
+  //     if (filterMode == FilteringMode.group) {
+  //       segments = segments ?? {};
 
-        for (final e in cells) {
-          segments![e.group ?? "Ungrouped"] =
-              (segments![e.group ?? "Ungrouped"] ?? 0) + 1;
-        }
-      } else {
-        segments = null;
-      }
+  //       for (final e in cells) {
+  //         segments![e.group ?? "Ungrouped"] =
+  //             (segments![e.group ?? "Ungrouped"] ?? 0) + 1;
+  //       }
+  //     } else {
+  //       segments = null;
+  //     }
 
-      return switch (filterMode) {
-        FilteringMode.same => _same(cells, data, end),
-        FilteringMode.ungrouped => (
-            cells.where(
-                (element) => element.group == null || element.group!.isEmpty),
-            data
-          ),
-        FilteringMode.gif => (
-            cells.where((element) => element.fileDisplay() is NetGif),
-            data
-          ),
-        FilteringMode.video => (
-            cells.where((element) => element.fileDisplay() is NetVideo),
-            data
-          ),
-        FilteringMode() => (cells, data)
-      };
-    };
+  //     return switch (filterMode) {
+  //       FilteringMode.same => _same(cells, data, end),
+  //       FilteringMode.ungrouped => (
+  //           cells.where(
+  //               (element) => element.group == null || element.group!.isEmpty),
+  //           data
+  //         ),
+  //       FilteringMode.gif => (
+  //           cells.where((element) => element.fileDisplay() is NetGif),
+  //           data
+  //         ),
+  //       FilteringMode.video => (
+  //           cells.where((element) => element.fileDisplay() is NetVideo),
+  //           data
+  //         ),
+  //       FilteringMode() => (cells, data)
+  //     };
+  //   };
 
-  (Iterable<FavoriteBooru>, dynamic) _same(
-      Iterable<FavoriteBooru> cells, Map<String, Set<String>>? data, bool end) {
-    data = data ?? {};
+  // (Iterable<FavoriteBooru>, dynamic) _same(
+  //     Iterable<FavoriteBooru> cells, Map<String, Set<String>>? data, bool end) {
+  //   data = data ?? {};
 
-    FavoriteBooru? prevCell;
-    for (final e in cells) {
-      if (prevCell != null) {
-        if (prevCell.md5 == e.md5) {
-          final prev = data[e.md5] ?? {prevCell.fileUrl};
+  //   FavoriteBooru? prevCell;
+  //   for (final e in cells) {
+  //     if (prevCell != null) {
+  //       if (prevCell.md5 == e.md5) {
+  //         final prev = data[e.md5] ?? {prevCell.fileUrl};
 
-          data[e.md5] = {...prev, e.fileUrl};
-        }
-      }
+  //         data[e.md5] = {...prev, e.fileUrl};
+  //       }
+  //     }
 
-      prevCell = e;
-    }
+  //     prevCell = e;
+  //   }
 
-    if (end) {
-      return (
-        () sync* {
-          for (final ids in data!.values) {
-            for (final i in ids) {
-              final f = loader.instance.favoriteBoorus.getByFileUrlSync(i)!;
-              f.isarId = null;
-              yield f;
-            }
-          }
-        }(),
-        null
-      );
-    }
+  //   if (end) {
+  //     return (
+  //       () sync* {
+  //         for (final ids in data!.values) {
+  //           for (final i in ids) {
+  //             final f = loader.instance.favoriteBoorus.getByFileUrlSync(i)!;
+  //             f.isarId = null;
+  //             yield f;
+  //           }
+  //         }
+  //       }(),
+  //       null
+  //     );
+  //   }
 
-    return ([], data);
-  }
+  //   return ([], data);
+  // }
 
-  late final state = GridSkeletonStateFilter<FavoriteBooru>(
-    filter: loader.filter,
-    unsetFilteringModeOnReset: false,
-    hook: (selected) {
-      segments = null;
-      if (selected == FilteringMode.group) {
-        segmented = true;
-        setState(() {});
-      } else {
-        segmented = false;
-        setState(() {});
-      }
+  // late final state = GridSkeletonStateFilter<FavoriteBooru>(
+  //   filter: loader.filter,
+  //   unsetFilteringModeOnReset: false,
+  //   hook: (selected) {
+  //     segments = null;
+  //     if (selected == FilteringMode.group) {
+  //       segmented = true;
+  //       setState(() {});
+  //     } else {
+  //       segmented = false;
+  //       setState(() {});
+  //     }
 
-      Settings.fromDb().copy(favoritesPageMode: selected).save();
+  //     Settings.fromDb().copy(favoritesPageMode: selected).save();
 
-      return SortingMode.none;
-    },
-    defaultMode: FilteringMode.tag,
-    filteringModes: {
-      FilteringMode.tag,
-      FilteringMode.group,
-      FilteringMode.ungrouped,
-      FilteringMode.gif,
-      FilteringMode.video,
-      FilteringMode.same,
-    },
-    transform: (FavoriteBooru cell, SortingMode sort) {
-      return cell;
-    },
-  );
+  //     return SortingMode.none;
+  //   },
+  //   defaultMode: FilteringMode.tag,
+  //   filteringModes: {
+  //     FilteringMode.tag,
+  //     FilteringMode.group,
+  //     FilteringMode.ungrouped,
+  //     FilteringMode.gif,
+  //     FilteringMode.video,
+  //     FilteringMode.same,
+  //   },
+  //   transform: (FavoriteBooru cell, SortingMode sort) {
+  //     return cell;
+  //   },
+  // );
 
-  Future<void> _download(int i) async {
-    final p = loader.getCell(i);
+  final state = GridSkeletonState<FavoriteBooru>();
 
-    PostTags.g.addTagsPost(p.filename(), p.tags, true);
+  void _download(FavoriteBooru cell) {
+    PostTags.g.addTagsPost(cell.filename(), cell.tags, true);
 
-    return Downloader.g.add(
+    Downloader.g.add(
         DownloadFile.d(
-            url: p.fileDownloadUrl(),
+            url: cell.fileDownloadUrl(),
             site: booru.booru.url,
-            name: p.filename(),
-            thumbUrl: p.previewUrl),
+            name: cell.filename(),
+            thumbUrl: cell.previewUrl),
         state.settings);
   }
 
   @override
   void initState() {
     super.initState();
-    searchHook(state);
+    // searchHook(state);
 
     WidgetsBinding.instance.scheduleFrameCallback((timeStamp) {
-      setFilteringMode(state.settings.favoritesPageMode);
-      setLocalTagCompleteF((string) {
-        final result = Dbs.g.main.localTagDictionarys
-            .filter()
-            .tagContains(string)
-            .sortByFrequencyDesc()
-            .limit(10)
-            .findAllSync();
+      // setFilteringMode(state.settings.favoritesPageMode);
+      // setLocalTagCompleteF((string) {
+      //   final result = Dbs.g.main.localTagDictionarys
+      //       .filter()
+      //       .tagContains(string)
+      //       .sortByFrequencyDesc()
+      //       .limit(10)
+      //       .findAllSync();
 
-        return Future.value(result.map((e) => e.tag).toList());
-      });
+      //   return Future.value(result.map((e) => e.tag).toList());
+      // });
 
-      performSearch("");
+      // performSearch("");
 
       setState(() {});
     });
@@ -237,7 +244,7 @@ class _FavoritesPageState extends State<FavoritesPage>
     favoritesWatcher = Dbs.g.main.favoriteBoorus
         .watchLazy(fireImmediately: false)
         .listen((event) {
-      performSearch(searchTextController.text);
+      // performSearch(searchTextController.text);
     });
   }
 
@@ -252,11 +259,8 @@ class _FavoritesPageState extends State<FavoritesPage>
 
       return g;
     }, (selected, value) {
-      for (var e in selected) {
-        e.group = value.isEmpty ? null : value;
-      }
-      Dbs.g.main.writeTxnSync(
-          () => Dbs.g.main.favoriteBoorus.putAllByFileUrlSync(selected));
+      Dbs.g.main.write((i) => i.favoriteBoorus
+          .putAll(selected.map((e) => e.withGroup(value)).toList()));
 
       Navigator.pop(context);
     });
@@ -268,7 +272,7 @@ class _FavoritesPageState extends State<FavoritesPage>
     favoritesWatcher.cancel();
 
     state.dispose();
-    disposeSearch();
+    // disposeSearch();
 
     super.dispose();
   }
@@ -277,83 +281,87 @@ class _FavoritesPageState extends State<FavoritesPage>
   Widget build(BuildContext context) {
     return GridSkeleton<FavoriteBooru>(
         state,
-        (context) => CallbackGrid(
-              key: state.gridKey,
-              getCell: loader.getCell,
-              initalScrollPosition: 0,
-              showCount: true,
-              selectionGlue: widget.glue,
-              scaffoldKey: state.scaffoldKey,
-              addIconsImage: (p) => [
-                BooruGridActions.favorites(context, p,
-                    showDeleteSnackbar: true),
-                BooruGridActions.download(context, booru),
-                _groupButton(context)
-              ],
-              systemNavigationInsets: EdgeInsets.only(
-                  bottom: MediaQuery.systemGestureInsetsOf(context).bottom +
-                      (Scaffold.of(context).widget.bottomNavigationBar !=
-                                  null &&
-                              !widget.glue.keyboardVisible()
-                          ? 80
-                          : 0)),
-              hasReachedEnd: () => true,
-              hideAlias: true,
-              menuButtonItems: [
-                gridSettingsButton(state.settings.favorites,
-                    selectHideName: null,
-                    selectRatio: (ratio) => state.settings
-                        .copy(
-                            favorites: state.settings.favorites
-                                .copy(aspectRatio: ratio))
-                        .save(),
-                    selectListView: null,
-                    selectGridColumn: (columns) => state.settings
-                        .copy(
-                            favorites:
-                                state.settings.favorites.copy(columns: columns))
-                        .save())
-              ],
-              download: _download,
-              immutable: false,
-              noteInterface: NoteBooru.interface<FavoriteBooru>(setState),
-              addFabPadding:
-                  Scaffold.of(context).widget.bottomNavigationBar == null,
-              mainFocus: state.mainFocus,
-              searchWidget: SearchAndFocus(
-                  searchWidget(context,
-                      hint: AppLocalizations.of(context)!
-                          .favoritesLabel
-                          .toLowerCase()),
-                  searchFocus),
-              refresh: () => Future.value(loader.count()),
-              description: GridDescription([
-                BooruGridActions.download(context, booru),
-                _groupButton(context)
-              ],
-                  keybindsDescription:
-                      AppLocalizations.of(context)!.favoritesLabel,
-                  layout: segmented
-                      ? SegmentLayout(
-                          Segments(
-                            "Ungrouped", // TODO: change
-                            hidePinnedIcon: true,
-                            prebuiltSegments: segments,
-                          ),
-                          state.settings.favorites.columns,
-                          state.settings.favorites.aspectRatio)
-                      : GridLayout(state.settings.favorites.columns,
-                          state.settings.favorites.aspectRatio)),
+        CallbackGridShell(
+            // key: state.gridKey,
+            keybinds: const {},
+            // initalScrollPosition: 0,
+            // showCount: true,
+            // selectionGlue: widget.glue,
+            // scaffoldKey: state.scaffoldKey,
+            // addIconsImage: (p) => [
+            //   BooruGridActions.favorites(context, p,
+            //       showDeleteSnackbar: true),
+            //   BooruGridActions.download(context, booru),
+            //   _groupButton(context)
+            // ],
+            // systemNavigationInsets: EdgeInsets.only(
+            //     bottom: MediaQuery.systemGestureInsetsOf(context).bottom +
+            //         (Scaffold.of(context).widget.bottomNavigationBar !=
+            //                     null &&
+            //                 !widget.glue.keyboardVisible()
+            //             ? 80
+            //             : 0)),
+            // hasReachedEnd: () => true,
+            // download: _download,
+            // noteInterface: NoteBooru.interface<FavoriteBooru>(setState),
+            // addFabPadding:
+            //     Scaffold.of(context).widget.bottomNavigationBar == null,
+            mainFocus: state.mainFocus,
+
+            // refresh: () => Future.value(loader.count()),
+
+            child: Placeholder()
+            //  GridLayout<FavoriteBooru>(
+            //   aspectRatio: state.settings.favorites.aspectRatio,
+            //   columns: state.settings.favorites.columns,
+            //   // getOriginalCell: loader.getCell,
+            //   segments: segmented
+            //       ? Segments(
+            //           "Ungrouped", // TODO: change
+            //           hidePinnedIcon: true,
+            //           prebuiltSegments: segments,
+            //         )
+            //       : null,
+            //   download: _download,
+            //   metadata: GridMetadata(
+            //     hideAlias: true,
+            //     appBarActions: [
+            //       gridSettingsButton(state.settings.favorites,
+            //           selectHideName: null,
+            //           selectRatio: (ratio) => state.settings
+            //               .copy(
+            //                   favorites: state.settings.favorites
+            //                       .copy(aspectRatio: ratio))
+            //               .save(),
+            //           selectListView: null,
+            //           selectGridColumn: (columns) => state.settings
+            //               .copy(
+            //                   favorites: state.settings.favorites
+            //                       .copy(columns: columns))
+            //               .save())
+            //     ],
+            //     gridActions: [
+            //       BooruGridActions.download(context, booru),
+            //       _groupButton(context)
+            //     ],
+            //     // search: SearchAndFocus(
+            //     //     searchWidget(context,
+            //     //         hint: AppLocalizations.of(context)!
+            //     //             .favoritesLabel
+            //     //             .toLowerCase()),
+            //     //     searchFocus),
+            //   ),
+            // ),
             ),
         canPop: false, overrideOnPop: (pop, hideAppBar) {
-      if (searchTextController.text.isNotEmpty) {
-        resetSearch();
-        return;
-      }
-      if (widget.glue.isOpen()) {
-        state.gridKey.currentState?.selection.reset();
-        return;
-      }
+      // if (searchTextController.text.isNotEmpty) {
+      //   resetSearch();
+      //   return;
+      // }
+      // if (widget.glue.isOpen()) {
+      //   state.gridKey.currentState?.selection.reset();
+      //   return;
+      // }
 
       if (hideAppBar()) {
         setState(() {});

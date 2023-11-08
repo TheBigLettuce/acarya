@@ -15,13 +15,11 @@ import 'system_gallery_directory_file.dart';
 
 part 'system_gallery_directory.g.dart';
 
+@immutable
 @collection
 class SystemGalleryDirectory implements Cell {
-  @override
-  Id? isarId;
-
   final int thumbFileId;
-  @Index(unique: true)
+  @Id()
   final String bucketId;
 
   @override
@@ -39,7 +37,7 @@ class SystemGalleryDirectory implements Cell {
   @Index()
   final String tag;
 
-  SystemGalleryDirectory(
+  const SystemGalleryDirectory(
       {required this.bucketId,
       required this.name,
       required this.tag,

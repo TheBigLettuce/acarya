@@ -83,10 +83,10 @@ class Downloader with _CancelTokens {
   void _done() {
     if (_inWork <= maximum) {
       final f = Dbs.g.main.downloadFiles
-          .filter()
+          .where()
           .inProgressEqualTo(false)
           .isFailedEqualTo(false)
-          .findFirstSync();
+          .findFirst();
       if (f != null) {
         f.inprogress().save();
 
@@ -106,7 +106,7 @@ class Downloader with _CancelTokens {
 
       return;
     }
-    if (download.isarId != null && _hasCancelKey(download.url)) {
+    if (_hasCancelKey(download.url)) {
       return;
     }
 
@@ -127,8 +127,7 @@ class Downloader with _CancelTokens {
     }
 
     final toDownload = downloads
-        .where(
-            (element) => element.isarId == null || !_hasCancelKey(element.url))
+        .where((element) => !_hasCancelKey(element.url))
         .map((e) => e.onHold())
         .toList();
 
@@ -156,8 +155,8 @@ class Downloader with _CancelTokens {
   }
 
   void removeAll() {
-    Dbs.g.main.writeTxnSync(() {
-      Dbs.g.main.downloadFiles.clearSync();
+    Dbs.g.main.write((i) {
+      i.downloadFiles.clear();
     });
 
     for (final element in _tokens.values) {
@@ -176,9 +175,8 @@ class Downloader with _CancelTokens {
         }
       }
 
-      Dbs.g.main.writeTxnSync(() {
-        Dbs.g.main.downloadFiles
-            .putAllSync(override.map((e) => e.failed()).toList());
+      Dbs.g.main.write((i) {
+        i.downloadFiles.putAll(override.map((e) => e.failed()).toList());
       });
 
       return;
@@ -187,7 +185,7 @@ class Downloader with _CancelTokens {
     final toUpdate = <DownloadFile>[];
 
     final inProgress =
-        Dbs.g.main.downloadFiles.filter().inProgressEqualTo(true).findAllSync();
+        Dbs.g.main.downloadFiles.where().inProgressEqualTo(true).findAll();
     for (final element in inProgress) {
       if (_tokens[element.url] == null) {
         toUpdate.add(element.failed());
@@ -198,8 +196,8 @@ class Downloader with _CancelTokens {
       return;
     }
 
-    Dbs.g.main.writeTxnSync(() {
-      Dbs.g.main.downloadFiles.putAllSync(toUpdate);
+    Dbs.g.main.write((i) {
+      i.downloadFiles.putAll(toUpdate);
     });
   }
 
@@ -227,7 +225,7 @@ class Downloader with _CancelTokens {
     }
 
     final progress = await notificationPlug.newProgress(
-        d.name, d.isarId!, d.site, "Downloader");
+        d.name, d.date.millisecondsSinceEpoch, d.site, "Downloader");
 
     dio.download(d.url, filePath,
         cancelToken: _tokens[d.url],
@@ -246,12 +244,10 @@ class Downloader with _CancelTokens {
         moverPlug.move(MoveOp(
             source: filePath, rootDir: settings.path, targetDir: d.site));
 
-        Dbs.g.main.writeTxnSync(
-          () {
-            _removeToken(d.url);
-            Dbs.g.main.downloadFiles.deleteSync(d.isarId!);
-          },
-        );
+        Dbs.g.main.write((i) {
+          _removeToken(d.url);
+          i.downloadFiles.delete(d.url);
+        });
       } catch (e, trace) {
         log("writting downloaded file ${d.name} to uri",
             level: Level.SEVERE.value, error: e, stackTrace: trace);

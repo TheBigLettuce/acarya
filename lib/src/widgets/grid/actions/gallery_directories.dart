@@ -8,12 +8,12 @@
 import 'package:flutter/material.dart';
 import 'package:gallery/src/pages/gallery/directories.dart';
 import 'package:gallery/src/db/schemas/system_gallery_directory.dart';
-import 'package:gallery/src/widgets/grid/callback_grid.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../../interfaces/gallery.dart';
 import '../../../pages/gallery/files.dart';
 import '../../../db/schemas/blacklisted_directory.dart';
+import '../grid_action.dart';
 
 class SystemGalleryDirectoriesActions {
   static GridAction<SystemGalleryDirectory> blacklist(

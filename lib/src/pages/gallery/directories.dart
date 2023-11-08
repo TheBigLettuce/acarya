@@ -10,28 +10,32 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:gallery/src/plugs/gallery.dart';
-import 'package:gallery/src/widgets/copy_move_preview.dart';
 import 'package:gallery/src/widgets/grid/actions/favorites.dart';
 import 'package:gallery/src/widgets/grid/actions/gallery_directories.dart';
 import 'package:gallery/src/db/post_tags.dart';
 import 'package:gallery/src/db/initalize_db.dart';
 import 'package:gallery/src/plugs/platform_channel.dart';
-import 'package:gallery/src/pages/gallery/files.dart';
 import 'package:gallery/src/pages/booru/main.dart';
 import 'package:gallery/src/db/schemas/system_gallery_directory.dart';
 import 'package:gallery/src/db/schemas/system_gallery_directory_file.dart';
 import 'package:gallery/src/db/schemas/favorite_media.dart';
 import 'package:gallery/src/db/schemas/pinned_directories.dart';
 import 'package:gallery/src/db/schemas/tags.dart';
-import 'package:gallery/src/widgets/grid/callback_grid.dart';
+import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
+import 'package:gallery/src/widgets/grid/grid_metadata.dart';
+import 'package:gallery/src/widgets/grid/layouts/grid/grid.dart';
+import 'package:gallery/src/widgets/grid/search_and_focus.dart';
+import 'package:gallery/src/widgets/grid/segments.dart';
 import 'package:gallery/src/widgets/search_bar/search_filter_grid.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:gallery/src/widgets/skeletons/grid_skeleton_state.dart';
 import 'package:isar/isar.dart';
 import 'package:logging/logging.dart';
 
 import '../../interfaces/booru.dart';
 import '../../db/schemas/settings.dart';
 import '../../interfaces/filtering/filtering_mode.dart';
+import '../../widgets/grid/selection_glue.dart';
 import '../../widgets/skeletons/grid_skeleton_state_filter.dart';
 import '../../widgets/skeletons/grid_skeleton.dart';
 
@@ -88,34 +92,33 @@ class GalleryDirectories extends StatefulWidget {
   State<GalleryDirectories> createState() => _GalleryDirectoriesState();
 }
 
-class _GalleryDirectoriesState extends State<GalleryDirectories>
-    with SearchFilterGrid<SystemGalleryDirectory> {
+class _GalleryDirectoriesState extends State<GalleryDirectories> {
   late StreamSubscription<Settings?> settingsWatcher;
-  bool proceed = true;
-  late final extra = api.getExtra()
-    ..setRefreshGridCallback(() {
-      if (widget.callback != null) {
-        stream.add(0);
-        state.gridKey.currentState?.mutationInterface?.setIsRefreshing(true);
-      } else {
-        if (state.gridKey.currentState?.mutationInterface?.isRefreshing ==
-            false) {
-          _refresh();
-        }
-      }
-    });
+  // bool proceed = true;
+  late final extra = api.getExtra();
+  // ..setRefreshGridCallback(() {
+  //   if (widget.callback != null) {
+  //     stream.add(0);
+  //     state.gridKey.currentState?.mutationInterface?.setIsRefreshing(true);
+  //   } else {
+  //     if (state.gridKey.currentState?.mutationInterface?.isRefreshing ==
+  //         false) {
+  //       _refresh();
+  //     }
+  //   }
+  // });
 
-  late final GridSkeletonStateFilter<SystemGalleryDirectory> state =
-      GridSkeletonStateFilter(
-    transform: (cell, _) => cell,
-    filter: extra.filter,
-  );
+  late final GridSkeletonState<SystemGalleryDirectory> state =
+      GridSkeletonState(
+          // transform: (cell, _) => cell,
+          // filter: extra.filter,
+          );
   late final api = chooseGalleryPlug().galleryApi(
       temporaryDb: widget.callback != null || widget.nestedCallback != null,
       setCurrentApi: widget.callback == null);
-  final stream = StreamController<int>(sync: true);
+  // final stream = StreamController<int>(sync: true);
 
-  bool isThumbsLoading = false;
+  // bool isThumbsLoading = false;
 
   int? trashThumbId;
 
@@ -123,21 +126,21 @@ class _GalleryDirectoriesState extends State<GalleryDirectories>
   void initState() {
     super.initState();
     if (widget.callback != null) {
-      extra.setTemporarySet((i, end) {
-        stream.add(i);
+      // extra.setTemporarySet((i, end) {
+      //   stream.add(i);
 
-        if (end) {
-          state.gridKey.currentState?.mutationInterface?.setIsRefreshing(false);
-        }
-      });
+      //   if (end) {
+      //     state.gridKey.currentState?.mutationInterface?.setIsRefreshing(false);
+      //   }
+      // });
     }
 
     settingsWatcher = Settings.watch((s) {
-      state.settings = s!;
+      // state.settings = s!;
       setState(() {});
     });
 
-    searchHook(state);
+    // searchHook(state);
 
     if (widget.callback != null) {
       PlatformFunctions.trashThumbId().then((value) {
@@ -149,26 +152,26 @@ class _GalleryDirectoriesState extends State<GalleryDirectories>
       });
     }
 
-    extra.setRefreshingStatusCallback((i, inRefresh, empty) {
-      state.gridKey.currentState?.mutationInterface?.unselectAll();
+    // extra.setRefreshingStatusCallback((i, inRefresh, empty) {
+    //   state.gridKey.currentState?.mutationInterface?.unselectAll();
 
-      stream.add(i);
+    //   stream.add(i);
 
-      if (!inRefresh || empty) {
-        state.gridKey.currentState?.mutationInterface?.setIsRefreshing(false);
-        performSearch(searchTextController.text);
-        setState(() {});
-      }
-    });
+    //   if (!inRefresh || empty) {
+    //     state.gridKey.currentState?.mutationInterface?.setIsRefreshing(false);
+    //     performSearch(searchTextController.text);
+    //     setState(() {});
+    //   }
+    // });
   }
 
   @override
   void dispose() {
     api.close();
-    stream.close();
+    // stream.close();
     settingsWatcher.cancel();
-    disposeSearch();
-    state.dispose();
+    // disposeSearch();
+    // state.dispose();
     Dbs.g.clearTemporaryImages();
 
     super.dispose();
@@ -182,9 +185,9 @@ class _GalleryDirectoriesState extends State<GalleryDirectories>
         });
       } catch (_) {}
     });
-    stream.add(0);
-    state.gridKey.currentState?.mutationInterface?.setIsRefreshing(true);
-    api.refresh();
+    // stream.add(0);
+    // state.gridKey.currentState?.mutationInterface?.setIsRefreshing(true);
+    // api.refresh();
   }
 
   Segments<SystemGalleryDirectory> _makeSegments(BuildContext context) =>
@@ -201,16 +204,14 @@ class _GalleryDirectoriesState extends State<GalleryDirectories>
           if (dirTag != null) {
             return (
               dirTag,
-              Dbs.g.blacklisted.pinnedDirectories.getSync(fastHash(dirTag)) !=
-                  null
+              Dbs.g.blacklisted.pinnedDirectories.get(dirTag) != null
             );
           }
 
           final name = cell.name.split(" ");
           return (
             name.first.toLowerCase(),
-            Dbs.g.blacklisted.pinnedDirectories
-                    .getSync(fastHash(name.first.toLowerCase())) !=
+            Dbs.g.blacklisted.pinnedDirectories.get(name.first.toLowerCase()) !=
                 null
           );
         },
@@ -219,20 +220,19 @@ class _GalleryDirectoriesState extends State<GalleryDirectories>
             return false;
           }
           if (unsticky == true) {
-            Dbs.g.blacklisted.writeTxnSync(() {
-              Dbs.g.blacklisted.pinnedDirectories.deleteSync(fastHash(seg));
+            Dbs.g.blacklisted.write((i) {
+              i.pinnedDirectories.delete(seg);
             });
           } else {
-            Dbs.g.blacklisted.writeTxnSync(() {
-              Dbs.g.blacklisted.pinnedDirectories
-                  .putSync(PinnedDirectories(seg, DateTime.now()));
+            Dbs.g.blacklisted.write((i) {
+              i.pinnedDirectories.put(PinnedDirectories(seg, DateTime.now()));
             });
           }
 
           return true;
         },
         injectedSegments: [
-          if (Dbs.g.blacklisted.favoriteMedias.countSync() != 0)
+          if (Dbs.g.blacklisted.favoriteMedias.count() != 0)
             SystemGalleryDirectory(
                 bucketId: "favorites",
                 name: "Favorites", // change
@@ -243,7 +243,7 @@ class _GalleryDirectoriesState extends State<GalleryDirectories>
                 thumbFileId: Dbs.g.blacklisted.favoriteMedias
                     .where()
                     .sortByTimeDesc()
-                    .findFirstSync()!
+                    .findFirst()!
                     .id),
           if (trashThumbId != null)
             SystemGalleryDirectory(
@@ -266,190 +266,204 @@ class _GalleryDirectoriesState extends State<GalleryDirectories>
   Widget build(BuildContext context) {
     return GridSkeleton<SystemGalleryDirectory>(
         state,
-        (context) => CallbackGrid(
-            key: state.gridKey,
-            getCell: (i) => api.directCell(i),
-            initalScrollPosition: 0,
-            scaffoldKey: state.scaffoldKey,
-            onBack: widget.showBackButton ? () => Navigator.pop(context) : null,
-            systemNavigationInsets: EdgeInsets.only(
-                bottom: MediaQuery.of(context).systemGestureInsets.bottom +
-                    (widget.glue.isOpen() && !widget.glue.keyboardVisible()
-                        ? 80
-                        : widget.bottomPadding)),
-            hasReachedEnd: () => true,
-            showCount: true,
-            selectionGlue: widget.glue,
-            addFabPadding: widget.callback != null ||
-                widget.nestedCallback != null ||
-                !widget.glue.isOpen(),
-            inlineMenuButtonItems: true,
-            menuButtonItems: [
-              if (widget.callback != null)
-                IconButton(
-                    onPressed: () async {
-                      try {
-                        widget.callback!(
-                            null,
-                            await PlatformFunctions.chooseDirectory(
-                                temporary: true));
-                        // ignore: use_build_context_synchronously
-                        Navigator.pop(context);
-                      } catch (e) {
-                        log("new folder in android_directories",
-                            level: Level.SEVERE.value, error: e);
-                        // ignore: use_build_context_synchronously
-                        Navigator.pop(context);
-                      }
-                    },
-                    icon: const Icon(Icons.create_new_folder_outlined)),
-              gridSettingsButton(state.settings.galleryDirectories,
-                  selectRatio: (ratio) => state.settings
-                      .copy(
-                          galleryDirectories: state.settings.galleryDirectories
-                              .copy(aspectRatio: ratio))
-                      .save(),
-                  selectHideName: (hideNames) => state.settings
-                      .copy(
-                          galleryDirectories: state.settings.galleryDirectories
-                              .copy(hideName: hideNames))
-                      .save(),
-                  selectListView: null,
-                  selectGridColumn: (columns) => state.settings
-                      .copy(
-                          galleryDirectories: state.settings.galleryDirectories
-                              .copy(columns: columns))
-                      .save()),
-            ],
-            hideAlias: state.settings.galleryDirectories.hideName,
-            immutable: false,
-            mainFocus: state.mainFocus,
-            footer: widget.callback?.preview,
-            initalCellCount: widget.callback != null
-                ? extra.db.systemGalleryDirectorys.countSync()
-                : 0,
-            searchWidget: SearchAndFocus(
-                searchWidget(context,
-                    hint: AppLocalizations.of(context)!.directoriesHint),
-                searchFocus),
-            refresh: () {
-              if (widget.callback != null) {
-                PlatformFunctions.trashThumbId().then((value) {
-                  try {
-                    setState(() {
-                      trashThumbId = value;
-                    });
-                  } catch (_) {}
-                });
-                return Future.value(
-                    extra.db.systemGalleryDirectorys.countSync());
-              } else {
-                _refresh();
+        CallbackGridShell(
+          keybinds: const {},
+          // initalScrollPosition: 0,
+          // scaffoldKey: state.scaffoldKey,
+          // onBack:
+          //     widget.showBackButton ? () => Navigator.pop(context) : null,
+          // systemNavigationInsets: EdgeInsets.only(
+          //     bottom: MediaQuery.of(context).systemGestureInsets.bottom +
+          //         (widget.glue.isOpen() && !widget.glue.keyboardVisible()
+          //             ? 80
+          //             : widget.bottomPadding)),
+          // hasReachedEnd: () => true,
+          // showCount: true,
+          // selectionGlue: widget.glue,
+          // addFabPadding: widget.callback != null ||
+          //     widget.nestedCallback != null ||
+          //     !widget.glue.isOpen(),
+          // hideAlias: state.settings.galleryDirectories.hideName,
+          mainFocus: state.mainFocus,
+          footer: widget.callback?.preview,
+          // initalCellCount: widget.callback != null
+          //     ? extra.db.systemGalleryDirectorys.countSync()
+          //     : 0,
+          // searchWidget: SearchAndFocus(
+          //     searchWidget(context,
+          //         hint: AppLocalizations.of(context)!.directoriesHint),
+          //     searchFocus),
+          // refresh: () {
+          //   if (widget.callback != null) {
+          //     PlatformFunctions.trashThumbId().then((value) {
+          //       try {
+          //         setState(() {
+          //           trashThumbId = value;
+          //         });
+          //       } catch (_) {}
+          //     });
+          //     return Future.value(
+          //         extra.db.systemGalleryDirectorys.countSync());
+          //   } else {
+          //     _refresh();
 
-                return null;
-              }
-            },
-            showSearchBarFirst: widget.callback != null,
-            overrideOnPress: (context, cell) {
-              if (widget.callback != null) {
-                widget.callback!.c(cell, null).then((_) {
-                  Navigator.pop(context);
-                });
-              } else {
-                final d = cell;
+          //     return null;
+          //   }
+          // },
+          // showSearchBarFirst: widget.callback != null,
+          // overrideOnPress: (context, cell) {
+          //   if (widget.callback != null) {
+          //     widget.callback!.c(cell, null).then((_) {
+          //       Navigator.pop(context);
+          //     });
+          //   } else {
+          //     final d = cell;
 
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => switch (cell.bucketId) {
-                        "favorites" => GalleryFiles(
-                            api: extra.favorites(),
-                            callback: widget.nestedCallback,
-                            dirName: "favorites",
-                            bucketId: "favorites"),
-                        "trash" => GalleryFiles(
-                            api: extra.trash(),
-                            callback: widget.nestedCallback,
-                            dirName: "trash",
-                            bucketId: "trash"),
-                        String() => GalleryFiles(
-                            api: api.files(d),
-                            dirName: d.name,
-                            callback: widget.nestedCallback,
-                            bucketId: d.bucketId)
-                      },
-                    ));
-              }
-            },
-            progressTicker: stream.stream,
-            description: GridDescription(
-                widget.callback != null || widget.nestedCallback != null
-                    ? [
-                        if (widget.callback == null ||
-                            widget.callback!.joinable)
-                          SystemGalleryDirectoriesActions.joinedDirectories(
-                              context, extra, widget.nestedCallback)
-                      ]
-                    : [
-                        FavoritesActions.addToGroup(context, (selected) {
-                          final t = selected.first.tag;
-                          for (final e in selected.skip(1)) {
-                            if (t != e.tag) {
-                              return null;
-                            }
-                          }
+          //     Navigator.push(
+          //         context,
+          //         MaterialPageRoute(
+          //           builder: (context) => switch (cell.bucketId) {
+          //             "favorites" => GalleryFiles(
+          //                 api: extra.favorites(),
+          //                 callback: widget.nestedCallback,
+          //                 dirName: "favorites",
+          //                 bucketId: "favorites"),
+          //             "trash" => GalleryFiles(
+          //                 api: extra.trash(),
+          //                 callback: widget.nestedCallback,
+          //                 dirName: "trash",
+          //                 bucketId: "trash"),
+          //             String() => GalleryFiles(
+          //                 api: api.files(d),
+          //                 dirName: d.name,
+          //                 callback: widget.nestedCallback,
+          //                 bucketId: d.bucketId)
+          //           },
+          //         ));
+          //   }
+          // },
+          // progressTicker: stream.stream,
+          // description: GridDescription(
 
-                          return t;
-                        }, (selected, value) {
-                          if (value.isEmpty) {
-                            PostTags.g.removeDirectoriesTag(
-                                selected.map((e) => e.bucketId));
-                          } else {
-                            PostTags.g.setDirectoriesTag(
-                                selected.map((e) => e.bucketId), value);
-                          }
+          // bottomWidget:
+          //     widget.callback != null || widget.nestedCallback != null
+          //         ? CopyMovePreview.hintWidget(
+          //             context,
+          //             widget.callback != null
+          //                 ? widget.callback!.description
+          //                 : widget.nestedCallback!.description)
+          //         : null,
 
-                          _refresh();
-
+          // ),
+          child: GridLayout<SystemGalleryDirectory>(
+            segments: _makeSegments(context),
+            aspectRatio: state.settings.galleryDirectories.aspectRatio,
+            columns: state.settings.galleryDirectories.columns,
+            // getOriginalCell: api.directCell,
+            loader: extra.loader,
+            download: null,
+            metadata: GridMetadata(
+              appBarActions: [
+                if (widget.callback != null)
+                  IconButton(
+                      onPressed: () async {
+                        try {
+                          widget.callback!(
+                              null,
+                              await PlatformFunctions.chooseDirectory(
+                                  temporary: true));
+                          // ignore: use_build_context_synchronously
                           Navigator.pop(context);
-                        }),
-                        SystemGalleryDirectoriesActions.blacklist(
-                            context, extra),
+                        } catch (e) {
+                          log("new folder in android_directories",
+                              level: Level.SEVERE.value, error: e);
+                          // ignore: use_build_context_synchronously
+                          Navigator.pop(context);
+                        }
+                      },
+                      icon: const Icon(Icons.create_new_folder_outlined)),
+                gridSettingsButton(state.settings.galleryDirectories,
+                    selectRatio: (ratio) => state.settings
+                        .copy(
+                            galleryDirectories: state
+                                .settings.galleryDirectories
+                                .copy(aspectRatio: ratio))
+                        .save(),
+                    selectHideName: (hideNames) => state.settings
+                        .copy(
+                            galleryDirectories: state
+                                .settings.galleryDirectories
+                                .copy(hideName: hideNames))
+                        .save(),
+                    selectListView: null,
+                    selectGridColumn: (columns) => state.settings
+                        .copy(
+                            galleryDirectories: state
+                                .settings.galleryDirectories
+                                .copy(columns: columns))
+                        .save()),
+              ],
+              hideAlias: state.settings.galleryDirectories.hideName,
+              // search: SearchAndFocus(
+              //     searchWidget(context,
+              //         hint: AppLocalizations.of(context)!.directoriesHint),
+              //     searchFocus),
+              gridActions: widget.callback != null ||
+                      widget.nestedCallback != null
+                  ? [
+                      if (widget.callback == null || widget.callback!.joinable)
                         SystemGalleryDirectoriesActions.joinedDirectories(
                             context, extra, widget.nestedCallback)
-                      ],
-                bottomWidget:
-                    widget.callback != null || widget.nestedCallback != null
-                        ? CopyMovePreview.hintWidget(
-                            context,
-                            widget.callback != null
-                                ? widget.callback!.description
-                                : widget.nestedCallback!.description)
-                        : null,
-                keybindsDescription:
-                    AppLocalizations.of(context)!.androidGKeybindsDescription,
-                layout: SegmentLayout(
-                    _makeSegments(context),
-                    state.settings.galleryDirectories.columns,
-                    state.settings.galleryDirectories.aspectRatio))),
+                    ]
+                  : [
+                      FavoritesActions.addToGroup(context, (selected) {
+                        final t = selected.first.tag;
+                        for (final e in selected.skip(1)) {
+                          if (t != e.tag) {
+                            return null;
+                          }
+                        }
+
+                        return t;
+                      }, (selected, value) {
+                        if (value.isEmpty) {
+                          PostTags.g.removeDirectoriesTag(
+                              selected.map((e) => e.bucketId));
+                        } else {
+                          PostTags.g.setDirectoriesTag(
+                              selected.map((e) => e.bucketId), value);
+                        }
+
+                        _refresh();
+
+                        Navigator.pop(context);
+                      }),
+                      SystemGalleryDirectoriesActions.blacklist(context, extra),
+                      SystemGalleryDirectoriesActions.joinedDirectories(
+                          context, extra, widget.nestedCallback)
+                    ],
+            ),
+          ),
+        ),
         noDrawer: widget.noDrawer ?? false,
         canPop: widget.callback != null || widget.nestedCallback != null
-            ? currentFilteringMode() == FilteringMode.noFilter &&
-                searchTextController.text.isEmpty &&
-                !widget.glue.isOpen() &&
-                state.gridKey.currentState?.showSearchBar != true
+            ? true
+            // ? currentFilteringMode() == FilteringMode.noFilter &&
+            // searchTextController.text.isEmpty &&
+            // !widget.glue.isOpen() &&
+            // state.gridKey.currentState?.showSearchBar != true
             : false, overrideOnPop: (pop, hideAppBar) {
-      final filterMode = currentFilteringMode();
-      if (filterMode != FilteringMode.noFilter ||
-          searchTextController.text.isNotEmpty) {
-        resetSearch();
-        return;
-      }
+      // final filterMode = currentFilteringMode();
+      // if (filterMode != FilteringMode.noFilter ||
+      //     searchTextController.text.isNotEmpty) {
+      //   resetSearch();
+      //   return;
+      // }
 
-      if (widget.glue.isOpen()) {
-        state.gridKey.currentState?.selection.reset();
-        return;
-      }
+      // if (widget.glue.isOpen()) {
+      //   state.gridKey.currentState?.selection.reset();
+      //   return;
+      // }
 
       if (hideAppBar()) {
         setState(() {});

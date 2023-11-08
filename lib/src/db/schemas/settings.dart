@@ -24,16 +24,15 @@ import 'post.dart';
 
 part 'settings.g.dart';
 
+@immutable
 @collection
 class Settings {
-  final Id id = 0;
+  @Id()
+  final int id = 0;
 
   final String path;
-  @enumerated
   final Booru selectedBooru;
-  @enumerated
   final DisplayQuality quality;
-  @enumerated
   final SafeMode safeMode;
 
   final bool autoRefresh;
@@ -44,7 +43,6 @@ class Settings {
   final GridSettings galleryFiles;
   final GridSettings favorites;
 
-  @enumerated
   final FilteringMode favoritesPageMode;
 
   const Settings({
@@ -121,11 +119,11 @@ class Settings {
                 : GridColumn.six);
 
   static Settings fromDb() {
-    return Dbs.g.main.settings.getSync(0) ?? Settings.empty();
+    return Dbs.g.main.settings.get(0) ?? Settings.empty();
   }
 
   void save() {
-    Dbs.g.main.writeTxnSync(() => Dbs.g.main.settings.putSync(this));
+    Dbs.g.main.write((i) => i.settings.put(this));
   }
 
   /// Pick an operating system directory.
@@ -163,8 +161,9 @@ class Settings {
     for (final post in posts) {
       if (!isFavorite(post.fileUrl)) {
         toAdd.add(FavoriteBooru(
+            group: "",
             height: post.height,
-            id: post.id,
+            postId: post.postId,
             md5: post.md5,
             tags: post.tags,
             width: post.width,
@@ -186,14 +185,12 @@ class Settings {
       return;
     }
 
-    final deleteCopy = toRemove.isEmpty
-        ? null
-        : Dbs.g.main.favoriteBoorus.getAllByFileUrlSync(toRemove);
+    final deleteCopy =
+        toRemove.isEmpty ? null : Dbs.g.main.favoriteBoorus.getAll(toRemove);
 
-    Dbs.g.main.writeTxnSync(() {
-      Dbs.g.main.favoriteBoorus.putAllSync(toAdd);
-      Dbs.g.main.favoriteBoorus
-          .deleteAllByFileUrlSync(toRemove.map((e) => e).toList());
+    Dbs.g.main.write((i) {
+      i.favoriteBoorus.putAll(toAdd);
+      i.favoriteBoorus.deleteAll(toRemove.map((e) => e).toList());
     });
 
     if (deleteCopy != null && showDeleteSnackbar) {
@@ -203,15 +200,15 @@ class Settings {
         action: SnackBarAction(
             label: AppLocalizations.of(context)!.undoLabel,
             onPressed: () {
-              Dbs.g.main.writeTxnSync(() =>
-                  Dbs.g.main.favoriteBoorus.putAllSync(deleteCopy.cast()));
+              Dbs.g.main
+                  .write((i) => i.favoriteBoorus.putAll(deleteCopy.cast()));
             }),
       ));
     }
   }
 
   static bool isFavorite(String fileUrl) {
-    return Dbs.g.main.favoriteBoorus.getByFileUrlSync(fileUrl) != null;
+    return Dbs.g.main.favoriteBoorus.get(fileUrl) != null;
   }
 
   static StreamSubscription<Settings?> watch(void Function(Settings? s) f,
@@ -220,12 +217,11 @@ class Settings {
   }
 }
 
+@immutable
 @embedded
 class GridSettings {
   final bool hideName;
-  @enumerated
   final GridAspectRatio aspectRatio;
-  @enumerated
   final GridColumn columns;
   final bool listView;
 

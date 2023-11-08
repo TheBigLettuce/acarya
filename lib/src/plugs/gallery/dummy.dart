@@ -14,6 +14,7 @@ import 'package:gallery/src/interfaces/filtering/filtering_mode.dart';
 import 'package:gallery/src/interfaces/filtering/sorting_mode.dart';
 import 'package:gallery/src/interfaces/gallery.dart';
 import 'package:gallery/src/plugs/gallery.dart';
+import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
 import 'package:isar/isar.dart';
 
 class DummyGallery implements GalleryPlug {
@@ -34,10 +35,10 @@ class _DummyDirectories implements GalleryAPIDirectories {
   @override
   void close() {}
 
-  @override
-  SystemGalleryDirectory directCell(int i) {
-    throw UnimplementedError();
-  }
+  // @override
+  // SystemGalleryDirectory directCell(int i) {
+  //   throw UnimplementedError();
+  // }
 
   @override
   GalleryAPIFiles files(SystemGalleryDirectory d) {
@@ -49,38 +50,42 @@ class _DummyDirectories implements GalleryAPIDirectories {
     return const _DummyDirectoriesExtra();
   }
 
-  @override
-  Future<int> refresh() {
-    return Future.value(0);
-  }
+  // @override
+  // Future<int> refresh() {
+  //   return Future.value(0);
+  // }
 
   const _DummyDirectories();
 }
 
-class _DummyFilter implements FilterInterface<SystemGalleryDirectory> {
-  @override
-  FilterResult<SystemGalleryDirectory> filter(String s, FilteringMode mode) {
-    return FilterResult((i) => throw UnimplementedError(), 0);
-  }
+// class _DummyFilter implements FilterInterface<SystemGalleryDirectory> {
+//   @override
+//   FilterResult<SystemGalleryDirectory> filter(String s, FilteringMode mode) {
+//     return FilterResult((i) => throw UnimplementedError(), 0);
+//   }
 
-  @override
-  void resetFilter() {}
+//   @override
+//   void resetFilter() {}
 
-  @override
-  void setSortingMode(SortingMode mode) {}
+//   @override
+//   void setSortingMode(SortingMode mode) {}
 
-  const _DummyFilter();
-}
+//   const _DummyFilter();
+// }
 
 class _DummyDirectoriesExtra implements GalleryDirectoriesExtra {
   @override
   void addBlacklisted(List<BlacklistedDirectory> bucketIds) {}
 
   @override
-  Isar get db => throw UnimplementedError();
+  BackgroundDataLoader<SystemGalleryDirectory, int> get loader =>
+      DummyBackgroundLoader();
 
-  @override
-  FilterInterface<SystemGalleryDirectory> get filter => const _DummyFilter();
+  // @override
+  // Isar get db => throw UnimplementedError();
+
+  // @override
+  // FilterInterface<SystemGalleryDirectory> get filter => const _DummyFilter();
 
   @override
   GalleryAPIFiles favorites() {
@@ -97,25 +102,25 @@ class _DummyDirectoriesExtra implements GalleryDirectoriesExtra {
     throw UnimplementedError();
   }
 
-  @override
-  void setPassFilter(
-      (Iterable<SystemGalleryDirectory>, dynamic) Function(
-              Iterable<SystemGalleryDirectory> p1, dynamic p2, bool p3)?
-          filter) {}
+  // @override
+  // void setPassFilter(
+  //     (Iterable<SystemGalleryDirectory>, dynamic) Function(
+  //             Iterable<SystemGalleryDirectory> p1, dynamic p2, bool p3)?
+  //         filter) {}
 
-  @override
-  void setRefreshGridCallback(void Function() callback) {}
+  // @override
+  // void setRefreshGridCallback(void Function() callback) {}
 
-  @override
-  void setRefreshingStatusCallback(
-      void Function(int i, bool inRefresh, bool empty) callback) {
-    WidgetsBinding.instance.scheduleFrameCallback((timeStamp) {
-      callback(0, false, true);
-    });
-  }
+  // @override
+  // void setRefreshingStatusCallback(
+  //     void Function(int i, bool inRefresh, bool empty) callback) {
+  //   WidgetsBinding.instance.scheduleFrameCallback((timeStamp) {
+  //     callback(0, false, true);
+  //   });
+  // }
 
-  @override
-  void setTemporarySet(void Function(int p1, bool p2) callback) {}
+  // @override
+  // void setTemporarySet(void Function(int p1, bool p2) callback) {}
 
   const _DummyDirectoriesExtra();
 }

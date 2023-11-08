@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../interfaces/cell.dart';
-import 'callback_grid.dart';
+import 'selection_glue.dart';
 import 'selection_glue_state.dart';
 
 class WrappedGridPage<T extends Cell> extends StatefulWidget {

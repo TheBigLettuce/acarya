@@ -10,7 +10,7 @@ import 'package:gallery/src/widgets/gesture_dead_zones.dart';
 
 import '../../interfaces/booru.dart';
 import '../../interfaces/cell.dart';
-import '../grid/callback_grid.dart';
+import '../grid/callback_grid_shell.dart';
 import 'grid_skeleton_state.dart';
 
 class GridSkeleton<T extends Cell> extends StatelessWidget {
@@ -19,7 +19,7 @@ class GridSkeleton<T extends Cell> extends StatelessWidget {
   final bool canPop;
   final void Function(bool, bool Function())? overrideOnPop;
   final GridSkeletonState<T> state;
-  final CallbackGrid<T> Function(BuildContext context) grid;
+  final CallbackGridShell grid;
 
   const GridSkeleton(this.state, this.grid,
       {super.key,
@@ -36,21 +36,25 @@ class GridSkeleton<T extends Cell> extends StatelessWidget {
           ? null
           : (pop) {
               overrideOnPop!(pop, () {
-                final s = state.gridKey.currentState;
-                if (s != null) {
-                  if (s.showSearchBar) {
-                    s.showSearchBar = false;
-                    // ignore: invalid_use_of_protected_member
-                    s.setState(() {});
+                // final s = state.gridKey.currentState;
+                // if (s != null) {
+                //   if (s.showSearchBar) {
+                //     s.showSearchBar = false;
+                //     // ignore: invalid_use_of_protected_member
+                //     s.setState(() {});
 
-                    return true;
-                  }
-                }
+                //     return true;
+                //   }
+                // }
 
                 return false;
               });
             },
-      child: GestureDeadZones(left: true, right: true, child: grid(context)),
+      child: GestureDeadZones(
+        left: true,
+        right: true,
+        child: grid,
+      ),
     );
   }
 }

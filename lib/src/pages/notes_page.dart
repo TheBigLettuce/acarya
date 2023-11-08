@@ -18,7 +18,9 @@ import 'package:gallery/src/pages/gallery/directories.dart';
 import 'package:gallery/src/pages/image_view.dart';
 import 'package:gallery/src/widgets/copy_move_preview.dart';
 import 'package:gallery/src/widgets/empty_widget.dart';
-import 'package:gallery/src/widgets/grid/callback_grid.dart';
+import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
+import 'package:gallery/src/widgets/grid/grid_metadata.dart';
+import 'package:gallery/src/widgets/grid/layouts/notes/notes.dart';
 import 'package:gallery/src/widgets/skeletons/grid_skeleton_state.dart';
 import 'package:gallery/src/widgets/skeletons/grid_skeleton.dart';
 import 'package:isar/isar.dart';
@@ -28,13 +30,15 @@ import 'package:palette_generator/palette_generator.dart';
 import '../db/schemas/system_gallery_directory.dart';
 import '../db/schemas/system_gallery_directory_file.dart';
 import '../interfaces/cell.dart';
+import '../widgets/grid/grid_action.dart';
+// import '../widgets/grid/selection_glue.dart';
 import '../widgets/grid/wrap_grid_page.dart';
 
 const kNoteLoadCount = 30;
 
 class _NotePageContainer<T extends Cell> {
   final state = GridSkeletonState<T>();
-  final PagingIsarLoader<T> notes;
+  // final PagingIsarLoader<T> notes;
   final List<T> Function(String text) filterFnc;
   final NoteInterface<T> noteInterface;
   final List<GridAction<T>> addActions;
@@ -84,42 +88,43 @@ class _NotePageContainer<T extends Cell> {
 
   Widget widget(BuildContext context) => GridSkeleton<T>(
       state,
-      (context) => CallbackGrid<T>(
-            key: state.gridKey,
-            getCell: notes.get,
-            initalScrollPosition: 0,
-            scaffoldKey: state.scaffoldKey,
-            immutable: false,
-            onBack: () {
-              Navigator.pop(context);
-            },
-            systemNavigationInsets: MediaQuery.systemGestureInsetsOf(context),
-            hasReachedEnd: notes.reachedEnd,
-            selectionGlue: SelectionGlue.empty(context),
-            mainFocus: state.mainFocus,
-            refresh: notes.refresh,
-            noteInterface: noteInterface,
-            addIconsImage: (_) => addActions,
-            initalCellCount: notes.count(),
-            loadNext: notes.next,
-            description: GridDescription<T>([],
-                keybindsDescription: "Notes page",
-                showAppBar: false,
-                layout: NoteLayout<T>(GridColumn.three, getText)),
-          ),
+      CallbackGridShell(
+        // key: state.gridKey,
+        keybinds: const {},
+        // initalScrollPosition: 0,
+        // scaffoldKey: state.scaffoldKey,
+        // onBack: () {
+        //   Navigator.pop(context);
+        // },
+        // hasReachedEnd: notes.reachedEnd,
+        // selectionGlue: SelectionGlue.empty(context),
+        mainFocus: state.mainFocus,
+        // refresh: notes.refresh,
+        // noteInterface: noteInterface,
+        // addIconsImage: (_) => addActions,
+        // initalCellCount: notes.count(),
+        // loadNext: notes.next,
+        // description: GridDescription<T>([],
+        //     keybindsDescription: "Notes page",
+        //     showAppBar: false,
+        //     layout: NoteLayout<T>(GridColumn.three, getText)),
+        child: NotesLayout(
+            columns: GridColumn.three,
+            getOriginalCell: throw "",
+            metadata: GridMetadata<T>(gridActions: addActions)),
+      ),
       canPop: true);
 
   void dispose() {
     state.dispose();
-    notes.dispose(force: true);
+    // notes.dispose(force: true);
   }
 
-  _NotePageContainer(List<CollectionSchema> schemas, this.noteInterface,
+  _NotePageContainer(List<IsarGeneratedSchema> schemas, this.noteInterface,
       {required Iterable<T> Function(int) loadNext,
       required this.filterFnc,
       this.addActions = const [],
-      required this.getText})
-      : notes = PagingIsarLoader<T>(schemas, loadNext);
+      required this.getText});
 }
 
 class NotesPage extends StatefulWidget {
@@ -143,41 +148,41 @@ class _NotesPageState extends State<NotesPage>
       _NotePageContainer<NoteBooru>(
           [NoteBooruSchema],
           NoteBooru.interfaceSelf(() {
-            booruContainer.state.gridKey.currentState?.refresh(() =>
-                booruContainer.notes.loadUntil(booruContainer.notes.count()));
+            // booruContainer.state.gridKey.currentState?.refresh(() =>
+            //     booruContainer.notes.loadUntil(booruContainer.notes.count()));
           }),
           loadNext: (count) => Dbs.g.blacklisted.noteBoorus
               .where()
-              .offset(count)
-              .limit(kNoteLoadCount)
-              .findAllSync(),
+              // .offset(count)
+              // .limit(kNoteLoadCount)
+              .findAll(offset: count, limit: kNoteLoadCount),
           filterFnc: (text) {
             return Dbs.g.blacklisted.noteBoorus
-                .filter()
+                .where()
                 .textElementContains(text, caseSensitive: false)
-                .limit(15)
-                .findAllSync();
+                // .limit(15)
+                .findAll(limit: 15);
           },
           getText: (cell) => cell.currentText());
   late final _NotePageContainer<NoteGallery> galleryContainer =
       _NotePageContainer<NoteGallery>(
           [NoteGallerySchema],
           NoteGallery.interfaceSelf(() {
-            galleryContainer.state.gridKey.currentState?.refresh(() =>
-                galleryContainer.notes
-                    .loadUntil(galleryContainer.notes.count()));
+            // galleryContainer.state.gridKey.currentState?.refresh(() =>
+            //     galleryContainer.notes
+            //         .loadUntil(galleryContainer.notes.count()));
           }),
           loadNext: (count) => Dbs.g.main.noteGallerys
               .where()
-              .offset(count)
-              .limit(kNoteLoadCount)
-              .findAllSync(),
+              // .offset(count)
+              // .limit(kNoteLoadCount)
+              .findAll(offset: count, limit: kNoteLoadCount),
           filterFnc: (text) {
             return Dbs.g.main.noteGallerys
-                .filter()
+                .where()
                 .textElementContains(text, caseSensitive: false)
-                .limit(15)
-                .findAllSync();
+                // .limit(15)
+                .findAll(limit: 15);
           },
           addActions: widget.callback != null
               ? [
@@ -238,8 +243,8 @@ class _NotesPageState extends State<NotesPage>
                                         originalUri: chosen.originalUri);
                                     NoteGallery.removeAll(s.id);
 
-                                    galleryContainer.state.gridKey.currentState
-                                        ?.refresh();
+                                    // galleryContainer.state.gridKey.currentState
+                                    //     ?.refresh();
                                   }, returnBack: true),
                                 ));
                       }));
@@ -344,9 +349,9 @@ class _NotesPageState extends State<NotesPage>
             ? CopyMovePreview.hintWidget(context, widget.callback!.description)
             : TabBar(controller: tabController, tabs: [
                 _makeTab(AppLocalizations.of(context)!.booruLabel,
-                    Dbs.g.blacklisted.noteBoorus.countSync()),
+                    Dbs.g.blacklisted.noteBoorus.count()),
                 _makeTab(AppLocalizations.of(context)!.galleryLabel,
-                    Dbs.g.main.noteGallerys.countSync())
+                    Dbs.g.main.noteGallerys.count())
               ]),
       ),
       body: widget.callback != null

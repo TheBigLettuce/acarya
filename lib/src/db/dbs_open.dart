@@ -9,12 +9,16 @@ part of 'initalize_db.dart';
 
 abstract class DbsOpen {
   static Isar primaryGrid(Booru booru) {
-    final instance = Isar.getInstance(booru.string);
-    if (instance != null) {
-      return instance;
-    }
+    // final instance = Isar.get(schemas: [
+    //   GridStateSchema,
+    //   TagSchema,
+    //   PostSchema,
+    // ], name: booru.string);
+    // if (instance != null) {
+    //   return instance;
+    // }
 
-    return Isar.openSync([
+    return Isar.open(schemas: [
       GridStateSchema,
       TagSchema,
       PostSchema,
@@ -22,26 +26,34 @@ abstract class DbsOpen {
   }
 
   static Isar secondaryGrid({bool temporary = true}) {
-    return Isar.openSync([PostSchema],
+    return Isar.open(
+        schemas: [PostSchema],
         directory: temporary ? _dbs.temporaryDbDir : _dbs.directory,
         inspector: false,
         name: _microsecSinceEpoch());
   }
 
   static Isar secondaryGridName(String name) {
-    return Isar.openSync([PostSchema],
-        directory: _dbs.directory, inspector: false, name: name);
+    return Isar.open(
+        schemas: [PostSchema],
+        directory: _dbs.directory,
+        inspector: false,
+        name: name);
   }
 
-  static Isar localTags() => Isar.openSync(
-        [LocalTagsSchema, LocalTagDictionarySchema, DirectoryTagSchema],
+  static Isar localTags() => Isar.open(
+        schemas: [
+          LocalTagsSchema,
+          LocalTagDictionarySchema,
+          DirectoryTagSchema
+        ],
         directory: _dbs.directory,
         inspector: false,
         name: "localTags",
       );
 
-  static Isar androidGalleryDirectories({bool? temporary}) => Isar.openSync(
-        [SystemGalleryDirectorySchema],
+  static Isar androidGalleryDirectories({bool? temporary}) => Isar.open(
+        schemas: [SystemGalleryDirectorySchema],
         directory: temporary == true ? _dbs.temporaryDbDir : _dbs.directory,
         inspector: false,
         name: temporary == true
@@ -49,15 +61,15 @@ abstract class DbsOpen {
             : "systemGalleryDirectories",
       );
 
-  static Isar androidGalleryFiles() => Isar.openSync(
-        [SystemGalleryDirectoryFileSchema],
+  static Isar androidGalleryFiles() => Isar.open(
+        schemas: [SystemGalleryDirectoryFileSchema],
         directory: _dbs.temporaryDbDir,
         inspector: false,
         name: _microsecSinceEpoch(),
       );
 
-  static Isar temporarySchemas(List<CollectionSchema> schemas) => Isar.openSync(
-        schemas,
+  static Isar temporarySchemas(List<IsarGeneratedSchema> schemas) => Isar.open(
+        schemas: schemas,
         directory: _dbs.temporaryDbDir,
         inspector: false,
         name: _microsecSinceEpoch(),

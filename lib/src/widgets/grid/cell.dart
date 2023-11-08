@@ -11,10 +11,10 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:transparent_image/transparent_image.dart';
 import '../loading_error_widget.dart';
 import 'cell_data.dart';
-import 'callback_grid.dart';
+import 'callback_grid_shell.dart';
 import 'sticker.dart';
 
-/// The cell of [CallbackGrid].
+/// The cell of [CallbackGridShell].
 class GridCell<T extends CellData> extends StatefulWidget {
   final T _data;
   final int indx;
@@ -23,8 +23,8 @@ class GridCell<T extends CellData> extends StatefulWidget {
 
   /// If [tight] is true, margin between the [GridCell]s on the grid is tight.
   final bool tight;
-  final void Function()? onLongPress;
-  final Future Function(int)? download;
+  // final void Function()? onLongPress;
+  final void Function(BuildContext context, int)? download;
 
   /// If [shadowOnTop] is true, then on top of the [GridCell] painted [Colors.black],
   /// with 0.5 opacity.
@@ -37,19 +37,18 @@ class GridCell<T extends CellData> extends StatefulWidget {
   /// If [ignoreStickers] is true, then stickers aren't displayed on top of the cell.
   final bool ignoreStickers;
 
-  const GridCell(
-      {super.key,
-      required T cell,
-      required this.indx,
-      required this.onPressed,
-      required this.tight,
-      required this.download,
-      bool? hidealias,
-      this.shadowOnTop = false,
-      this.circle = false,
-      this.ignoreStickers = false,
-      this.onLongPress})
-      : _data = cell,
+  const GridCell({
+    super.key,
+    required T cell,
+    required this.indx,
+    required this.onPressed,
+    required this.tight,
+    required this.download,
+    bool? hidealias,
+    this.shadowOnTop = false,
+    this.circle = false,
+    this.ignoreStickers = false,
+  })  : _data = cell,
         hideAlias = hidealias ?? false;
 
   @override
@@ -67,11 +66,10 @@ class _GridCellState<T extends CellData> extends State<GridCell<T>> {
               widget.onPressed!(context);
             },
       focusColor: Theme.of(context).colorScheme.primary,
-      onLongPress: widget.onLongPress,
       onDoubleTap: widget.download != null
           ? () {
               HapticFeedback.selectionClick();
-              widget.download!(widget.indx);
+              widget.download!(context, widget.indx);
             }
           : null,
       child: Card(

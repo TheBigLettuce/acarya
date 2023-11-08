@@ -181,7 +181,7 @@ class Danbooru implements BooruAPI {
 
         final post = Post(
             height: e["image_height"],
-            id: e["id"],
+            postId: e["id"],
             score: e["score"],
             sourceUrl: e["source"],
             rating: e["rating"] ?? "?",

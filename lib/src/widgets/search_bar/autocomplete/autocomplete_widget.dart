@@ -18,7 +18,7 @@ import 'autocomplete_tag.dart';
 class AutocompleteWidget extends StatelessWidget {
   final TextEditingController controller;
   final void Function(String) highlightChanged;
-  final void Function(Tag) onSubmit;
+  final void Function(String) onSubmit;
   final void Function() focusMain;
   final Future<List<String>> Function(String) complF;
   final FocusNode focus;
@@ -61,7 +61,7 @@ class AutocompleteWidget extends StatelessWidget {
                     if (submitOnPress) {
                       focusMain();
                       controller.text = "";
-                      onSubmit(Tag.string(tag: elem));
+                      onSubmit(elem);
                       return;
                     }
 
@@ -134,7 +134,7 @@ class AutocompleteWidget extends StatelessWidget {
                   onChanged?.call();
                 },
                 onSubmitted: (value) {
-                  onSubmit(Tag.string(tag: value));
+                  onSubmit(value);
                 },
               )
             : TextField(
@@ -163,7 +163,7 @@ class AutocompleteWidget extends StatelessWidget {
                   onChanged?.call();
                 },
                 onSubmitted: (value) {
-                  onSubmit(Tag.string(tag: value));
+                  onSubmit(value);
                 },
               );
       },

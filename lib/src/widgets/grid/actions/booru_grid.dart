@@ -17,7 +17,7 @@ import '../../../db/schemas/local_tag_dictionary.dart';
 import '../../../db/schemas/post.dart';
 import '../../../db/schemas/settings.dart';
 import '../../../db/schemas/tags.dart';
-import '../callback_grid.dart';
+import '../grid_action.dart';
 
 class BooruGridActions {
   static GridAction<T> download<T extends PostBase>(
@@ -47,17 +47,12 @@ class BooruGridActions {
         isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
         (selected) {
       Settings.addRemoveFavorites(context, selected, showDeleteSnackbar);
-      Dbs.g.main.writeTxnSync(
-        () {
+      Dbs.g.main.write(
+        (i) {
           for (final post in selected) {
-            Dbs.g.main.localTagDictionarys.putAllSync(post.tags
-                .map((e) => LocalTagDictionary(
-                    HtmlUnescape().convert(e),
-                    (Dbs.g.main.localTagDictionarys
-                                .getSync(fastHash(e))
-                                ?.frequency ??
-                            0) +
-                        1))
+            i.localTagDictionarys.putAll(post.tags
+                .map((e) => LocalTagDictionary(HtmlUnescape().convert(e),
+                    (i.localTagDictionarys.get(e)?.frequency ?? 0) + 1))
                 .toList());
           }
         },

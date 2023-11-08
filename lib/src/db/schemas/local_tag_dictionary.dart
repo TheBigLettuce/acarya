@@ -7,17 +7,17 @@
 
 import 'package:gallery/src/db/schemas/tags.dart';
 import 'package:isar/isar.dart';
+import 'package:meta/meta.dart';
 
 part 'local_tag_dictionary.g.dart';
 
+@immutable
 @collection
 class LocalTagDictionary {
-  Id get isarId => fastHash(tag);
-
-  @Index(unique: true, replace: true)
+  @Id()
   final String tag;
 
   final int frequency;
 
-  LocalTagDictionary(this.tag, this.frequency);
+  const LocalTagDictionary(this.tag, this.frequency);
 }

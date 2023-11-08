@@ -5,51 +5,50 @@
 // This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
-part of 'callback_grid.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:gallery/src/widgets/notifiers/is_selecting.dart';
+import 'package:gallery/src/widgets/notifiers/selection_count.dart';
+import 'package:gallery/src/widgets/notifiers/selection_interface.dart';
 
-class _WrappedSelection extends StatelessWidget {
-  final Widget child;
-  final bool isSelected;
-  final bool selectionEnabled;
+class WrappedSelection extends StatelessWidget {
   final int thisIndx;
-  final double bottomPadding;
-  final ScrollController scrollController;
-  final void Function() selectUnselect;
-  final void Function(int indx) selectUntil;
+  final Widget child;
 
-  const _WrappedSelection(
-      {required this.child,
-      required this.isSelected,
-      required this.selectUnselect,
-      required this.thisIndx,
-      required this.bottomPadding,
-      required this.scrollController,
-      required this.selectionEnabled,
-      required this.selectUntil});
+  const WrappedSelection({
+    super.key,
+    required this.thisIndx,
+    required this.child,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final selection = SelectionData.of(context);
+    SelectionCountNotifier.of(context);
+
     return thisIndx.isNegative
         ? _WrappedSelectionCore(
-            isSelected: isSelected,
-            selectUnselect: selectUnselect,
             thisIndx: thisIndx,
-            selectionEnabled: selectionEnabled,
-            selectUntil: selectUntil,
+            selectionEnabled: IsSelectingNotifier.of(context),
             child: child,
           )
         : DragTarget(
             onAccept: (data) {
-              selectUnselect();
+              selection.selectUnselect(context, thisIndx);
             },
             onLeave: (data) {
+              final scrollController = PrimaryScrollController.of(context);
+
               if (scrollController.position.isScrollingNotifier.value &&
-                  isSelected) {
+                  selection.isSelected(context, thisIndx)) {
                 return;
               }
-              selectUnselect();
+              selection.selectUnselect(context, thisIndx);
             },
             onMove: (details) {
+              final scrollController = PrimaryScrollController.of(context);
+
               if (scrollController.position.isScrollingNotifier.value) {
                 return;
               }
@@ -58,8 +57,7 @@ class _WrappedSelection extends StatelessWidget {
               if (details.offset.dy < 120 && scrollController.offset > 100) {
                 scrollController.animateTo(scrollController.offset - 100,
                     duration: 200.ms, curve: Curves.linear);
-              } else if (details.offset.dy + bottomPadding >
-                      (height * 0.9) - (bottomPadding) &&
+              } else if (details.offset.dy > (height * 0.9) &&
                   scrollController.offset <
                       scrollController.position.maxScrollExtent * 0.99) {
                 scrollController.animateTo(scrollController.offset + 100,
@@ -73,11 +71,8 @@ class _WrappedSelection extends StatelessWidget {
                 affinity: Axis.horizontal,
                 feedback: const SizedBox(),
                 child: _WrappedSelectionCore(
-                  isSelected: isSelected,
-                  selectUnselect: selectUnselect,
                   thisIndx: thisIndx,
-                  selectionEnabled: selectionEnabled,
-                  selectUntil: selectUntil,
+                  selectionEnabled: IsSelectingNotifier.of(context),
                   child: child,
                 ),
               );
@@ -88,23 +83,20 @@ class _WrappedSelection extends StatelessWidget {
 
 class _WrappedSelectionCore extends StatelessWidget {
   final int thisIndx;
-  final bool isSelected;
-  final void Function() selectUnselect;
-  final void Function(int indx) selectUntil;
   final bool selectionEnabled;
   final Widget child;
 
   const _WrappedSelectionCore({
-    required this.isSelected,
-    required this.selectUnselect,
     required this.thisIndx,
     required this.selectionEnabled,
-    required this.selectUntil,
     required this.child,
   });
 
   @override
   Widget build(BuildContext context) {
+    final selection = SelectionData.of(context);
+    SelectionCountNotifier.of(context);
+
     return Stack(
       children: [
         Align(
@@ -113,20 +105,21 @@ class _WrappedSelectionCore extends StatelessWidget {
               padding: const EdgeInsets.all(0.5),
               child: Container(
                 decoration: BoxDecoration(
-                  color:
-                      isSelected ? Theme.of(context).colorScheme.primary : null,
+                  color: selection.isSelected(context, thisIndx)
+                      ? Theme.of(context).colorScheme.primary
+                      : null,
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: GestureDetector(
                   onTap: thisIndx.isNegative
                       ? null
                       : () {
-                          selectUnselect();
+                          selection.selectUnselect(context, thisIndx);
                         },
                   onLongPress: thisIndx.isNegative
                       ? null
                       : () {
-                          selectUntil(thisIndx);
+                          selection.selectUntil(context, thisIndx);
                           HapticFeedback.vibrate();
                         },
                   child: AbsorbPointer(
@@ -136,12 +129,12 @@ class _WrappedSelectionCore extends StatelessWidget {
                 ),
               )),
         ),
-        if (isSelected) ...[
+        if (selection.isSelected(context, thisIndx)) ...[
           GestureDetector(
             onTap: thisIndx.isNegative
                 ? null
                 : () {
-                    selectUnselect();
+                    selection.selectUnselect(context, thisIndx);
                   },
             child: Padding(
               padding: const EdgeInsets.all(12),

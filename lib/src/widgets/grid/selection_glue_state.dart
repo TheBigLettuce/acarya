@@ -6,9 +6,9 @@
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 import 'package:flutter/material.dart';
-
+import 'package:gallery/src/widgets/grid/selection_interface.dart';
 import '../../interfaces/cell.dart';
-import 'callback_grid.dart';
+import 'selection_glue.dart';
 
 class SelectionGlueState {
   List<Widget>? actions;
@@ -34,38 +34,38 @@ class SelectionGlueState {
               setState(() {});
             } catch (_) {}
           },
-          open: (addActions, selection) {
-            if (actions != null || addActions.isEmpty) {
-              return;
-            }
-            actions = addActions
-                .map((e) => WrapGridActionButton(
-                    e.icon,
-                    e.showOnlyWhenSingle && selection.selected.length != 1
-                        ? null
-                        : () {
-                            e.onPress(selection.selected.values.toList());
+          open: (selection) {
+            // if (actions != null || addActions.isEmpty) {
+            //   return;
+            // }
+            // actions = addActions
+            //     .map((e) => WrapGridActionButton(
+            //         e.icon,
+            //         e.showOnlyWhenSingle && selection.selected.length != 1
+            //             ? null
+            //             : () {
+            //                 e.onPress(selection.selected.values.toList());
 
-                            if (e.closeOnPress) {
-                              selection.selected.clear();
-                              actions = null;
+            //                 if (e.closeOnPress) {
+            //                   selection.selected.clear();
+            //                   actions = null;
 
-                              setState(() {});
-                            }
-                          },
-                    false,
-                    selection.selected.length.toString(),
-                    animate: e.animate,
-                    color: e.color,
-                    play: e.play,
-                    backgroundColor: e.backgroundColor))
-                .toList();
+            //                   setState(() {});
+            //                 }
+            //               },
+            //         false,
+            //         selection.selected.length.toString(),
+            //         animate: e.animate,
+            //         color: e.color,
+            //         play: e.play,
+            //         backgroundColor: e.backgroundColor))
+            //     .toList();
 
-            if (_playAnimation != null) {
-              _playAnimation!(false).then((value) => setState(() {}));
-            } else {
-              setState(() {});
-            }
+            // if (_playAnimation != null) {
+            //   _playAnimation!(false).then((value) => setState(() {}));
+            // } else {
+            //   setState(() {});
+            // }
           },
           isOpen: () {
             return actions != null;

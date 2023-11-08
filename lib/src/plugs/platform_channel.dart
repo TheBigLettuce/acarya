@@ -180,13 +180,13 @@ class ThumbId {
       {required this.id, required this.path, required this.differenceHash});
 
   static void addThumbnailsToDb(List<ThumbId> l) {
-    if (Dbs.g.thumbnail!.thumbnails.countSync() >= 3000) {
-      final List<int> toDelete = Dbs.g.thumbnail!.writeTxnSync(() {
-        final toDelete = Dbs.g.thumbnail!.thumbnails
+    if (Dbs.g.thumbnail!.thumbnails.count() >= 3000) {
+      final List<int> toDelete = Dbs.g.thumbnail!.write((i) {
+        final toDelete = i.thumbnails
             .where()
             .sortByUpdatedAt()
-            .limit(l.length)
-            .findAllSync()
+            // .limit()
+            .findAll(limit: l.length)
             .map((e) => e.id)
             .toList();
 
@@ -194,7 +194,7 @@ class ThumbId {
           return [];
         }
 
-        Dbs.g.thumbnail!.thumbnails.deleteAllSync(toDelete);
+        i.thumbnails.deleteAll(toDelete);
 
         return toDelete;
       });
@@ -202,8 +202,8 @@ class ThumbId {
       PlatformFunctions.deleteCachedThumbs(toDelete);
     }
 
-    Dbs.g.thumbnail!.writeTxnSync(() {
-      Dbs.g.thumbnail!.thumbnails.putAllSync(l
+    Dbs.g.thumbnail!.write((i) {
+      i.thumbnails.putAll(l
           .map((e) => Thumbnail(e.id, DateTime.now(), e.path, e.differenceHash))
           .toList());
     });

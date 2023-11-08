@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:gallery/src/db/schemas/thumbnail.dart';
 import 'package:gallery/src/plugs/platform_channel.dart';
 
 import '../../db/initalize_db.dart';
@@ -251,10 +252,9 @@ class _SettingsListState extends State<SettingsList> {
                                                           .no)),
                                               TextButton(
                                                   onPressed: () {
-                                                    Dbs.g.thumbnail!
-                                                        .writeTxnSync(() => Dbs
-                                                            .g.thumbnail!
-                                                            .clearSync());
+                                                    Dbs.g.thumbnail!.write(
+                                                        (i) => i.thumbnails
+                                                            .clear());
 
                                                     PlatformFunctions
                                                         .clearCachedThumbs();

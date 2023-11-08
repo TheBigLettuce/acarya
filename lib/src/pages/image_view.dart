@@ -13,18 +13,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gallery/src/db/schemas/note.dart';
+import 'package:gallery/src/widgets/grid/selection_interface.dart';
 import 'package:gallery/src/widgets/image_view/loading_builder.dart';
 import 'package:gallery/src/widgets/image_view/make_image_view_bindings.dart';
 import 'package:gallery/src/widgets/image_view/wrap_image_view_notifiers.dart';
 import 'package:gallery/src/widgets/image_view/wrap_image_view_skeleton.dart';
 import 'package:gallery/src/widgets/image_view/wrap_image_view_theme.dart';
 import 'package:gallery/src/plugs/platform_fullscreens.dart';
-import 'package:gallery/src/widgets/grid/callback_grid.dart';
 import 'package:logging/logging.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import '../widgets/grid/grid_action.dart';
 import '../widgets/keybinds/keybind_description.dart';
 import '../interfaces/cell.dart';
 import '../interfaces/contentable.dart';
@@ -223,7 +224,7 @@ class ImageViewState<T extends Cell> extends State<ImageView<T>>
 
     if (cellCount == 1) {
       final newCell = widget.getCell(0);
-      if (newCell.isarId == currentCell.isarId) {
+      if (newCell == currentCell) {
         return;
       }
       controller.previousPage(duration: 200.ms, curve: Curves.linearToEaseOut);

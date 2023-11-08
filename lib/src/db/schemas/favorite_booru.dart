@@ -7,17 +7,38 @@
 
 import 'package:gallery/src/db/schemas/post.dart';
 import 'package:isar/isar.dart';
+import 'package:meta/meta.dart';
 
 part 'favorite_booru.g.dart';
 
+@immutable
 @collection
 class FavoriteBooru extends PostBase {
   @Index()
-  String? group;
+  final String group;
 
-  FavoriteBooru(
+  FavoriteBooru withGroup(String group) {
+    return FavoriteBooru(
+        height: height,
+        postId: postId,
+        md5: md5,
+        tags: tags,
+        width: width,
+        fileUrl: fileUrl,
+        prefix: prefix,
+        previewUrl: previewUrl,
+        sampleUrl: sampleUrl,
+        ext: ext,
+        group: group,
+        sourceUrl: sourceUrl,
+        rating: rating,
+        score: score,
+        createdAt: createdAt);
+  }
+
+  const FavoriteBooru(
       {required super.height,
-      required super.id,
+      required super.postId,
       required super.md5,
       required super.tags,
       required super.width,
@@ -26,7 +47,7 @@ class FavoriteBooru extends PostBase {
       required super.previewUrl,
       required super.sampleUrl,
       required super.ext,
-      this.group,
+      required this.group,
       required super.sourceUrl,
       required super.rating,
       required super.score,

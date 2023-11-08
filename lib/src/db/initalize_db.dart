@@ -63,7 +63,7 @@ Future initalizeDb(bool temporary) async {
 
   final temporaryImagesPath = dimages.path;
 
-  final main = Isar.openSync([
+  final main = Isar.open(schemas: [
     SettingsSchema,
     FavoriteBooruSchema,
     LocalTagDictionarySchema,
@@ -72,7 +72,7 @@ Future initalizeDb(bool temporary) async {
     NoteGallerySchema
   ], directory: directoryPath, inspector: false);
 
-  final blacklistedDirIsar = Isar.openSync([
+  final blacklistedDirIsar = Isar.open(schemas: [
     BlacklistedDirectorySchema,
     PinnedDirectoriesSchema,
     FavoriteMediaSchema,
@@ -82,15 +82,18 @@ Future initalizeDb(bool temporary) async {
   Isar? thumbnailIsar;
 
   if (io.Platform.isAndroid) {
-    thumbnailIsar = Isar.openSync([ThumbnailSchema],
-        directory: directoryPath, inspector: false, name: "androidThumbnails");
-    thumbnailIsar.writeTxnSync(() {
-      thumbnailIsar!.thumbnails
+    thumbnailIsar = Isar.open(
+        schemas: [ThumbnailSchema],
+        directory: directoryPath,
+        inspector: false,
+        name: "androidThumbnails");
+    thumbnailIsar.write((i) {
+      i.thumbnails
           .where()
           .differenceHashEqualTo(0)
           .or()
           .pathEqualTo("")
-          .deleteAllSync();
+          .deleteAll();
     });
   }
 

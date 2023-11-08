@@ -7,7 +7,9 @@
 
 import 'dart:developer';
 import 'dart:io';
+import 'dart:ui' as ui;
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:gallery/src/db/schemas/thumbnail.dart';
@@ -37,15 +39,13 @@ import 'settings.dart';
 
 part 'system_gallery_directory_file.g.dart';
 
+@immutable
 @collection
 class SystemGalleryDirectoryFile implements Cell {
   @override
-  Id? isarId;
-
-  @override
   Key uniqueKey() => ValueKey(id);
 
-  @Index(unique: true)
+  @Id()
   final int id;
   final String bucketId;
   @Index()
@@ -65,15 +65,15 @@ class SystemGalleryDirectoryFile implements Cell {
 
   final bool isOriginal;
 
-  @ignore
-  final List<Sticker> injectedStickers = [];
+  // @ignore
+  // final List<Sticker> injectedStickers = [];
 
   final String notesFlat;
   final String tagsFlat;
   final bool isDuplicate;
   final bool isFavorite;
 
-  SystemGalleryDirectoryFile({
+  const SystemGalleryDirectoryFile({
     required this.id,
     required this.bucketId,
     required this.name,
@@ -133,7 +133,7 @@ class SystemGalleryDirectoryFile implements Cell {
   @override
   List<(IconData, void Function()?)>? addStickers(BuildContext context) {
     final stickers = [
-      ...injectedStickers.map((e) => e.icon).map((e) => (e, null)),
+      // ...injectedStickers.map((e) => e.icon).map((e) => (e, null)),
       ..._stickers(context),
     ];
 
@@ -314,11 +314,7 @@ class SystemGalleryDirectoryFile implements Cell {
                 final res = PostTags.g.dissassembleFilename(name);
                 final tagManager = TagManager.fromEnum(res.booru, true);
 
-                tagManager.onTagPressed(
-                    context,
-                    Tag(tag: t, isExcluded: false, time: DateTime.now()),
-                    res.booru,
-                    false);
+                tagManager.onTagPressed(context, t, res.booru, false);
               } catch (e) {
                 log("launching local tag random booru",
                     level: Level.SEVERE.value, error: e);
@@ -348,7 +344,7 @@ class SystemGalleryDirectoryFile implements Cell {
   @override
   CellData getCellData(bool isList, {required BuildContext context}) {
     final stickers = <Sticker>[
-      ...injectedStickers,
+      // ...injectedStickers,
       ..._stickers(context).map((e) => Sticker(e.$1)),
       if (isFavorite)
         Sticker(Icons.star_rounded,
@@ -366,7 +362,7 @@ class SystemGalleryDirectoryFile implements Cell {
   }
 
   Thumbnail? getThumbnail() {
-    return Dbs.g.thumbnail!.thumbnails.getSync(id);
+    return Dbs.g.thumbnail!.thumbnails.get(id);
   }
 }
 
@@ -375,7 +371,7 @@ class ThumbnailProvider extends ImageProvider {
 
   @override
   Future<Object> obtainKey(ImageConfiguration configuration) async {
-    final thumb = Dbs.g.thumbnail!.thumbnails.getSync(id);
+    final thumb = Dbs.g.thumbnail!.thumbnails.get(id);
     if (thumb != null) {
       if (thumb.path.isEmpty || thumb.differenceHash == 0) {
         return MemoryImage(kTransparentImage);
@@ -414,6 +410,103 @@ class ThumbnailProvider extends ImageProvider {
 
   const ThumbnailProvider(this.id);
 }
+
+// class ThumbnailProvider1 extends ImageProvider<ThumbnailProvider1> {
+//   final int id;
+//   String? path;
+
+//   @override
+//   Future<ThumbnailProvider1> obtainKey(ImageConfiguration configuration) async {
+//     final thumb = Dbs.g.thumbnail!.thumbnails.getSync(id);
+//     if (thumb != null) {
+//       if (thumb.path.isEmpty || thumb.differenceHash == 0) {
+//         return this;
+//       }
+
+//       path = thumb.path;
+
+//       return this;
+//     }
+
+//     final cachedThumb = await PlatformFunctions.getCachedThumb(id);
+//     ThumbId.addThumbnailsToDb([cachedThumb]);
+
+//     path = cachedThumb.path;
+
+//     return this;
+//   }
+
+//   @override
+//   ImageStreamCompleter loadBuffer(
+//       ThumbnailProvider1 key, DecoderBufferCallback decode) {
+//     return MultiFrameImageStreamCompleter(
+//       codec: _loadAsync(key, decode: decode),
+//       scale: 1.0,
+//       debugLabel: path,
+//       informationCollector: () => <DiagnosticsNode>[
+//         ErrorDescription('Path: $path'),
+//       ],
+//     );
+//   }
+
+//   @override
+//   ImageStreamCompleter loadImage(
+//       ThumbnailProvider1 key, ImageDecoderCallback decode) {
+//     return MultiFrameImageStreamCompleter(
+//       codec: _loadAsync(key, decode: decode),
+//       scale: 1.0,
+//       debugLabel: path,
+//       informationCollector: () => <DiagnosticsNode>[
+//         ErrorDescription('Path: $path'),
+//       ],
+//     );
+//   }
+
+//   Future<ui.Codec> _loadAsync(
+//     ThumbnailProvider1 key, {
+//     required Future<ui.Codec> Function(ui.ImmutableBuffer buffer) decode,
+//   }) async {
+//     assert(key == this);
+//     // TODO(jonahwilliams): making this sync caused test failures that seem to
+//     // indicate that we can fail to call evict unless at least one await has
+//     // occurred in the test.
+//     // https://github.com/flutter/flutter/issues/113044
+
+//     if (path == null) {
+//       return decode(await ui.ImmutableBuffer.fromUint8List(kTransparentImage));
+//     }
+
+//     final file = File(path!);
+
+//     final int lengthInBytes = await file.length();
+//     if (lengthInBytes == 0) {
+//       // The file may become available later.
+//       PaintingBinding.instance.imageCache.evict(key);
+//       throw StateError('$file is empty and cannot be loaded as an image.');
+//     }
+//     return (file.runtimeType == File)
+//         ? decode(await ui.ImmutableBuffer.fromFilePath(file.path))
+//         : decode(
+//             await ui.ImmutableBuffer.fromUint8List(await file.readAsBytes()));
+//   }
+
+//   @override
+//   bool operator ==(Object other) {
+//     if (other.runtimeType != runtimeType) {
+//       return false;
+//     }
+//     return other is ThumbnailProvider1 && other.id == id;
+//   }
+
+//   @override
+//   int get hashCode => Object.hashAll([id]);
+
+//   // @override
+//   // String toString() =>
+//   //     '${objectRuntimeType(this, 'FileImage')}("${file.path}", scale: ${scale.toStringAsFixed(1)})';
+
+//   ThumbnailProvider1(this.id);
+// }
 
 ListTile addInfoTile(
         {required AddInfoColorData colors,

@@ -29,62 +29,61 @@ class StateRestoration {
   final Isar _mainGrid;
   final GridState copy;
 
-  GridState get current => _mainGrid.gridStates.getByNameSync(copy.name)!;
+  GridState get current => _mainGrid.gridStates.get(copy.name)!;
 
   void updateScrollPosition(double pos,
       {double? infoPos, int? selectedCell, int? page}) {
-    final prev = _mainGrid.gridStates.getByNameSync(copy.name)!;
+    final prev = _mainGrid.gridStates.get(copy.name)!;
 
-    _mainGrid.writeTxnSync(() => _mainGrid.gridStates.putSync(prev.copy(false,
+    _mainGrid.write((i) => i.gridStates.put(prev.copy(false,
         scrollPositionGrid: pos,
         scrollPositionTags: infoPos,
         page: page,
         selectedPost: selectedCell)));
   }
 
-  int secondaryCount() => _mainGrid.gridStates.countSync() - 1;
+  int secondaryCount() => _mainGrid.gridStates.count() - 1;
 
   void moveToBookmarks(Booru booru, int? page) {
-    final prev = _mainGrid.gridStates.getByNameSync(copy.name)!;
+    final prev = current;
 
-    _mainGrid.writeTxnSync(() => _mainGrid.gridStates.deleteSync(prev.id!));
+    _mainGrid.write((i) => i.gridStates.delete(prev.name));
 
-    prev.id = null;
-
-    Dbs.g.main.writeTxnSync(() => Dbs.g.main.gridStateBoorus.putSync(
-        GridStateBooru(booru,
-            tags: prev.tags,
-            scrollPositionTags: prev.scrollPositionTags,
-            selectedPost: prev.selectedPost,
-            safeMode: prev.safeMode,
-            scrollPositionGrid: prev.scrollPositionGrid,
-            name: prev.name,
-            time: prev.time,
-            page: page)));
+    Dbs.g.main.write((i) => i.gridStateBoorus.put(GridStateBooru(
+          booru,
+          tags: prev.tags,
+          scrollPositionTags: prev.scrollPositionTags,
+          selectedPost: prev.selectedPost,
+          safeMode: prev.safeMode,
+          scrollPositionGrid: prev.scrollPositionGrid,
+          name: prev.name,
+          time: prev.time,
+          page: page,
+        )));
   }
 
   void setSafeMode(SafeMode safeMode) {
-    final prev = _mainGrid.gridStates.getByNameSync(copy.name)!;
+    final prev = current;
 
-    _mainGrid.writeTxnSync(() =>
-        _mainGrid.gridStates.putSync(prev.copy(false, safeMode: safeMode)));
+    _mainGrid
+        .write((i) => i.gridStates.put(prev.copy(false, safeMode: safeMode)));
   }
 
   void updateTime() {
-    final prev = _mainGrid.gridStates.getByNameSync(copy.name)!;
+    final prev = current;
 
-    _mainGrid.writeTxnSync(() =>
-        _mainGrid.gridStates.putSync(prev.copy(false, time: DateTime.now())));
+    _mainGrid
+        .write((i) => i.gridStates.put(prev.copy(false, time: DateTime.now())));
   }
 
   void removeScrollTagsSelectedPost() {
     if (isRestart) {
       return;
     }
-    final prev = _mainGrid.gridStates.getByNameSync(copy.name)!;
+    final prev = current;
 
-    _mainGrid.writeTxnSync(() => _mainGrid.gridStates.putSync(
-        prev.copy(true, scrollPositionTags: null, selectedPost: null)));
+    _mainGrid.write((i) => i.gridStates
+        .put(prev.copy(true, scrollPositionTags: null, selectedPost: null)));
   }
 
   void removeSelf() {
@@ -92,16 +91,15 @@ class StateRestoration {
       throw "can't remove main grid's state";
     }
 
-    _mainGrid
-        .writeTxnSync(() => _mainGrid.gridStates.deleteByNameSync(copy.name));
+    _mainGrid.write((i) => i.gridStates.delete(copy.name));
   }
 
   StateRestoration insert(
       {required String tags,
       required String name,
       required SafeMode safeMode}) {
-    _mainGrid.writeTxnSync(() => _mainGrid.gridStates
-        .putByNameSync(GridState.empty(name, tags, safeMode)));
+    _mainGrid.write((i) => i.gridStates
+        .put(GridState.empty(name, tags, safeMode, DateTime.now())));
     return StateRestoration._new(_mainGrid, name, tags);
   }
 
@@ -110,8 +108,7 @@ class StateRestoration {
       throw "can't restore next in main StateRestoration";
     }
 
-    _mainGrid
-        .writeTxnSync(() => _mainGrid.gridStates.deleteByNameSync(copy.name));
+    _mainGrid.write((i) => i.gridStates.delete(copy.name));
 
     return last();
   }
@@ -119,9 +116,10 @@ class StateRestoration {
   StateRestoration? last() {
     var res = _mainGrid.gridStates
         .where()
-        .nameNotEqualTo(_mainGrid.name)
+        .not()
+        .nameEqualTo(_mainGrid.name)
         .sortByTimeDesc()
-        .findFirstSync();
+        .findFirst();
     if (res == null) {
       return null;
     }
@@ -131,16 +129,16 @@ class StateRestoration {
 
   StateRestoration(Isar mainGrid, String name, SafeMode safeMode)
       : _mainGrid = mainGrid,
-        copy = mainGrid.gridStates.getByNameSync(name) ??
-            GridState.empty(name, "", safeMode) {
-    if (mainGrid.gridStates.getByNameSync(name) == null) {
-      mainGrid.writeTxnSync(() => mainGrid.gridStates
-          .putByNameSync(GridState.empty(name, "", safeMode)));
+        copy = mainGrid.gridStates.get(name) ??
+            GridState.empty(name, "", safeMode, DateTime.now()) {
+    if (mainGrid.gridStates.get(name) == null) {
+      mainGrid.write((i) => i.gridStates
+          .put(GridState.empty(name, "", safeMode, DateTime.now())));
     }
   }
 
   StateRestoration._next(this._mainGrid, this.copy);
 
   StateRestoration._new(this._mainGrid, String name, String tags)
-      : copy = _mainGrid.gridStates.getByNameSync(name)!;
+      : copy = _mainGrid.gridStates.get(name)!;
 }

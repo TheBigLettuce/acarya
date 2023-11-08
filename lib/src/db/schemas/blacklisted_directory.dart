@@ -13,16 +13,17 @@ import 'package:isar/isar.dart';
 
 part 'blacklisted_directory.g.dart';
 
+@immutable
 @collection
 class BlacklistedDirectory implements Cell {
-  @override
-  Id? isarId;
+  // @override
+  // Id? isarId;
 
   @override
   Key uniqueKey() => ValueKey(bucketId);
 
-  @Index(unique: true, replace: true)
-  String bucketId;
+  @Id()
+  final String bucketId;
   @Index()
   final String name;
 
@@ -54,5 +55,5 @@ class BlacklistedDirectory implements Cell {
   CellData getCellData(bool isList, {BuildContext? context}) =>
       CellData(thumb: null, name: name, stickers: []);
 
-  BlacklistedDirectory(this.bucketId, this.name);
+  const BlacklistedDirectory(this.bucketId, this.name);
 }
