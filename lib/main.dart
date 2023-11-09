@@ -11,18 +11,24 @@ import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:gallery/src/db/schemas/post.dart';
+import 'package:gallery/src/db/state_restoration.dart';
+import 'package:gallery/src/interfaces/booru.dart';
 import 'package:gallery/src/net/downloader.dart';
 import 'package:gallery/src/plugs/gallery.dart';
 import 'package:gallery/src/plugs/platform_channel.dart';
 import 'package:gallery/src/pages/gallery/directories.dart';
 import 'package:gallery/src/db/initalize_db.dart';
+import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
 import 'package:gallery/src/widgets/restart_widget.dart';
+import 'package:isar/isar.dart';
 // import 'package:google_fonts/google_fonts.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import 'src/db/schemas/settings.dart';
 import 'src/pages/home.dart';
 
 late final String azariVersion;
@@ -123,6 +129,25 @@ void main() async {
   changeExceptionErrorColors();
 
   initalizeGalleryPlug(false);
+
+  await BackgroundCellLoader<Post, String>.cache(kMainGridLoaderKey, () {
+    final settings = Settings.fromDb();
+
+    return (
+      (db, idx) => db.posts.where().sortByPostIdDesc().findFirst(offset: idx),
+      DbsOpen.primaryGrid(settings.selectedBooru),
+      kPrimaryGridSchemas,
+      (loader) {
+        final tagManager = TagManager.fromEnum(settings.selectedBooru, true);
+
+        return BooruAPILoaderStateController(
+            loader,
+            BooruAPI.fromEnum(settings.selectedBooru, page: null),
+            tagManager.excluded,
+            "");
+      },
+    );
+  }).init();
 
   final accentColor = await PlatformFunctions.accentColor();
 

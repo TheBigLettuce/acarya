@@ -228,7 +228,7 @@ class Gelbooru implements BooruAPI {
               : post["sample_url"]));
     }
 
-    return (list, null);
+    return (List<Post>.unmodifiable(list), null);
   }
 
   @override

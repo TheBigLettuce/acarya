@@ -30,7 +30,10 @@ class _GridBody<T extends Cell> extends StatelessWidget {
           childAspectRatio: aspectRatio.value, crossAxisCount: columns.number),
       itemCount: GridElementCountNotifier.of(context),
       itemBuilder: (context, indx) {
-        final cell = CellProvider.getOf<T, int>(context, indx);
+        final t1 = DateTime.now();
+        final cell = CellProvider.getOf<T>(context, indx);
+        print(
+            DateTime.now().microsecondsSinceEpoch - t1.microsecondsSinceEpoch);
 
         return WrappedSelection(
           thisIndx: indx,

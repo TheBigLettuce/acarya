@@ -8,11 +8,13 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:gallery/src/interfaces/cell.dart';
+import 'package:gallery/src/widgets/notifiers/get_cell.dart';
 import 'package:gallery/src/widgets/notifiers/grid_footer.dart';
 
 import '../notifiers/selection_glue.dart';
 
-class CallbackGridBase extends StatefulWidget {
+class CallbackGridBase<T extends Cell> extends StatefulWidget {
   final Widget? appBar;
   final Widget child;
   final Future<void> Function() onRefresh;
@@ -24,11 +26,37 @@ class CallbackGridBase extends StatefulWidget {
       required this.child});
 
   @override
-  State<CallbackGridBase> createState() => _CallbackGridBaseState();
+  State<CallbackGridBase<T>> createState() => _CallbackGridBaseState();
 }
 
-class _CallbackGridBaseState extends State<CallbackGridBase> {
+class _CallbackGridBaseState<T extends Cell>
+    extends State<CallbackGridBase<T>> {
   final scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    scrollController.addListener(() {
+      // final h = MediaQuery.sizeOf(context).height;
+
+      // final height = h - h * 0.80;
+
+      if (scrollController.position.pixels >=
+          scrollController.position.maxScrollExtent * 0.80) {
+        final state = CellProvider.stateOf<T>(context);
+
+        state.next();
+      }
+
+      // if (!_state.isRefreshing &&
+      //     _state.cellCount != 0 &&
+      //     (controller.offset / controller.positions.first.maxScrollExtent) >=
+      //         1 - (height / controller.positions.first.maxScrollExtent)) {
+      //   _state._loadNext(context);
+      // }
+    });
+  }
 
   @override
   void dispose() {
@@ -43,24 +71,19 @@ class _CallbackGridBaseState extends State<CallbackGridBase> {
         onRefresh: widget.onRefresh,
         child: PrimaryScrollController(
           controller: scrollController,
-          child: Scrollbar(
-              interactive: false,
-              thumbVisibility:
-                  Platform.isAndroid || Platform.isIOS ? false : true,
-              thickness: 6,
-              child: CustomScrollView(
-                primary: true,
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: [
-                  if (widget.appBar != null) widget.appBar!,
-                  _Padding(child: widget.child),
-                ],
-              )),
+          child: CustomScrollView(
+            controller: scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              if (widget.appBar != null) widget.appBar!,
+              _Padding<T>(child: widget.child),
+            ],
+          ),
         ));
   }
 }
 
-class _Padding extends StatelessWidget {
+class _Padding<T extends Cell> extends StatelessWidget {
   final Widget child;
 
   const _Padding({super.key, required this.child});
@@ -68,10 +91,12 @@ class _Padding extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scaffold = Scaffold.maybeOf(context);
+    PrimaryScrollController.of(context);
+
     return SliverPadding(
       padding: EdgeInsets.only(
           bottom: (MediaQuery.of(context).viewInsets.bottom) +
-              (SelectionGlueNotifier.isOpenOf(context)
+              (SelectionGlueNotifier.isOpenOf<T>(context)
                   ? 84
                   : scaffold?.widget.bottomNavigationBar != null
                       ? 84
@@ -440,22 +465,6 @@ class _Padding extends StatelessWidget {
 //   return;
 // }
 
-// controller.addListener(() {
-//   if (widget.hasReachedEnd()) {
-//     return;
-//   }
-
-//   final h = MediaQuery.sizeOf(context).height;
-
-//   final height = h - h * 0.80;
-
-//   if (!_state.isRefreshing &&
-//       _state.cellCount != 0 &&
-//       (controller.offset / controller.positions.first.maxScrollExtent) >=
-//           1 - (height / controller.positions.first.maxScrollExtent)) {
-//     _state._loadNext(context);
-//   }
-// });
 
 // controller.position.isScrollingNotifier.addListener(() {
 //   if (!_state.isRefreshing) {

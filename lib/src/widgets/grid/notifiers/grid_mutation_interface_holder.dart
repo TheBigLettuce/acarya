@@ -8,7 +8,10 @@
 import 'package:flutter/material.dart';
 import 'package:gallery/src/interfaces/cell.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
+import 'package:gallery/src/widgets/notifiers/get_cell.dart';
 import 'package:gallery/src/widgets/notifiers/grid_element_count.dart';
+
+import 'wrap_grid_status_notifiers.dart';
 
 class DataLoaderHolder<T extends Cell> extends StatefulWidget {
   final BackgroundDataLoader<T, int> loader;
@@ -52,7 +55,13 @@ class _DataLoaderHolderState<T extends Cell>
   Widget build(BuildContext context) {
     return GridElementCountNotifier(
       count: _count,
-      child: widget.child,
+      child: CellProvider(
+        loader: widget.loader,
+        child: WrapGridStatusNotifiers(
+          stateController: widget.loader.state,
+          child: widget.child,
+        ),
+      ),
     );
   }
 }

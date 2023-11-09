@@ -38,6 +38,7 @@ import '../../interfaces/filtering/filtering_mode.dart';
 import '../../widgets/grid/selection_glue.dart';
 import '../../widgets/skeletons/grid_skeleton_state_filter.dart';
 import '../../widgets/skeletons/grid_skeleton.dart';
+import '../booru/grid_settings_button.dart';
 
 class CallbackDescription {
   final Future<void> Function(SystemGalleryDirectory? chosen, String? newDir) c;

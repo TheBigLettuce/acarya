@@ -99,7 +99,7 @@ class SelectionInterface<T extends Cell> {
 
   void selectOrUnselect(BuildContext context, int index) {
     if (!isSelected(context, index)) {
-      add(context, index, CellProvider.getOf<T, int>(context, index));
+      add(context, index, CellProvider.getOf<T>(context, index)!);
     } else {
       remove(context, index);
     }

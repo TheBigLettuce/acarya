@@ -50,7 +50,7 @@ dependencies:
   file_picker: ^5.2.10
   permission_handler: ^11.0.1
   introduction_screen: ^3.1.7
-  analyzer: ^6.3.0
+  analyzer: ^5.13.0
   cached_network_image: ^3.3.0
   flutter_local_notifications: ^16.1.0
   isar: ^4.0.0-dev.14
@@ -78,7 +78,7 @@ dependencies:
   mobile_scanner: ^3.5.1
   stream_transform: ^2.1.0
   stream_channel: ^2.1.2
-  meta: ^1.11.0
+  meta: ^1.10.0
 
 dev_dependencies:
   flutter_test:

@@ -201,7 +201,7 @@ class Danbooru implements BooruAPI {
       }
     }
 
-    return (list, currentSkipped);
+    return (List<Post>.unmodifiable(list), currentSkipped);
   }
 
   @override

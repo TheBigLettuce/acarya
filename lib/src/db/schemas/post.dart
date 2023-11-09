@@ -92,7 +92,7 @@ class PostBase implements Cell {
   final String prefix;
 
   String filename() =>
-      "${prefix.isNotEmpty ? '${prefix}_' : ''}$id - $md5${ext != '.zip' ? ext : path_util.extension(sampleUrl)}";
+      "${prefix.isNotEmpty ? '${prefix}_' : ''}$postId - $md5${ext != '.zip' ? ext : path_util.extension(sampleUrl)}";
 
   static void showQr(BuildContext context, String prefix, int id) {
     Navigator.push(
@@ -263,7 +263,7 @@ class PostBase implements Cell {
   }
 
   @override
-  String alias(bool isList) => isList ? tags.join(" ") : id.toString();
+  String alias(bool isList) => isList ? tags.join(" ") : postId.toString();
 
   @override
   Contentable fileDisplay() {

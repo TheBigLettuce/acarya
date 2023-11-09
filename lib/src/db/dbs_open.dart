@@ -7,6 +7,12 @@
 
 part of 'initalize_db.dart';
 
+const kPrimaryGridSchemas = [
+  GridStateSchema,
+  TagSchema,
+  PostSchema,
+];
+
 abstract class DbsOpen {
   static Isar primaryGrid(Booru booru) {
     // final instance = Isar.get(schemas: [
@@ -18,12 +24,20 @@ abstract class DbsOpen {
     //   return instance;
     // }
 
-    return Isar.open(schemas: [
-      GridStateSchema,
-      TagSchema,
-      PostSchema,
-    ], directory: _dbs.directory, inspector: false, name: booru.string);
+    return Isar.open(
+        schemas: kPrimaryGridSchemas,
+        directory: _dbs.directory,
+        inspector: false,
+        name: booru.string);
   }
+
+  // static Isar primaryGridInstance(Booru booru) {
+  //   return Isar.open(
+  //       schemas: kPrimaryGridSchemas,
+  //       directory: _dbs.directory,
+  //       name: booru.string,
+  //       inspector: false);
+  // }
 
   static Isar secondaryGrid({bool temporary = true}) {
     return Isar.open(

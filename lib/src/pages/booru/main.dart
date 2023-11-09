@@ -15,10 +15,12 @@ import 'package:gallery/src/db/schemas/favorite_booru.dart';
 import 'package:gallery/src/db/schemas/grid_state_booru.dart';
 import 'package:gallery/src/db/schemas/note.dart';
 import 'package:gallery/src/db/schemas/tags.dart';
+import 'package:gallery/src/interfaces/cell.dart';
 import 'package:gallery/src/pages/booru/random.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
 import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/layouts/grid/grid.dart';
+import 'package:gallery/src/widgets/notifiers/get_cell.dart';
 import 'package:gallery/src/widgets/notifiers/selection_glue.dart';
 import 'package:isar/isar.dart';
 import 'package:logging/logging.dart';
@@ -46,96 +48,8 @@ import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../widgets/time_label.dart';
+import 'grid_settings_button.dart';
 import 'secondary.dart';
-import '../../db/schemas/settings.dart' as schema show GridAspectRatio;
-
-PopupMenuButton gridSettingsButton(GridSettings gridSettings,
-    {required void Function(schema.GridAspectRatio?) selectRatio,
-    required void Function(bool)? selectHideName,
-    required void Function(bool)? selectListView,
-    required void Function(GridColumn?) selectGridColumn,
-    SafeMode? safeMode,
-    void Function(SafeMode?)? selectSafeMode}) {
-  return PopupMenuButton(
-    icon: const Icon(Icons.more_horiz_outlined),
-    itemBuilder: (context) => [
-      if (safeMode != null)
-        _safeMode(context, safeMode, selectSafeMode: selectSafeMode),
-      if (selectListView != null)
-        _listView(gridSettings.listView, selectListView),
-      if (selectHideName != null)
-        _hideName(context, gridSettings.hideName, selectHideName),
-      _ratio(context, gridSettings.aspectRatio, selectRatio),
-      _columns(context, gridSettings.columns, selectGridColumn)
-    ],
-  );
-}
-
-PopupMenuItem _safeMode(BuildContext context, SafeMode safeMode,
-    {void Function(SafeMode?)? selectSafeMode}) {
-  return PopupMenuItem(
-    child: Text(AppLocalizations.of(context)!.safeModeSetting),
-    onTap: () => radioDialog<SafeMode>(
-      context,
-      SafeMode.values.map((e) => (e, e.string)),
-      safeMode,
-      selectSafeMode ??
-          (value) {
-            Settings.fromDb().copy(safeMode: value).save();
-          },
-      title: AppLocalizations.of(context)!.safeModeSetting,
-    ),
-  );
-}
-
-PopupMenuItem _hideName(
-    BuildContext context, bool hideName, void Function(bool) select) {
-  return PopupMenuItem(
-    child: Text(hideName
-        ? "Show names" // TODO: change
-        : "Hide names"),
-    onTap: () => select(!hideName),
-  );
-}
-
-PopupMenuItem _ratio(BuildContext context, schema.GridAspectRatio aspectRatio,
-    void Function(schema.GridAspectRatio?) select) {
-  return PopupMenuItem(
-    child: Text(AppLocalizations.of(context)!.aspectRatio),
-    onTap: () => radioDialog(
-      context,
-      schema.GridAspectRatio.values
-          .map((e) => (e, e.value.toString()))
-          .toList(),
-      aspectRatio,
-      select,
-      title: AppLocalizations.of(context)!.aspectRatio,
-    ),
-  );
-}
-
-PopupMenuItem _columns(BuildContext context, GridColumn columns,
-    void Function(GridColumn?) select) {
-  return PopupMenuItem(
-    child: const Text("Columns"), // TODO: change
-    onTap: () => radioDialog(
-      context,
-      GridColumn.values.map((e) => (e, e.number.toString())).toList(),
-      columns,
-      select,
-      title: AppLocalizations.of(context)!.nPerElementsSetting,
-    ),
-  );
-}
-
-PopupMenuItem _listView(bool listView, void Function(bool) select) {
-  return PopupMenuItem(
-    child: Text(listView
-        ? "Grid view" // TODO: change
-        : "List view"),
-    onTap: () => select(!listView),
-  );
-}
 
 class MainBooruGrid extends StatefulWidget {
   final Isar mainGrid;
@@ -185,15 +99,23 @@ class MainBooruGrid extends StatefulWidget {
   State<MainBooruGrid> createState() => _MainBooruGridState();
 }
 
-class _MainBooruGridState extends State<MainBooruGrid>
-// with SearchLaunchGrid<Post>
-{
+class _MainBooruGridState extends State<MainBooruGrid> {
   late final StreamSubscription<Settings?> settingsWatcher;
   late final StreamSubscription favoritesWatcher;
 
   late final BooruAPI api;
   late final StateRestoration restore;
   late final TagManager tagManager;
+
+  late final loader =
+      BackgroundCellLoader<Post, String>.cached(kMainGridLoaderKey);
+
+//  () {
+//     final db = DbsOpen.primaryGrid(Settings.fromDb().selectedBooru);
+//     final e = db.posts.where().findFirst()!;
+
+//     return ((db, idx) => db.posts.get(e.fileUrl), db, kPrimaryGridSchemas);
+//   }
 
   int? currentSkipped;
 
@@ -217,6 +139,10 @@ class _MainBooruGridState extends State<MainBooruGrid>
         f();
       });
     });
+
+    // api.page(0, "", tagManager.excluded).then((value) {
+    //   loader.send(value.$1);
+    // });
 
     // searchHook(SearchLaunchGridData(
     //     mainFocus: state.mainFocus,
@@ -259,135 +185,135 @@ class _MainBooruGridState extends State<MainBooruGrid>
     super.dispose();
   }
 
-  // Future<int> _clearAndRefresh() async {
-  //   try {
-  //     restore.updateTime();
-
-  //     final list = await api.page(0, "", tagManager.excluded);
-  //     restore.updateScrollPosition(0, page: api.currentPage);
-  //     currentSkipped = list.$2;
-  //     widget.mainGrid.writeTxnSync(() {
-  //       widget.mainGrid.posts.clearSync();
-  //       return widget.mainGrid.posts.putAllByFileUrlSync(list.$1);
-  //     });
-
-  //     reachedEnd = false;
-  //   } catch (e) {
-  //     rethrow;
-  //   }
-
-  //   return widget.mainGrid.posts.count();
-  // }
-
-  // Future<void> _download(int i) async {
-  //   final p = widget.mainGrid.posts.getSync(i + 1);
-  //   if (p == null) {
-  //     return Future.value();
-  //   }
-
-  //   PostTags.g.addTagsPost(p.filename(), p.tags, true);
-
-  //   return Downloader.g.add(
-  //       DownloadFile.d(
-  //           url: p.fileDownloadUrl(),
-  //           site: api.booru.url,
-  //           name: p.filename(),
-  //           thumbUrl: p.previewUrl),
-  //       state.settings);
-  // }
-
-  // Future<int> _addLast() async {
-  //   if (reachedEnd) {
-  //     return widget.mainGrid.posts.countSync();
-  //   }
-  //   final p = widget.mainGrid.posts.getSync(widget.mainGrid.posts.countSync());
-  //   if (p == null) {
-  //     return widget.mainGrid.posts.countSync();
-  //   }
-
-  //   try {
-  //     final list = await api.fromPost(
-  //         currentSkipped != null && currentSkipped! < p.id
-  //             ? currentSkipped!
-  //             : p.id,
-  //         "",
-  //         tagManager.excluded);
-  //     if (list.$1.isEmpty && currentSkipped == null) {
-  //       reachedEnd = true;
-  //     } else {
-  //       currentSkipped = list.$2;
-  //       final oldCount = widget.mainGrid.posts.countSync();
-  //       widget.mainGrid.writeTxnSync(
-  //           () => widget.mainGrid.posts.putAllByFileUrlSync(list.$1));
-  //       restore.updateTime();
-  //       if (widget.mainGrid.posts.countSync() - oldCount < 3) {
-  //         return await _addLast();
-  //       }
-  //     }
-  //   } catch (e, trace) {
-  //     log("_addLast on grid ${state.settings.selectedBooru.string}",
-  //         level: Level.WARNING.value, error: e, stackTrace: trace);
-  //   }
-
-  //   return widget.mainGrid.posts.count();
-  // }
-
   @override
   Widget build(BuildContext context) {
     return BooruAPINotifier(
       api: api,
-      child: GlueHolder(
-        child: TagManagerNotifier(
-            tagManager: tagManager,
-            child: GridSkeleton(
-              state,
-              CallbackGridShell(
-                keybinds: const {},
-                registerNotifiers: (child) => TagManagerNotifier(
-                    tagManager: tagManager,
-                    child: BooruAPINotifier(api: api, child: child)),
-                mainFocus: state.mainFocus,
-                child: GridLayout<Post>(
-                  aspectRatio: state.settings.booru.aspectRatio,
-                  columns: state.settings.booru.columns,
-                  download: null,
-                  loader: DummyBackgroundLoader(),
-                  metadata: GridMetadata(
-                    hideAlias: true,
-                    appBarActions: [
-                      const BookmarkButton(),
-                      MainBooruGrid.gridButton(state.settings)
-                    ],
-                    gridActions: [
-                      BooruGridActions.download(context, api),
-                      BooruGridActions.favorites(context, null,
-                          showDeleteSnackbar: true)
-                    ],
-                  ),
-                ),
+      child: GlueHolder<Post>(
+          child: TagManagerNotifier(
+        tagManager: tagManager,
+        child: GridSkeleton(
+          state,
+          CallbackGridShell(
+            keybinds: const {},
+            registerNotifiers: (child) => TagManagerNotifier(
+                tagManager: tagManager,
+                child: BooruAPINotifier(api: api, child: child)),
+            mainFocus: state.mainFocus,
+            child: GridLayout<Post>(
+              aspectRatio: state.settings.booru.aspectRatio,
+              columns: state.settings.booru.columns,
+              download: null,
+              loader: loader,
+              metadata: GridMetadata(
+                hideAlias: false,
+                appBarActions: [
+                  const BookmarkButton(),
+                  MainBooruGrid.gridButton(state.settings)
+                ],
+                gridActions: [
+                  BooruGridActions.download(context, api),
+                  BooruGridActions.favorites(context, null,
+                      showDeleteSnackbar: true)
+                ],
               ),
-              overrideBooru: api.booru,
-              canPop: true,
-              // !widget.glue.isOpen() &&
-              //     state.gridKey.currentState?.showSearchBar != true,
-              overrideOnPop: (pop, hideAppBar) {
-                // if (widget.glue.isOpen()) {
-                //   state.gridKey.currentState?.selection.reset();
-                //   return;
-                // }
+            ),
+          ),
+          overrideBooru: api.booru,
+          canPop: true,
+          // !widget.glue.isOpen() &&
+          //     state.gridKey.currentState?.showSearchBar != true,
+          overrideOnPop: (pop, hideAppBar) {
+            // if (widget.glue.isOpen()) {
+            //   state.gridKey.currentState?.selection.reset();
+            //   return;
+            // }
 
-                if (hideAppBar()) {
-                  setState(() {});
-                  return;
-                }
+            if (hideAppBar()) {
+              setState(() {});
+              return;
+            }
 
-                widget.procPop(pop);
-              },
-            )),
-      ),
+            widget.procPop(pop);
+          },
+        ),
+      )),
     );
   }
 }
+
+// Future<int> _clearAndRefresh() async {
+//   try {
+//     restore.updateTime();
+
+//     final list = await api.page(0, "", tagManager.excluded);
+//     restore.updateScrollPosition(0, page: api.currentPage);
+//     currentSkipped = list.$2;
+//     widget.mainGrid.writeTxnSync(() {
+//       widget.mainGrid.posts.clearSync();
+//       return widget.mainGrid.posts.putAllByFileUrlSync(list.$1);
+//     });
+
+//     reachedEnd = false;
+//   } catch (e) {
+//     rethrow;
+//   }
+
+//   return widget.mainGrid.posts.count();
+// }
+
+// Future<void> _download(int i) async {
+//   final p = widget.mainGrid.posts.getSync(i + 1);
+//   if (p == null) {
+//     return Future.value();
+//   }
+
+//   PostTags.g.addTagsPost(p.filename(), p.tags, true);
+
+//   return Downloader.g.add(
+//       DownloadFile.d(
+//           url: p.fileDownloadUrl(),
+//           site: api.booru.url,
+//           name: p.filename(),
+//           thumbUrl: p.previewUrl),
+//       state.settings);
+// }
+
+// Future<int> _addLast() async {
+//   if (reachedEnd) {
+//     return widget.mainGrid.posts.countSync();
+//   }
+//   final p = widget.mainGrid.posts.getSync(widget.mainGrid.posts.countSync());
+//   if (p == null) {
+//     return widget.mainGrid.posts.countSync();
+//   }
+
+//   try {
+//     final list = await api.fromPost(
+//         currentSkipped != null && currentSkipped! < p.id
+//             ? currentSkipped!
+//             : p.id,
+//         "",
+//         tagManager.excluded);
+//     if (list.$1.isEmpty && currentSkipped == null) {
+//       reachedEnd = true;
+//     } else {
+//       currentSkipped = list.$2;
+//       final oldCount = widget.mainGrid.posts.countSync();
+//       widget.mainGrid.writeTxnSync(
+//           () => widget.mainGrid.posts.putAllByFileUrlSync(list.$1));
+//       restore.updateTime();
+//       if (widget.mainGrid.posts.countSync() - oldCount < 3) {
+//         return await _addLast();
+//       }
+//     }
+//   } catch (e, trace) {
+//     log("_addLast on grid ${state.settings.selectedBooru.string}",
+//         level: Level.WARNING.value, error: e, stackTrace: trace);
+//   }
+
+//   return widget.mainGrid.posts.count();
+// }
 
 // systemNavigationInsets: EdgeInsets.only(
 //     bottom: MediaQuery.of(context).systemGestureInsets.bottom +
@@ -480,19 +406,19 @@ class _MainBooruGridState extends State<MainBooruGrid>
 // pageViewScrollingOffset: restore.copy.scrollPositionTags,
 // initalCell: restore.copy.selectedPost,
 
-class GlueHolder extends StatefulWidget {
+class GlueHolder<T extends Cell> extends StatefulWidget {
   final Widget child;
 
   const GlueHolder({super.key, required this.child});
 
   @override
-  State<GlueHolder> createState() => _GlueHolderState();
+  State<GlueHolder<T>> createState() => _GlueHolderState();
 }
 
-class _GlueHolderState extends State<GlueHolder> {
+class _GlueHolderState<T extends Cell> extends State<GlueHolder<T>> {
   @override
   Widget build(BuildContext context) {
-    return SelectionGlueNotifier(
+    return SelectionGlueNotifier<T>(
       glue: SelectionGlue.empty(context),
       child: widget.child,
     );

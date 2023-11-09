@@ -196,6 +196,7 @@ class _AndroidGalleryFiles implements GalleryAPIFiles {
     (db, idx) => db.systemGalleryDirectoryFiles.get(idx),
     DbsOpen.androidGalleryFiles(),
     [SystemGalleryDirectoryFileSchema],
+    makeState: (loader) => CellLoaderStateController(loader),
   );
 
   // final Isar db;

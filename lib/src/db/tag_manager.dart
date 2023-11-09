@@ -29,7 +29,7 @@ class TagManager {
 
     if (restore && !_temporary) {
       Navigator.push(context, MaterialPageRoute(builder: (context) {
-        final instance = DbsOpen.secondaryGrid(temporary: false);
+        // final instance = DbsOpen.secondaryGrid(temporary: false);
 
         return Placeholder();
         // SecondaryBooruGrid(

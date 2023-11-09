@@ -71,11 +71,10 @@ class _GridLayoutState<T extends Cell> extends State<GridLayout<T>> {
 
   @override
   Widget build(BuildContext context) {
-    return WrapGridStatusNotifiers(
-        child: DataLoaderHolder<T>(
+    return DataLoaderHolder<T>(
       loader: widget.loader,
       child: GridSelectionHolder<T>(
-          child: CallbackGridBase(
+          child: CallbackGridBase<T>(
         onRefresh: _refresh,
         appBar: GridAppBar(
             actions: widget.metadata.appBarActions,
@@ -97,6 +96,6 @@ class _GridLayoutState<T extends Cell> extends State<GridLayout<T>> {
           onPressed: _onPressed,
         ),
       )),
-    ));
+    );
   }
 }

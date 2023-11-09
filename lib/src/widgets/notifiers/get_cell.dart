@@ -10,21 +10,28 @@ import 'package:gallery/src/interfaces/cell.dart';
 
 import '../grid/data_loaders/interface.dart';
 
-class CellProvider<T extends Cell, J> extends InheritedWidget {
-  final BackgroundCellLoader<T, J> loader;
+class CellProvider<T extends Cell> extends InheritedWidget {
+  final BackgroundDataLoader<T, int> loader;
 
   const CellProvider({super.key, required this.loader, required super.child});
 
-  static T getOf<T extends Cell, J>(BuildContext context, J token) {
+  static LoaderStateController stateOf<T extends Cell>(BuildContext context) {
     final widget =
-        context.dependOnInheritedWidgetOfExactType<CellProvider<T, J>>();
+        context.dependOnInheritedWidgetOfExactType<CellProvider<T>>();
+
+    return widget!.loader.state;
+  }
+
+  static T getOf<T extends Cell>(BuildContext context, int token) {
+    final widget =
+        context.dependOnInheritedWidgetOfExactType<CellProvider<T>>();
 
     return widget!.loader.getSingle(token)!;
   }
 
-  static T? Function(J) of<T extends Cell, J>(BuildContext context) {
+  static T? Function(int) of<T extends Cell, I>(BuildContext context) {
     final widget =
-        context.dependOnInheritedWidgetOfExactType<CellProvider<T, J>>();
+        context.dependOnInheritedWidgetOfExactType<CellProvider<T>>();
 
     return widget!.loader.getSingle;
   }

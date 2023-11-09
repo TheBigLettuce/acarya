@@ -41,6 +41,7 @@ import '../../widgets/search_bar/search_filter_grid.dart';
 import '../../plugs/gallery/android/filters.dart';
 import '../../widgets/skeletons/grid_skeleton_state_filter.dart';
 import '../../widgets/skeletons/grid_skeleton.dart';
+import '../booru/grid_settings_button.dart';
 
 bool _isSavingTags = false;
 

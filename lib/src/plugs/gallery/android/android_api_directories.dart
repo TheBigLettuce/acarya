@@ -91,8 +91,14 @@ class _AndroidGallery implements GalleryAPIDirectories {
   final bool? temporary;
   final time = DateTime.now();
   final loader = BackgroundCellLoader<SystemGalleryDirectory, int>.cached(
-      kAndroidGalleryLoaderKey,
-      () => ((db, id) => null, _global!.db, [SystemGalleryDirectorySchema]));
+      kAndroidGalleryLoaderKey);
+
+  // () => (
+  //       (db, id) => null,
+  //       _global!.db,
+  //       [SystemGalleryDirectorySchema],
+  //       (loader) => CellLoaderStateController(loader),
+  //     )
 
   // void Function(int, bool)? temporarySet;
 
