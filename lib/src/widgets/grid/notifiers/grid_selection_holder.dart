@@ -41,24 +41,18 @@ class GridSelectionHolderState<T extends Cell>
 
   @override
   Widget build(BuildContext context) {
-    return NotifierRegistryHolder.inherit(
-      context,
-      [
-        (child) => SelectionData(
-              bundle: SelectionCallbackBundle(
-                  isSelected: _selection.isSelected,
-                  selectUnselect: _selection.selectOrUnselect,
-                  selectUntil: _selection.selectUnselectUntil),
-              child: SelectionCountNotifier(
-                count: _count,
-                child: IsSelectingNotifier(
-                  isSelecting: _count != 0,
-                  child: child,
-                ),
-              ),
-            )
-      ],
-      widget.child,
+    return SelectionData(
+      bundle: SelectionCallbackBundle(
+          isSelected: _selection.isSelected,
+          selectUnselect: _selection.selectOrUnselect,
+          selectUntil: _selection.selectUnselectUntil),
+      child: SelectionCountNotifier(
+        count: _count,
+        child: IsSelectingNotifier(
+          isSelecting: _count != 0,
+          child: widget.child,
+        ),
+      ),
     );
   }
 }

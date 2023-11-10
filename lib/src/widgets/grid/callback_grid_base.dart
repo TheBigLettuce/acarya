@@ -38,7 +38,7 @@ class _CallbackGridBaseState<T extends Cell>
 
     scrollController.addListener(() {
       if (scrollController.position.pixels >=
-              scrollController.position.maxScrollExtent * 0.80 &&
+              scrollController.position.maxScrollExtent * 0.95 &&
           scrollController.position.maxScrollExtent != 0 &&
           scrollController.position.pixels != 0) {
         final state = CellProvider.stateOf<T>(context);
@@ -83,7 +83,11 @@ class _CallbackGridBaseState<T extends Cell>
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             if (widget.appBar != null) widget.appBar!,
-            _Padding<T>(child: widget.child),
+            _Padding<T>(
+                child: PrimaryScrollController(
+              controller: scrollController,
+              child: widget.child,
+            )),
           ],
         ));
   }

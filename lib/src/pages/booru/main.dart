@@ -18,11 +18,14 @@ import 'package:gallery/src/db/schemas/tags.dart';
 import 'package:gallery/src/interfaces/cell.dart';
 import 'package:gallery/src/net/network_configuration.dart';
 import 'package:gallery/src/pages/booru/random.dart';
+import 'package:gallery/src/widgets/grid/data_loaders/cell_loader.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
 import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/layouts/grid/grid.dart';
+import 'package:gallery/src/widgets/grid/layouts/list/list.dart';
 import 'package:gallery/src/widgets/notifiers/cell_provider.dart';
 import 'package:gallery/src/widgets/notifiers/grid_metadata.dart';
+import 'package:gallery/src/widgets/notifiers/notes_interface.dart';
 import 'package:gallery/src/widgets/notifiers/notifier_registry.dart';
 import 'package:gallery/src/widgets/notifiers/state_restoration.dart';
 import 'package:gallery/src/widgets/notifiers/network_configuration.dart';
@@ -178,30 +181,40 @@ class _MainBooruGridState extends State<MainBooruGrid> {
     // }
 
     registrer = [
-      (child) {
-        return NetworkConfigurationProvider(
-            configuration: const NetworkConfiguration(),
-            child: StateRestorationProvider(
-              state: restore,
-              child: GlueHolder<Post>(
-                  glue: widget.glue,
-                  child: GridMetadataProvider<Post>(
-                    metadata: GridMetadata(
-                      isList: false,
-                      aspectRatio: state.settings.booru.aspectRatio,
-                      columns: state.settings.booru.columns,
-                      onPressed: GridMetadata.launchImageView<Post>,
-                      hideAlias: true,
-                      gridActions: [
-                        // BooruGridActions.download(context, api),
-                        BooruGridActions.favorites(context, null,
-                            showDeleteSnackbar: true)
-                      ],
-                    ),
-                    child: child,
-                  )),
-            ));
-      },
+      (child) => StateRestorationProvider(
+            state: restore,
+            child: child,
+          ),
+
+      ...NotifierRegistry.genericNotifiers<Post>(
+        context,
+        widget.glue,
+        GridMetadata(
+          isList: false,
+          aspectRatio: state.settings.booru.aspectRatio,
+          columns: state.settings.booru.columns,
+          onPressed: GridMetadata.launchImageView<Post>,
+          hideAlias: true,
+          gridActions: [
+            BooruGridActions.download(context),
+            BooruGridActions.favorites(context, null, showDeleteSnackbar: true)
+          ],
+        ),
+        NoteBooru.interface(setState),
+      )
+      // (child) {
+      //   return NetworkConfigurationProvider(
+      //       configuration: const NetworkConfiguration(),
+      //       child: GlueHolder<Post>(
+      //         glue: widget.glue,
+      //         child: GridMetadataProvider<Post>(
+
+      //             child: NoteInterfaceProvider<Post>(
+
+      //               child: child,
+      //             )),
+      //       ));
+      // },
     ];
 
     settingsWatcher = Settings.watch((s) {
@@ -223,18 +236,10 @@ class _MainBooruGridState extends State<MainBooruGrid> {
     settingsWatcher.cancel();
     favoritesWatcher.cancel();
 
-    // disposeSearch();
-
     state.dispose();
 
     super.dispose();
   }
-
-  // NotifierRegistry.addNotifiersOn(context, (child) {
-  //     return NetworkConfigurationProvider(
-  //         configuration: NetworkConfigurationProvider.of(context),
-  //         child: child);
-  //   });
 
   @override
   Widget build(BuildContext context) {
@@ -242,20 +247,21 @@ class _MainBooruGridState extends State<MainBooruGrid> {
       l: registrer,
       child: GridSkeleton(
         state,
-        CallbackGridShell(
+        CallbackGridShell<Post>(
+          loader: loader,
+          appBarActions: [
+            const BookmarkButton(),
+            MainBooruGrid.gridButton(state.settings)
+          ],
           keybinds: const {},
           mainFocus: state.mainFocus,
-          child: GridLayout<Post>(
-            download: null,
-            loader: loader,
-            appBarActions: [
-              const BookmarkButton(),
-              MainBooruGrid.gridButton(state.settings)
-            ],
-            // metadata:,
-          ),
+          child: state.settings.booru.listView
+              ? const ListLayout<Post>()
+              : const GridLayout<Post>(download: null
+
+                  // metadata:,
+                  ),
         ),
-        // overrideBooru: api.booru,
         canPop: true,
         // !widget.glue.isOpen() &&
         //     state.gridKey.currentState?.showSearchBar != true,

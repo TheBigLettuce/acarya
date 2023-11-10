@@ -116,10 +116,10 @@ class _SinglePostState extends State<SinglePost> {
                   Settings.fromDb());
             },
             // cellCount: 1,
-            addIcons: (p) => [
-              // BooruGridActions.favorites(context, p),
-              BooruGridActions.download(context, booru)
-            ],
+            // addIcons: (p) => [
+            //   // BooruGridActions.favorites(context, p),
+            //   BooruGridActions.download(context, booru)
+            // ],
             // scrollUntill: (_) {},
             onExit: () {},
             focusMain: () {},

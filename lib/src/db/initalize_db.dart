@@ -38,6 +38,15 @@ part 'dbs_open.dart';
 
 bool _initalized = false;
 
+const kMainSchemas = [
+  SettingsSchema,
+  FavoriteBooruSchema,
+  LocalTagDictionarySchema,
+  GridStateBooruSchema,
+  DownloadFileSchema,
+  NoteGallerySchema
+];
+
 Future initalizeDb(bool temporary) async {
   if (_initalized) {
     return;
@@ -63,14 +72,8 @@ Future initalizeDb(bool temporary) async {
 
   final temporaryImagesPath = dimages.path;
 
-  final main = Isar.open(schemas: [
-    SettingsSchema,
-    FavoriteBooruSchema,
-    LocalTagDictionarySchema,
-    GridStateBooruSchema,
-    DownloadFileSchema,
-    NoteGallerySchema
-  ], directory: directoryPath, inspector: false);
+  final main = Isar.open(
+      schemas: kMainSchemas, directory: directoryPath, inspector: false);
 
   final blacklistedDirIsar = Isar.open(schemas: [
     BlacklistedDirectorySchema,

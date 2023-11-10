@@ -14,6 +14,7 @@ import 'package:gallery/src/interfaces/filtering/filtering_mode.dart';
 import 'package:gallery/src/interfaces/filtering/sorting_mode.dart';
 import 'package:gallery/src/interfaces/gallery.dart';
 import 'package:gallery/src/plugs/gallery.dart';
+import 'package:gallery/src/widgets/grid/data_loaders/dummy_loader.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
 import 'package:isar/isar.dart';
 

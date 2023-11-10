@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gallery/src/db/schemas/note.dart';
+import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/selection_interface.dart';
 import 'package:gallery/src/widgets/image_view/loading_builder.dart';
 import 'package:gallery/src/widgets/image_view/make_image_view_bindings.dart';
@@ -22,6 +23,8 @@ import 'package:gallery/src/widgets/image_view/wrap_image_view_theme.dart';
 import 'package:gallery/src/plugs/platform_fullscreens.dart';
 import 'package:gallery/src/widgets/notifiers/cell_provider.dart';
 import 'package:gallery/src/widgets/notifiers/grid_element_count.dart';
+import 'package:gallery/src/widgets/notifiers/grid_metadata.dart';
+import 'package:gallery/src/widgets/notifiers/notes_interface.dart';
 import 'package:gallery/src/widgets/notifiers/state_restoration.dart';
 import 'package:logging/logging.dart';
 import 'package:transparent_image/transparent_image.dart';
@@ -61,7 +64,7 @@ class NoteInterface<T extends Cell> {
 
 class ImageView<T extends Cell> extends StatefulWidget {
   final Future<int> Function()? onNearEnd;
-  final List<GridAction<T>> Function(T)? addIcons;
+  // final List<GridAction<T>> Function(T)? addIcons;
   final void Function(int i)? download;
   final void Function(ImageViewState<T> state)? pageChange;
   final void Function() onExit;
@@ -74,18 +77,19 @@ class ImageView<T extends Cell> extends StatefulWidget {
   final int startingCell;
   final T currentCell;
 
-  const ImageView(
-      {super.key,
-      required this.onExit,
-      this.predefinedIndexes,
-      required this.onNearEnd,
-      required this.currentCell,
-      required this.focusMain,
-      this.pageChange,
-      required this.startingCell,
-      this.onEmptyNotes,
-      this.download,
-      this.addIcons});
+  const ImageView({
+    super.key,
+    required this.onExit,
+    this.predefinedIndexes,
+    required this.onNearEnd,
+    required this.currentCell,
+    required this.focusMain,
+    this.pageChange,
+    required this.startingCell,
+    this.onEmptyNotes,
+    this.download,
+    // this.addIcons
+  });
 
   @override
   State<ImageView<T>> createState() => ImageViewState<T>();
@@ -332,39 +336,37 @@ class ImageViewState<T extends Cell> extends State<ImageView<T>>
                 textController: noteTextController,
                 addNote: () => noteListKey.currentState
                     ?.addNote(currentCell, currentPalette),
-                showAddNoteButton: false,
+                showAddNoteButton:
+                    NoteInterfaceProvider.maybeOf<T>(context) != null,
                 // widget.noteInterface != null,
-                children: widget.addIcons
-                        ?.call(currentCell)
-                        .map(
-                          (e) => WrapGridActionButton(e.icon, () {
-                            e.onPress([currentCell]);
-                          }, false, "",
-                              followColorTheme: true,
-                              color: e.color,
-                              play: e.play,
-                              backgroundColor: e.backgroundColor,
-                              animate: e.animate),
-                        )
-                        .toList() ??
-                    const []),
+                children: GridMetadataProvider.gridActionsOf<T>(context)
+                    .map(
+                      (e) => WrapGridActionButton(e.icon, () {
+                        e.onPress([currentCell]);
+                      }, false, "",
+                          followColorTheme: true,
+                          color: e.color,
+                          play: e.play,
+                          backgroundColor: e.backgroundColor,
+                          animate: e.animate),
+                    )
+                    .toList()),
             mainFocus: mainFocus,
             child: ImageViewBody(
               onPageChanged: _onPageChanged,
               onLongPress: _onLongPress,
               pageController: controller,
-              notes: null,
-              // widget.noteInterface == null
-              //     ? null
-              //     : NoteList<T>(
-              //         key: noteListKey,
-              //         noteInterface: widget.noteInterface!,
-              //         onEmptyNotes: widget.onEmptyNotes,
-              //         backgroundColor: currentPalette?.dominantColor?.color
-              //                 .harmonizeWith(
-              //                     Theme.of(context).colorScheme.primary) ??
-              //             Colors.black,
-              //       ),
+              notes: NoteInterfaceProvider.maybeOf<T>(context) == null
+                  ? null
+                  : NoteList<T>(
+                      key: noteListKey,
+                      noteInterface: NoteInterfaceProvider.maybeOf<T>(context)!,
+                      onEmptyNotes: widget.onEmptyNotes,
+                      backgroundColor: currentPalette?.dominantColor?.color
+                              .harmonizeWith(
+                                  Theme.of(context).colorScheme.primary) ??
+                          Colors.black,
+                    ),
               loadingBuilder: (context, event, idx) => loadingBuilder(context,
                   event, idx, currentPage, wrapNotifiersKey, currentPalette),
               itemCount: GridElementCountNotifier.of(context),

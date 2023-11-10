@@ -19,6 +19,8 @@ import 'package:gallery/src/pages/image_view.dart';
 import 'package:gallery/src/widgets/copy_move_preview.dart';
 import 'package:gallery/src/widgets/empty_widget.dart';
 import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
+import 'package:gallery/src/widgets/grid/data_loaders/dummy_loader.dart';
+import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
 import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/layouts/notes/notes.dart';
 import 'package:gallery/src/widgets/notifiers/cell_provider.dart';
@@ -92,6 +94,8 @@ class _NotePageContainer<T extends Cell> {
   Widget widget(BuildContext context) => GridSkeleton<T>(
       state,
       CallbackGridShell(
+        loader: DummyBackgroundLoader(),
+        appBarActions: [],
         // key: state.gridKey,
         keybinds: const {},
         // initalScrollPosition: 0,

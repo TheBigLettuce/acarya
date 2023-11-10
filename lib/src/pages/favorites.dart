@@ -8,6 +8,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:gallery/src/db/schemas/note.dart';
 import 'package:gallery/src/widgets/grid/actions/favorites.dart';
 import 'package:gallery/src/net/downloader.dart';
 import 'package:gallery/src/interfaces/booru.dart';
@@ -17,9 +18,14 @@ import 'package:gallery/src/pages/booru/main.dart';
 import 'package:gallery/src/db/schemas/favorite_booru.dart';
 import 'package:gallery/src/db/schemas/local_tag_dictionary.dart';
 import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
+import 'package:gallery/src/widgets/grid/data_loaders/cell_loader.dart';
+import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
+import 'package:gallery/src/widgets/grid/data_loaders/read_only_loader.dart';
 import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/layouts/grid/grid.dart';
+import 'package:gallery/src/widgets/grid/notifiers/notifier_registry_holder.dart';
 import 'package:gallery/src/widgets/grid/segments.dart';
+import 'package:gallery/src/widgets/notifiers/notifier_registry.dart';
 import 'package:gallery/src/widgets/search_bar/search_filter_grid.dart';
 import 'package:gallery/src/widgets/skeletons/grid_skeleton_state.dart';
 import 'package:isar/isar.dart';
@@ -37,6 +43,7 @@ import '../widgets/grid/search_and_focus.dart';
 import '../widgets/grid/selection_glue.dart';
 import '../widgets/skeletons/grid_skeleton_state_filter.dart';
 import '../widgets/skeletons/grid_skeleton.dart';
+import 'booru/grid_settings_button.dart';
 
 class FavoritesPage extends StatefulWidget {
   final void Function(bool) procPop;
@@ -212,6 +219,12 @@ class _FavoritesPageState extends State<FavoritesPage>
         state.settings);
   }
 
+  final loader = ReadOnlyDataLoader<FavoriteBooru, int, String>(
+    Dbs.g.main,
+    (db, idx) =>
+        db.favoriteBoorus.where().sortByPostIdDesc().findFirst(offset: idx),
+  );
+
   @override
   void initState() {
     super.initState();
@@ -248,6 +261,20 @@ class _FavoritesPageState extends State<FavoritesPage>
     });
   }
 
+  late final notifiers = NotifierRegistry.genericNotifiers<FavoriteBooru>(
+    context,
+    widget.glue,
+    GridMetadata(
+      gridActions: [BooruGridActions.download(context), _groupButton(context)],
+      onPressed: GridMetadata.launchImageView<FavoriteBooru>,
+      aspectRatio: state.settings.favorites.aspectRatio,
+      columns: state.settings.favorites.columns,
+      hideAlias: true,
+      isList: state.settings.favorites.listView,
+    ),
+    NoteBooru.interface(setState),
+  );
+
   GridAction<FavoriteBooru> _groupButton(BuildContext context) {
     return FavoritesActions.addToGroup(context, (selected) {
       final g = selected.first.group;
@@ -279,96 +306,81 @@ class _FavoritesPageState extends State<FavoritesPage>
 
   @override
   Widget build(BuildContext context) {
-    return GridSkeleton<FavoriteBooru>(
-        state,
-        CallbackGridShell(
-            // key: state.gridKey,
-            keybinds: const {},
-            // initalScrollPosition: 0,
-            // showCount: true,
-            // selectionGlue: widget.glue,
-            // scaffoldKey: state.scaffoldKey,
-            // addIconsImage: (p) => [
-            //   BooruGridActions.favorites(context, p,
-            //       showDeleteSnackbar: true),
-            //   BooruGridActions.download(context, booru),
-            //   _groupButton(context)
-            // ],
-            // systemNavigationInsets: EdgeInsets.only(
-            //     bottom: MediaQuery.systemGestureInsetsOf(context).bottom +
-            //         (Scaffold.of(context).widget.bottomNavigationBar !=
-            //                     null &&
-            //                 !widget.glue.keyboardVisible()
-            //             ? 80
-            //             : 0)),
-            // hasReachedEnd: () => true,
-            // download: _download,
-            // noteInterface: NoteBooru.interface<FavoriteBooru>(setState),
-            // addFabPadding:
-            //     Scaffold.of(context).widget.bottomNavigationBar == null,
-            mainFocus: state.mainFocus,
+    return NotifierRegistryHolder(
+      l: notifiers,
+      child: GridSkeleton<FavoriteBooru>(
+          state,
+          CallbackGridShell<FavoriteBooru>(
+              loader: loader,
+              appBarActions: [
+                gridSettingsButton(state.settings.favorites,
+                    selectHideName: null,
+                    selectRatio: (ratio) => state.settings
+                        .copy(
+                            favorites: state.settings.favorites
+                                .copy(aspectRatio: ratio))
+                        .save(),
+                    selectListView: null,
+                    selectGridColumn: (columns) => state.settings
+                        .copy(
+                            favorites:
+                                state.settings.favorites.copy(columns: columns))
+                        .save())
+              ],
+              keybinds: const {},
+              // showCount: true,
+              // systemNavigationInsets: EdgeInsets.only(
+              //     bottom: MediaQuery.systemGestureInsetsOf(context).bottom +
+              //         (Scaffold.of(context).widget.bottomNavigationBar !=
+              //                     null &&
+              //                 !widget.glue.keyboardVisible()
+              //             ? 80
+              //             : 0)),
+              // hasReachedEnd: () => true,
+              // download: _download,
+              // addFabPadding:
+              //     Scaffold.of(context).widget.bottomNavigationBar == null,
+              mainFocus: state.mainFocus,
 
-            // refresh: () => Future.value(loader.count()),
+              // refresh: () => Future.value(loader.count()),
 
-            child: Placeholder()
-            //  GridLayout<FavoriteBooru>(
-            //   aspectRatio: state.settings.favorites.aspectRatio,
-            //   columns: state.settings.favorites.columns,
-            //   // getOriginalCell: loader.getCell,
-            //   segments: segmented
-            //       ? Segments(
-            //           "Ungrouped", // TODO: change
-            //           hidePinnedIcon: true,
-            //           prebuiltSegments: segments,
-            //         )
-            //       : null,
-            //   download: _download,
-            //   metadata: GridMetadata(
-            //     hideAlias: true,
-            //     appBarActions: [
-            //       gridSettingsButton(state.settings.favorites,
-            //           selectHideName: null,
-            //           selectRatio: (ratio) => state.settings
-            //               .copy(
-            //                   favorites: state.settings.favorites
-            //                       .copy(aspectRatio: ratio))
-            //               .save(),
-            //           selectListView: null,
-            //           selectGridColumn: (columns) => state.settings
-            //               .copy(
-            //                   favorites: state.settings.favorites
-            //                       .copy(columns: columns))
-            //               .save())
-            //     ],
-            //     gridActions: [
-            //       BooruGridActions.download(context, booru),
-            //       _groupButton(context)
-            //     ],
-            //     // search: SearchAndFocus(
-            //     //     searchWidget(context,
-            //     //         hint: AppLocalizations.of(context)!
-            //     //             .favoritesLabel
-            //     //             .toLowerCase()),
-            //     //     searchFocus),
-            //   ),
-            // ),
-            ),
-        canPop: false, overrideOnPop: (pop, hideAppBar) {
-      // if (searchTextController.text.isNotEmpty) {
-      //   resetSearch();
-      //   return;
-      // }
-      // if (widget.glue.isOpen()) {
-      //   state.gridKey.currentState?.selection.reset();
-      //   return;
-      // }
+              child: GridLayout<FavoriteBooru>(download: null)
+              //  GridLayout<FavoriteBooru>(
+              //   aspectRatio: state.settings.favorites.aspectRatio,
+              //   columns: state.settings.favorites.columns,
+              //   // getOriginalCell: loader.getCell,
+              //   segments: segmented
+              //       ? Segments(
+              //           "Ungrouped", // TODO: change
+              //           hidePinnedIcon: true,
+              //           prebuiltSegments: segments,
+              //         )
+              //       : null,
+              // search: SearchAndFocus(
+              //     searchWidget(context,
+              //         hint: AppLocalizations.of(context)!
+              //             .favoritesLabel
+              //             .toLowerCase()),
+              //     searchFocus),
+              // ),
+              ),
+          canPop: false, overrideOnPop: (pop, hideAppBar) {
+        // if (searchTextController.text.isNotEmpty) {
+        //   resetSearch();
+        //   return;
+        // }
+        // if (widget.glue.isOpen()) {
+        //   state.gridKey.currentState?.selection.reset();
+        //   return;
+        // }
 
-      if (hideAppBar()) {
-        setState(() {});
-        return;
-      }
+        if (hideAppBar()) {
+          setState(() {});
+          return;
+        }
 
-      widget.procPop(pop);
-    });
+        widget.procPop(pop);
+      }),
+    );
   }
 }

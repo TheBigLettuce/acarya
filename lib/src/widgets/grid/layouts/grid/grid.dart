@@ -27,65 +27,41 @@ import '../../notifiers/grid_selection_holder.dart';
 import '../../notifiers/wrap_grid_status_notifiers.dart';
 import '../../wrapped_selection.dart';
 
-part 'body.dart';
-
-class GridLayout<T extends Cell> extends StatefulWidget {
-  final List<Widget> appBarActions;
-
+class GridLayout<T extends Cell> extends StatelessWidget {
   final void Function(T)? download;
-  final SearchAndFocus? search;
 
   final Segments<T>? segments;
 
-  final BackgroundDataLoader<T, int> loader;
+  const GridLayout({super.key, required this.download, this.segments});
 
-  const GridLayout({
-    super.key,
-    required this.download,
-    required this.loader,
-    this.segments,
-    required this.appBarActions,
-    this.search,
-  });
-
-  @override
-  State<GridLayout<T>> createState() => _GridLayoutState<T>();
-}
-
-class _GridLayoutState<T extends Cell> extends State<GridLayout<T>> {
   void _download(BuildContext context, int i) {
-    widget.download!(widget.loader.getSingle(i)!);
+    download?.call(CellProvider.getOf<T>(context, i));
   }
-
-  Future<void> _refresh() {
-    return Future.value();
-  }
-
-  void _onAppBarTitlePressed() {}
 
   @override
   Widget build(BuildContext context) {
-    return DataLoaderHolder<T>(
-      loader: widget.loader,
-      child: GridSelectionHolder<T>(
-          child: CallbackGridBase<T>(
-        onRefresh: _refresh,
-        appBar: GridAppBar(
-            actions: widget.appBarActions,
-            bottomWidget: null,
-            centerTitle: true,
-            leading: Text(""),
-            // search: widget.metadata.search,
-            title: GridAppBarTitle(
-                onPressed: _onAppBarTitlePressed,
-                searchWidget: widget.search,
-                child: const WrapBadgeCellCountTitleWidget(
-                  child: SearchCharacterTitle(),
-                ))),
-        child: _GridBody<T>(
-          download: widget.download == null ? null : _download,
-        ),
-      )),
+    return SliverGrid.builder(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          childAspectRatio:
+              GridMetadataProvider.aspectRatioOf<T>(context).value,
+          crossAxisCount: GridMetadataProvider.columnsOf<T>(context).number),
+      itemCount: GridElementCountNotifier.of(context),
+      itemBuilder: (context, indx) {
+        final t1 = DateTime.now();
+        final cell = CellProvider.getOf<T>(context, indx);
+        print(
+            DateTime.now().microsecondsSinceEpoch - t1.microsecondsSinceEpoch);
+
+        return WrappedSelection(
+          thisIndx: indx,
+          child: GridCell<T>(
+            key: cell.uniqueKey(),
+            cell: cell,
+            indx: indx,
+            download: _download,
+          ),
+        );
+      },
     );
   }
 }

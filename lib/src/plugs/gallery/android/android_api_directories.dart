@@ -14,6 +14,7 @@ import 'package:gallery/src/db/schemas/system_gallery_directory.dart';
 import 'package:gallery/src/db/schemas/system_gallery_directory_file.dart';
 import 'package:gallery/src/db/schemas/blacklisted_directory.dart';
 import 'package:gallery/src/db/schemas/favorite_media.dart';
+import 'package:gallery/src/widgets/grid/data_loaders/cell_loader.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
 import 'package:isar/isar.dart';
 import 'package:logging/logging.dart';

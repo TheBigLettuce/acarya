@@ -267,7 +267,46 @@ class _GalleryDirectoriesState extends State<GalleryDirectories> {
   Widget build(BuildContext context) {
     return GridSkeleton<SystemGalleryDirectory>(
         state,
-        CallbackGridShell(
+        CallbackGridShell<SystemGalleryDirectory>(
+          loader: extra.loader,
+
+          appBarActions: [
+            if (widget.callback != null)
+              IconButton(
+                  onPressed: () async {
+                    try {
+                      widget.callback!(
+                          null,
+                          await PlatformFunctions.chooseDirectory(
+                              temporary: true));
+                      // ignore: use_build_context_synchronously
+                      Navigator.pop(context);
+                    } catch (e) {
+                      log("new folder in android_directories",
+                          level: Level.SEVERE.value, error: e);
+                      // ignore: use_build_context_synchronously
+                      Navigator.pop(context);
+                    }
+                  },
+                  icon: const Icon(Icons.create_new_folder_outlined)),
+            gridSettingsButton(state.settings.galleryDirectories,
+                selectRatio: (ratio) => state.settings
+                    .copy(
+                        galleryDirectories: state.settings.galleryDirectories
+                            .copy(aspectRatio: ratio))
+                    .save(),
+                selectHideName: (hideNames) => state.settings
+                    .copy(
+                        galleryDirectories: state.settings.galleryDirectories
+                            .copy(hideName: hideNames))
+                    .save(),
+                selectListView: null,
+                selectGridColumn: (columns) => state.settings
+                    .copy(
+                        galleryDirectories: state.settings.galleryDirectories
+                            .copy(columns: columns))
+                    .save()),
+          ],
           keybinds: const {},
           // initalScrollPosition: 0,
           // scaffoldKey: state.scaffoldKey,
@@ -358,47 +397,10 @@ class _GalleryDirectoriesState extends State<GalleryDirectories> {
           // ),
           child: GridLayout<SystemGalleryDirectory>(
             segments: _makeSegments(context),
-            appBarActions: [
-              if (widget.callback != null)
-                IconButton(
-                    onPressed: () async {
-                      try {
-                        widget.callback!(
-                            null,
-                            await PlatformFunctions.chooseDirectory(
-                                temporary: true));
-                        // ignore: use_build_context_synchronously
-                        Navigator.pop(context);
-                      } catch (e) {
-                        log("new folder in android_directories",
-                            level: Level.SEVERE.value, error: e);
-                        // ignore: use_build_context_synchronously
-                        Navigator.pop(context);
-                      }
-                    },
-                    icon: const Icon(Icons.create_new_folder_outlined)),
-              gridSettingsButton(state.settings.galleryDirectories,
-                  selectRatio: (ratio) => state.settings
-                      .copy(
-                          galleryDirectories: state.settings.galleryDirectories
-                              .copy(aspectRatio: ratio))
-                      .save(),
-                  selectHideName: (hideNames) => state.settings
-                      .copy(
-                          galleryDirectories: state.settings.galleryDirectories
-                              .copy(hideName: hideNames))
-                      .save(),
-                  selectListView: null,
-                  selectGridColumn: (columns) => state.settings
-                      .copy(
-                          galleryDirectories: state.settings.galleryDirectories
-                              .copy(columns: columns))
-                      .save()),
-            ],
+
             // aspectRatio: state.settings.galleryDirectories.aspectRatio,
             // columns: state.settings.galleryDirectories.columns,
             // getOriginalCell: api.directCell,
-            loader: extra.loader,
             download: null,
             // metadata: GridMetadata(
 

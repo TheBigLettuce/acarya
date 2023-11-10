@@ -12,6 +12,8 @@ import 'package:gallery/src/db/initalize_db.dart';
 import 'package:gallery/src/plugs/gallery.dart';
 import 'package:gallery/src/db/schemas/blacklisted_directory.dart';
 import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
+import 'package:gallery/src/widgets/grid/data_loaders/dummy_loader.dart';
+import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
 import 'package:gallery/src/widgets/grid/grid_action.dart';
 import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/layouts/list/list.dart';
@@ -78,6 +80,9 @@ class _BlacklistedDirectoriesState extends State<BlacklistedDirectories>
         f: (glue) => GridSkeleton(
               state,
               CallbackGridShell(
+                loader: DummyBackgroundLoader(),
+                appBarActions: [],
+
                 // key: state.gridKey,
                 // scaffoldKey: state.scaffoldKey,
                 // hasReachedEnd: () => true,

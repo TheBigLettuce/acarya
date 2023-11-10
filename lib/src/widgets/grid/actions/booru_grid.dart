@@ -20,8 +20,7 @@ import '../../../db/schemas/tags.dart';
 import '../grid_action.dart';
 
 class BooruGridActions {
-  static GridAction<T> download<T extends PostBase>(
-      BuildContext context, BooruAPI api) {
+  static GridAction<T> download<T extends PostBase>(BuildContext context) {
     return GridAction(
       Icons.download,
       (selected) {
@@ -31,7 +30,7 @@ class BooruGridActions {
         Downloader.g.addAll(
             selected.map((e) => DownloadFile.d(
                 url: e.fileUrl,
-                site: api.booru.url,
+                site: settings.selectedBooru.url,
                 name: e.filename(),
                 thumbUrl: e.previewUrl)),
             settings);
