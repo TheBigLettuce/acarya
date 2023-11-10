@@ -16,11 +16,16 @@ import 'package:gallery/src/db/schemas/grid_state_booru.dart';
 import 'package:gallery/src/db/schemas/note.dart';
 import 'package:gallery/src/db/schemas/tags.dart';
 import 'package:gallery/src/interfaces/cell.dart';
+import 'package:gallery/src/net/network_configuration.dart';
 import 'package:gallery/src/pages/booru/random.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
 import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/layouts/grid/grid.dart';
-import 'package:gallery/src/widgets/notifiers/get_cell.dart';
+import 'package:gallery/src/widgets/notifiers/cell_provider.dart';
+import 'package:gallery/src/widgets/notifiers/grid_metadata.dart';
+import 'package:gallery/src/widgets/notifiers/notifier_registry.dart';
+import 'package:gallery/src/widgets/notifiers/state_restoration.dart';
+import 'package:gallery/src/widgets/notifiers/network_configuration.dart';
 import 'package:gallery/src/widgets/notifiers/selection_glue.dart';
 import 'package:isar/isar.dart';
 import 'package:logging/logging.dart';
@@ -34,6 +39,7 @@ import '../../db/state_restoration.dart';
 import '../../db/schemas/download_file.dart';
 import '../../db/schemas/post.dart';
 import '../../db/schemas/settings.dart';
+import '../../widgets/grid/notifiers/notifier_registry_holder.dart';
 import '../../widgets/grid/selection_glue.dart';
 import '../../widgets/search_bar/search_launch_grid_data.dart';
 import '../../widgets/skeletons/grid_skeleton_state.dart';
@@ -99,13 +105,23 @@ class MainBooruGrid extends StatefulWidget {
   State<MainBooruGrid> createState() => _MainBooruGridState();
 }
 
+// class GridMetadataHolder extends StatelessWidget {
+
+//   const GridMetadataHolder({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return const Placeholder();
+//   }
+// }
+
 class _MainBooruGridState extends State<MainBooruGrid> {
   late final StreamSubscription<Settings?> settingsWatcher;
   late final StreamSubscription favoritesWatcher;
 
-  late final BooruAPI api;
+  // late final BooruAPI api;
   late final StateRestoration restore;
-  late final TagManager tagManager;
+  // late final TagManager tagManager;
 
   late final loader =
       BackgroundCellLoader<Post, String>.cached(kMainGridLoaderKey);
@@ -116,6 +132,8 @@ class _MainBooruGridState extends State<MainBooruGrid> {
 
 //     return ((db, idx) => db.posts.get(e.fileUrl), db, kPrimaryGridSchemas);
 //   }
+
+  late final List<InheritedWidget Function(Widget)> registrer;
 
   int? currentSkipped;
 
@@ -130,15 +148,15 @@ class _MainBooruGridState extends State<MainBooruGrid> {
     // main grid safe mode only from Settings
     restore = StateRestoration(widget.mainGrid,
         state.settings.selectedBooru.string, state.settings.safeMode);
-    api = BooruAPI.fromSettings(page: restore.copy.page);
+    // api = BooruAPI.fromSettings(page: restore.copy.page);
 
-    tagManager = TagManager(restore, (fire, f) {
-      return widget.mainGrid.tags
-          .watchLazy(fireImmediately: fire)
-          .listen((event) {
-        f();
-      });
-    });
+    // tagManager = TagManager(restore, (fire, f) {
+    //   return widget.mainGrid.tags
+    //       .watchLazy(fireImmediately: fire)
+    //       .listen((event) {
+    //     f();
+    //   });
+    // });
 
     // api.page(0, "", tagManager.excluded).then((value) {
     //   loader.send(value.$1);
@@ -150,14 +168,41 @@ class _MainBooruGridState extends State<MainBooruGrid> {
     //     addItems: null,
     //     restorable: true));
 
-    if (api.wouldBecomeStale &&
-        state.settings.autoRefresh &&
-        state.settings.autoRefreshMicroseconds != 0 &&
-        restore.copy.time.isBefore(DateTime.now()
-            .subtract(state.settings.autoRefreshMicroseconds.microseconds))) {
-      // widget.mainGrid.writeTxnSync(() => widget.mainGrid.posts.clearSync());
-      // restore.updateTime();
-    }
+    // if (api.wouldBecomeStale &&
+    //     state.settings.autoRefresh &&
+    //     state.settings.autoRefreshMicroseconds != 0 &&
+    //     restore.copy.time.isBefore(DateTime.now()
+    //         .subtract(state.settings.autoRefreshMicroseconds.microseconds))) {
+    //   // widget.mainGrid.writeTxnSync(() => widget.mainGrid.posts.clearSync());
+    //   // restore.updateTime();
+    // }
+
+    registrer = [
+      (child) {
+        return NetworkConfigurationProvider(
+            configuration: const NetworkConfiguration(),
+            child: StateRestorationProvider(
+              state: restore,
+              child: GlueHolder<Post>(
+                  glue: widget.glue,
+                  child: GridMetadataProvider<Post>(
+                    metadata: GridMetadata(
+                      isList: false,
+                      aspectRatio: state.settings.booru.aspectRatio,
+                      columns: state.settings.booru.columns,
+                      onPressed: GridMetadata.launchImageView<Post>,
+                      hideAlias: true,
+                      gridActions: [
+                        // BooruGridActions.download(context, api),
+                        BooruGridActions.favorites(context, null,
+                            showDeleteSnackbar: true)
+                      ],
+                    ),
+                    child: child,
+                  )),
+            ));
+      },
+    ];
 
     settingsWatcher = Settings.watch((s) {
       state.settings = s!;
@@ -185,62 +230,64 @@ class _MainBooruGridState extends State<MainBooruGrid> {
     super.dispose();
   }
 
+  // NotifierRegistry.addNotifiersOn(context, (child) {
+  //     return NetworkConfigurationProvider(
+  //         configuration: NetworkConfigurationProvider.of(context),
+  //         child: child);
+  //   });
+
   @override
   Widget build(BuildContext context) {
-    return BooruAPINotifier(
-      api: api,
-      child: GlueHolder<Post>(
-          child: TagManagerNotifier(
-        tagManager: tagManager,
-        child: GridSkeleton(
-          state,
-          CallbackGridShell(
-            keybinds: const {},
-            registerNotifiers: (child) => TagManagerNotifier(
-                tagManager: tagManager,
-                child: BooruAPINotifier(api: api, child: child)),
-            mainFocus: state.mainFocus,
-            child: GridLayout<Post>(
-              aspectRatio: state.settings.booru.aspectRatio,
-              columns: state.settings.booru.columns,
-              download: null,
-              loader: loader,
-              metadata: GridMetadata(
-                hideAlias: false,
-                appBarActions: [
-                  const BookmarkButton(),
-                  MainBooruGrid.gridButton(state.settings)
-                ],
-                gridActions: [
-                  BooruGridActions.download(context, api),
-                  BooruGridActions.favorites(context, null,
-                      showDeleteSnackbar: true)
-                ],
-              ),
-            ),
+    return NotifierRegistryHolder(
+      l: registrer,
+      child: GridSkeleton(
+        state,
+        CallbackGridShell(
+          keybinds: const {},
+          mainFocus: state.mainFocus,
+          child: GridLayout<Post>(
+            download: null,
+            loader: loader,
+            appBarActions: [
+              const BookmarkButton(),
+              MainBooruGrid.gridButton(state.settings)
+            ],
+            // metadata:,
           ),
-          overrideBooru: api.booru,
-          canPop: true,
-          // !widget.glue.isOpen() &&
-          //     state.gridKey.currentState?.showSearchBar != true,
-          overrideOnPop: (pop, hideAppBar) {
-            // if (widget.glue.isOpen()) {
-            //   state.gridKey.currentState?.selection.reset();
-            //   return;
-            // }
-
-            if (hideAppBar()) {
-              setState(() {});
-              return;
-            }
-
-            widget.procPop(pop);
-          },
         ),
-      )),
+        // overrideBooru: api.booru,
+        canPop: true,
+        // !widget.glue.isOpen() &&
+        //     state.gridKey.currentState?.showSearchBar != true,
+        overrideOnPop: (pop, hideAppBar) {
+          // if (widget.glue.isOpen()) {
+          //   state.gridKey.currentState?.selection.reset();
+          //   return;
+          // }
+
+          if (hideAppBar()) {
+            setState(() {});
+            return;
+          }
+
+          widget.procPop(pop);
+        },
+      ),
     );
   }
 }
+
+// class NetworkConfigurationHolder extends StatelessWidget {
+//   final NetworkConfiguration configuration;
+//   final Widget child;
+
+//   const NetworkConfigurationHolder({super.key, required this.configuration, required this.child });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return
+//   }
+// }
 
 // Future<int> _clearAndRefresh() async {
 //   try {
@@ -407,9 +454,10 @@ class _MainBooruGridState extends State<MainBooruGrid> {
 // initalCell: restore.copy.selectedPost,
 
 class GlueHolder<T extends Cell> extends StatefulWidget {
+  final SelectionGlue<T> glue;
   final Widget child;
 
-  const GlueHolder({super.key, required this.child});
+  const GlueHolder({super.key, required this.glue, required this.child});
 
   @override
   State<GlueHolder<T>> createState() => _GlueHolderState();
@@ -417,9 +465,14 @@ class GlueHolder<T extends Cell> extends StatefulWidget {
 
 class _GlueHolderState<T extends Cell> extends State<GlueHolder<T>> {
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SelectionGlueNotifier<T>(
-      glue: SelectionGlue.empty(context),
+      glue: widget.glue,
       child: widget.child,
     );
   }

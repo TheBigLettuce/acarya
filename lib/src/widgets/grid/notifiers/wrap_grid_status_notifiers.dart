@@ -23,8 +23,6 @@ class WrapGridStatusNotifiers extends StatefulWidget {
 }
 
 class _WrapGridStatusNotifiersState extends State<WrapGridStatusNotifiers> {
-  bool _isSelecting = false;
-
   @override
   void initState() {
     super.initState();
@@ -33,7 +31,7 @@ class _WrapGridStatusNotifiersState extends State<WrapGridStatusNotifiers> {
       setState(() {});
     });
 
-    widget.stateController.reset();
+    // widget.stateController.reset();
   }
 
   @override
@@ -46,10 +44,8 @@ class _WrapGridStatusNotifiersState extends State<WrapGridStatusNotifiers> {
   @override
   Widget build(BuildContext context) {
     return IsRefreshingNotifier(
-        isRefreshing: widget.stateController.currentState != LoaderState.idle,
-        child: IsSelectingNotifier(
-          isSelecting: _isSelecting,
-          child: widget.child,
-        ));
+      isRefreshing: widget.stateController.currentState != LoaderState.idle,
+      child: widget.child,
+    );
   }
 }

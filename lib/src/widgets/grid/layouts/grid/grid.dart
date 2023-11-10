@@ -13,9 +13,12 @@ import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
 import 'package:gallery/src/widgets/grid/grid_app_bar.dart';
 import 'package:gallery/src/widgets/grid/app_bar/grid_app_bar_title.dart';
 import 'package:gallery/src/widgets/grid/grid_metadata.dart';
+import 'package:gallery/src/widgets/grid/search_and_focus.dart';
 import 'package:gallery/src/widgets/grid/segments.dart';
-import 'package:gallery/src/widgets/notifiers/get_cell.dart';
+import 'package:gallery/src/widgets/notifiers/cell_provider.dart';
 import 'package:gallery/src/widgets/notifiers/grid_element_count.dart';
+import 'package:gallery/src/widgets/notifiers/grid_metadata.dart';
+import 'package:gallery/src/widgets/notifiers/state_restoration.dart';
 
 import '../../app_bar/wrap_badge_cell_count_title_widget.dart';
 import '../../cell.dart';
@@ -27,25 +30,23 @@ import '../../wrapped_selection.dart';
 part 'body.dart';
 
 class GridLayout<T extends Cell> extends StatefulWidget {
-  final GridColumn columns;
-  final GridAspectRatio aspectRatio;
-
-  final GridMetadata<T> metadata;
+  final List<Widget> appBarActions;
 
   final void Function(T)? download;
+  final SearchAndFocus? search;
 
   final Segments<T>? segments;
 
   final BackgroundDataLoader<T, int> loader;
 
-  const GridLayout(
-      {super.key,
-      required this.aspectRatio,
-      required this.columns,
-      required this.download,
-      required this.loader,
-      this.segments,
-      required this.metadata});
+  const GridLayout({
+    super.key,
+    required this.download,
+    required this.loader,
+    this.segments,
+    required this.appBarActions,
+    this.search,
+  });
 
   @override
   State<GridLayout<T>> createState() => _GridLayoutState<T>();
@@ -54,13 +55,6 @@ class GridLayout<T extends Cell> extends StatefulWidget {
 class _GridLayoutState<T extends Cell> extends State<GridLayout<T>> {
   void _download(BuildContext context, int i) {
     widget.download!(widget.loader.getSingle(i)!);
-  }
-
-  void _onPressed(BuildContext context, T cell, int idx) {
-    if (widget.metadata.overrideOnPress != null) {
-      widget.metadata.overrideOnPress!(context, cell);
-      return;
-    }
   }
 
   Future<void> _refresh() {
@@ -77,23 +71,19 @@ class _GridLayoutState<T extends Cell> extends State<GridLayout<T>> {
           child: CallbackGridBase<T>(
         onRefresh: _refresh,
         appBar: GridAppBar(
-            actions: widget.metadata.appBarActions,
+            actions: widget.appBarActions,
             bottomWidget: null,
             centerTitle: true,
             leading: Text(""),
-            search: widget.metadata.search,
+            // search: widget.metadata.search,
             title: GridAppBarTitle(
                 onPressed: _onAppBarTitlePressed,
-                searchWidget: widget.metadata.search,
+                searchWidget: widget.search,
                 child: const WrapBadgeCellCountTitleWidget(
                   child: SearchCharacterTitle(),
                 ))),
-        child: _GridBody(
-          aspectRatio: widget.aspectRatio,
-          columns: widget.columns,
-          metadata: widget.metadata,
+        child: _GridBody<T>(
           download: widget.download == null ? null : _download,
-          onPressed: _onPressed,
         ),
       )),
     );

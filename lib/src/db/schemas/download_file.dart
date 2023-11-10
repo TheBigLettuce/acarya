@@ -11,6 +11,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/widgets.dart';
 import 'package:gallery/src/interfaces/contentable.dart';
 import 'package:gallery/src/widgets/grid/cell_data.dart';
+import 'package:gallery/src/widgets/notifiers/network_configuration.dart';
 import 'package:isar/isar.dart';
 
 import '../../interfaces/cell.dart';
@@ -97,7 +98,7 @@ class DownloadFile implements Cell {
   String alias(bool isList) => name;
 
   @override
-  Contentable fileDisplay() {
+  Contentable fileDisplay(BuildContext context) {
     throw UnimplementedError();
   }
 
@@ -107,8 +108,14 @@ class DownloadFile implements Cell {
   }
 
   @override
-  CellData getCellData(bool isList, {BuildContext? context}) => CellData(
-      thumb: thumbUrl.isEmpty ? null : CachedNetworkImageProvider(thumbUrl),
-      name: name,
-      stickers: []);
+  CellData getCellData(bool isList, {required BuildContext context}) =>
+      CellData(
+          thumb:
+              thumbUrl.isEmpty
+                  ? null
+                  : CachedNetworkImageProvider(thumbUrl,
+                      headers:
+                          NetworkConfigurationProvider.of(context).asHeaders()),
+          name: name,
+          stickers: []);
 }

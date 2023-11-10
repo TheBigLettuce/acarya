@@ -10,6 +10,8 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:gallery/src/net/network_configuration.dart';
+import 'package:gallery/src/widgets/notifiers/network_configuration.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as path_util;
 import 'package:gallery/src/db/initalize_db.dart';
@@ -288,7 +290,7 @@ class NoteBooru extends NoteBase implements Cell {
   }
 
   @override
-  Contentable fileDisplay() {
+  Contentable fileDisplay(BuildContext context) {
     String url = switch (Settings.fromDb().quality) {
       DisplayQuality.original => fileUrl,
       DisplayQuality.sample => sampleUrl
@@ -304,7 +306,8 @@ class NoteBooru extends NoteBase implements Cell {
     if (typeHalf[0] == "image") {
       ImageProvider provider;
       try {
-        provider = NetworkImage(url);
+        provider = NetworkImage(url,
+            headers: NetworkConfigurationProvider.of(context).asHeaders());
       } catch (e) {
         provider = MemoryImage(kTransparentImage);
       }
@@ -329,7 +332,8 @@ class NoteBooru extends NoteBase implements Cell {
   @override
   CellData getCellData(bool isList, {required BuildContext context}) {
     return CellData(
-        thumb: CachedNetworkImageProvider(previewUrl),
+        thumb: CachedNetworkImageProvider(previewUrl,
+            headers: NetworkConfigurationProvider.of(context).asHeaders()),
         name: postId.toString(),
         stickers: const []);
   }

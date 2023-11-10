@@ -7,6 +7,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:gallery/src/widgets/grid/selection_interface.dart';
+import 'package:gallery/src/widgets/notifiers/grid_metadata.dart';
 import '../../interfaces/cell.dart';
 import 'selection_glue.dart';
 
@@ -34,38 +35,44 @@ class SelectionGlueState {
               setState(() {});
             } catch (_) {}
           },
-          open: (selection) {
-            // if (actions != null || addActions.isEmpty) {
-            //   return;
-            // }
-            // actions = addActions
-            //     .map((e) => WrapGridActionButton(
-            //         e.icon,
-            //         e.showOnlyWhenSingle && selection.selected.length != 1
-            //             ? null
-            //             : () {
-            //                 e.onPress(selection.selected.values.toList());
+          open: (context, selection) {
+            final addActions = GridMetadataProvider.gridActionsOf<T>(context);
 
-            //                 if (e.closeOnPress) {
-            //                   selection.selected.clear();
-            //                   actions = null;
+            if (actions != null || addActions.isEmpty) {
+              return;
+            }
+            actions = addActions
+                .map((e) => WrapGridActionButton(
+                    e.icon,
+                    e.showOnlyWhenSingle && selection.count() != 1
+                        ? null
+                        : () {
+                            // e.onPress(selection.selected.values.toList());
 
-            //                   setState(() {});
-            //                 }
-            //               },
-            //         false,
-            //         selection.selected.length.toString(),
-            //         animate: e.animate,
-            //         color: e.color,
-            //         play: e.play,
-            //         backgroundColor: e.backgroundColor))
-            //     .toList();
+                            selection.use((l) {
+                              e.onPress(l);
+                            });
 
-            // if (_playAnimation != null) {
-            //   _playAnimation!(false).then((value) => setState(() {}));
-            // } else {
-            //   setState(() {});
-            // }
+                            if (e.closeOnPress) {
+                              selection.reset();
+                              actions = null;
+
+                              setState(() {});
+                            }
+                          },
+                    false,
+                    selection.count().toString(),
+                    animate: e.animate,
+                    color: e.color,
+                    play: e.play,
+                    backgroundColor: e.backgroundColor))
+                .toList();
+
+            if (_playAnimation != null) {
+              _playAnimation!(false).then((value) => setState(() {}));
+            } else {
+              setState(() {});
+            }
           },
           isOpen: () {
             return actions != null;

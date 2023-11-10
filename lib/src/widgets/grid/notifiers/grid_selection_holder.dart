@@ -7,6 +7,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:gallery/src/interfaces/cell.dart';
+import 'package:gallery/src/widgets/grid/notifiers/notifier_registry_holder.dart';
+import 'package:gallery/src/widgets/notifiers/is_selecting.dart';
 import 'package:gallery/src/widgets/notifiers/selection_count.dart';
 import 'package:gallery/src/widgets/notifiers/selection_interface.dart';
 
@@ -39,15 +41,24 @@ class GridSelectionHolderState<T extends Cell>
 
   @override
   Widget build(BuildContext context) {
-    return SelectionData(
-      bundle: SelectionCallbackBundle(
-          isSelected: _selection.isSelected,
-          selectUnselect: _selection.selectOrUnselect,
-          selectUntil: _selection.selectUnselectUntil),
-      child: SelectionCountNotifier(
-        count: _count,
-        child: widget.child,
-      ),
+    return NotifierRegistryHolder.inherit(
+      context,
+      [
+        (child) => SelectionData(
+              bundle: SelectionCallbackBundle(
+                  isSelected: _selection.isSelected,
+                  selectUnselect: _selection.selectOrUnselect,
+                  selectUntil: _selection.selectUnselectUntil),
+              child: SelectionCountNotifier(
+                count: _count,
+                child: IsSelectingNotifier(
+                  isSelecting: _count != 0,
+                  child: child,
+                ),
+              ),
+            )
+      ],
+      widget.child,
     );
   }
 }

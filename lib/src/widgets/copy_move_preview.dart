@@ -53,48 +53,46 @@ class _CopyMovePreviewState extends State<CopyMovePreview> {
         height: widget.size,
         width: widget.size,
         child: GridCell(
-          cell: cellData.getCellData(false, context: context),
+          cell: cellData,
           indx: id,
           ignoreStickers: true,
-          onPressed: (context) {
-            Navigator.push(context, MaterialPageRoute(builder: (context) {
-              return ImageView<Cell>(
-                  key: key,
-                  systemOverlayRestoreColor:
-                      Theme.of(context).colorScheme.background.withOpacity(0.5),
-                  updateTagScrollPos: (_, __) {},
-                  scrollUntill: (_) {},
-                  onExit: () {},
-                  addIcons: (_) {
-                    return [
-                      GridAction(
-                        Icons.close_rounded,
-                        (_) {
-                          widget.files.removeAt(key.currentState!.currentPage);
+          // onPressed: (context) {
+          //   Navigator.push(context, MaterialPageRoute(builder: (context) {
+          //     return ImageView<Cell>(
+          //         key: key,
+          //         systemOverlayRestoreColor:
+          //             Theme.of(context).colorScheme.background.withOpacity(0.5),
+          //         updateTagScrollPos: (_, __) {},
+          //         scrollUntill: (_) {},
+          //         onExit: () {},
+          //         addIcons: (_) {
+          //           return [
+          //             GridAction(
+          //               Icons.close_rounded,
+          //               (_) {
+          //                 widget.files.removeAt(key.currentState!.currentPage);
 
-                          key.currentState!
-                              .update(context, widget.files.length);
+          //                 key.currentState!
+          //                     .update(context, widget.files.length);
 
-                          if (widget.files.isEmpty) {
-                            Navigator.pop(context);
-                          }
+          //                 if (widget.files.isEmpty) {
+          //                   Navigator.pop(context);
+          //                 }
 
-                          setState(() {});
-                        },
-                        false,
-                      )
-                    ];
-                  },
-                  focusMain: () {},
-                  getCell: (i) => widget.files[i],
-                  cellCount: widget.files.length,
-                  startingCell: id,
-                  onNearEnd: null);
-            }));
-          },
-          tight: true,
+          //                 setState(() {});
+          //               },
+          //               false,
+          //             )
+          //           ];
+          //         },
+          //         focusMain: () {},
+          //         getCell: (i) => widget.files[i],
+          //         cellCount: widget.files.length,
+          //         startingCell: id,
+          //         onNearEnd: null);
+          //   }));
+          // },
           download: null,
-          hidealias: true,
           shadowOnTop: shadow,
           circle: true,
         ),

@@ -358,92 +358,90 @@ class _GalleryDirectoriesState extends State<GalleryDirectories> {
           // ),
           child: GridLayout<SystemGalleryDirectory>(
             segments: _makeSegments(context),
-            aspectRatio: state.settings.galleryDirectories.aspectRatio,
-            columns: state.settings.galleryDirectories.columns,
+            appBarActions: [
+              if (widget.callback != null)
+                IconButton(
+                    onPressed: () async {
+                      try {
+                        widget.callback!(
+                            null,
+                            await PlatformFunctions.chooseDirectory(
+                                temporary: true));
+                        // ignore: use_build_context_synchronously
+                        Navigator.pop(context);
+                      } catch (e) {
+                        log("new folder in android_directories",
+                            level: Level.SEVERE.value, error: e);
+                        // ignore: use_build_context_synchronously
+                        Navigator.pop(context);
+                      }
+                    },
+                    icon: const Icon(Icons.create_new_folder_outlined)),
+              gridSettingsButton(state.settings.galleryDirectories,
+                  selectRatio: (ratio) => state.settings
+                      .copy(
+                          galleryDirectories: state.settings.galleryDirectories
+                              .copy(aspectRatio: ratio))
+                      .save(),
+                  selectHideName: (hideNames) => state.settings
+                      .copy(
+                          galleryDirectories: state.settings.galleryDirectories
+                              .copy(hideName: hideNames))
+                      .save(),
+                  selectListView: null,
+                  selectGridColumn: (columns) => state.settings
+                      .copy(
+                          galleryDirectories: state.settings.galleryDirectories
+                              .copy(columns: columns))
+                      .save()),
+            ],
+            // aspectRatio: state.settings.galleryDirectories.aspectRatio,
+            // columns: state.settings.galleryDirectories.columns,
             // getOriginalCell: api.directCell,
             loader: extra.loader,
             download: null,
-            metadata: GridMetadata(
-              appBarActions: [
-                if (widget.callback != null)
-                  IconButton(
-                      onPressed: () async {
-                        try {
-                          widget.callback!(
-                              null,
-                              await PlatformFunctions.chooseDirectory(
-                                  temporary: true));
-                          // ignore: use_build_context_synchronously
-                          Navigator.pop(context);
-                        } catch (e) {
-                          log("new folder in android_directories",
-                              level: Level.SEVERE.value, error: e);
-                          // ignore: use_build_context_synchronously
-                          Navigator.pop(context);
-                        }
-                      },
-                      icon: const Icon(Icons.create_new_folder_outlined)),
-                gridSettingsButton(state.settings.galleryDirectories,
-                    selectRatio: (ratio) => state.settings
-                        .copy(
-                            galleryDirectories: state
-                                .settings.galleryDirectories
-                                .copy(aspectRatio: ratio))
-                        .save(),
-                    selectHideName: (hideNames) => state.settings
-                        .copy(
-                            galleryDirectories: state
-                                .settings.galleryDirectories
-                                .copy(hideName: hideNames))
-                        .save(),
-                    selectListView: null,
-                    selectGridColumn: (columns) => state.settings
-                        .copy(
-                            galleryDirectories: state
-                                .settings.galleryDirectories
-                                .copy(columns: columns))
-                        .save()),
-              ],
-              hideAlias: state.settings.galleryDirectories.hideName,
-              // search: SearchAndFocus(
-              //     searchWidget(context,
-              //         hint: AppLocalizations.of(context)!.directoriesHint),
-              //     searchFocus),
-              gridActions: widget.callback != null ||
-                      widget.nestedCallback != null
-                  ? [
-                      if (widget.callback == null || widget.callback!.joinable)
-                        SystemGalleryDirectoriesActions.joinedDirectories(
-                            context, extra, widget.nestedCallback)
-                    ]
-                  : [
-                      FavoritesActions.addToGroup(context, (selected) {
-                        final t = selected.first.tag;
-                        for (final e in selected.skip(1)) {
-                          if (t != e.tag) {
-                            return null;
-                          }
-                        }
+            // metadata: GridMetadata(
 
-                        return t;
-                      }, (selected, value) {
-                        if (value.isEmpty) {
-                          PostTags.g.removeDirectoriesTag(
-                              selected.map((e) => e.bucketId));
-                        } else {
-                          PostTags.g.setDirectoriesTag(
-                              selected.map((e) => e.bucketId), value);
-                        }
+            //   hideAlias: state.settings.galleryDirectories.hideName,
+            //   // search: SearchAndFocus(
+            //   //     searchWidget(context,
+            //   //         hint: AppLocalizations.of(context)!.directoriesHint),
+            //   //     searchFocus),
+            //   gridActions: widget.callback != null ||
+            //           widget.nestedCallback != null
+            //       ? [
+            //           if (widget.callback == null || widget.callback!.joinable)
+            //             SystemGalleryDirectoriesActions.joinedDirectories(
+            //                 context, extra, widget.nestedCallback)
+            //         ]
+            //       : [
+            //           FavoritesActions.addToGroup(context, (selected) {
+            //             final t = selected.first.tag;
+            //             for (final e in selected.skip(1)) {
+            //               if (t != e.tag) {
+            //                 return null;
+            //               }
+            //             }
 
-                        _refresh();
+            //             return t;
+            //           }, (selected, value) {
+            //             if (value.isEmpty) {
+            //               PostTags.g.removeDirectoriesTag(
+            //                   selected.map((e) => e.bucketId));
+            //             } else {
+            //               PostTags.g.setDirectoriesTag(
+            //                   selected.map((e) => e.bucketId), value);
+            //             }
 
-                        Navigator.pop(context);
-                      }),
-                      SystemGalleryDirectoriesActions.blacklist(context, extra),
-                      SystemGalleryDirectoriesActions.joinedDirectories(
-                          context, extra, widget.nestedCallback)
-                    ],
-            ),
+            //             _refresh();
+
+            //             Navigator.pop(context);
+            //           }),
+            //           SystemGalleryDirectoriesActions.blacklist(context, extra),
+            //           SystemGalleryDirectoriesActions.joinedDirectories(
+            //               context, extra, widget.nestedCallback)
+            //         ],
+            // ),
           ),
         ),
         noDrawer: widget.noDrawer ?? false,

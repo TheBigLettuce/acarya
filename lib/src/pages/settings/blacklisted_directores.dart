@@ -96,38 +96,39 @@ class _BlacklistedDirectoriesState extends State<BlacklistedDirectories>
                 keybinds: const {},
                 child: ListLayout<BlacklistedDirectory>(
                     // getOriginalCell: loader.getCell,
-                    metadata: GridMetadata(
-                  gridActions: [
-                    GridAction(
-                      Icons.restore_page,
-                      (selected) {
-                        Dbs.g.blacklisted.write((i) {
-                          return i.blacklistedDirectorys.deleteAll(
-                              selected.map((e) => e.bucketId).toList());
-                        });
-                      },
-                      true,
-                    )
-                  ],
-                  // search: SearchAndFocus(
-                  //     searchWidget(
-                  //       context,
-                  //       hint: AppLocalizations.of(context)!
-                  //           .blacklistedDirectoriesPageName
-                  //           .toLowerCase(),
-                  //     ),
-                  //     searchFocus)
-                  // ,
-                  appBarActions: [
-                    IconButton(
-                        onPressed: () {
-                          Dbs.g.blacklisted
-                              .write((i) => i.blacklistedDirectorys.clear());
-                          chooseGalleryPlug().notify(null);
-                        },
-                        icon: const Icon(Icons.delete))
-                  ],
-                )),
+                    //     metadata: GridMetadata(
+                    //   gridActions: [
+                    //     GridAction(
+                    //       Icons.restore_page,
+                    //       (selected) {
+                    //         Dbs.g.blacklisted.write((i) {
+                    //           return i.blacklistedDirectorys.deleteAll(
+                    //               selected.map((e) => e.bucketId).toList());
+                    //         });
+                    //       },
+                    //       true,
+                    //     )
+                    //   ],
+                    //   // search: SearchAndFocus(
+                    //   //     searchWidget(
+                    //   //       context,
+                    //   //       hint: AppLocalizations.of(context)!
+                    //   //           .blacklistedDirectoriesPageName
+                    //   //           .toLowerCase(),
+                    //   //     ),
+                    //   //     searchFocus)
+                    //   // ,
+                    //   appBarActions: [
+                    //     IconButton(
+                    //         onPressed: () {
+                    //           Dbs.g.blacklisted
+                    //               .write((i) => i.blacklistedDirectorys.clear());
+                    //           chooseGalleryPlug().notify(null);
+                    //         },
+                    //         icon: const Icon(Icons.delete))
+                    //   ],
+                    // )
+                    ),
               ),
               canPop: true,
               // !glue.isOpen() &&

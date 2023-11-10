@@ -42,7 +42,7 @@ class BlacklistedDirectory implements Cell {
   String alias(bool isList) => name;
 
   @override
-  Contentable fileDisplay() {
+  Contentable fileDisplay(BuildContext context) {
     throw UnimplementedError();
   }
 

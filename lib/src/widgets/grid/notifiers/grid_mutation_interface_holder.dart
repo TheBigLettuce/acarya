@@ -8,7 +8,8 @@
 import 'package:flutter/material.dart';
 import 'package:gallery/src/interfaces/cell.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
-import 'package:gallery/src/widgets/notifiers/get_cell.dart';
+import 'package:gallery/src/widgets/grid/notifiers/notifier_registry_holder.dart';
+import 'package:gallery/src/widgets/notifiers/cell_provider.dart';
 import 'package:gallery/src/widgets/notifiers/grid_element_count.dart';
 
 import 'wrap_grid_status_notifiers.dart';
@@ -53,15 +54,21 @@ class _DataLoaderHolderState<T extends Cell>
 
   @override
   Widget build(BuildContext context) {
-    return GridElementCountNotifier(
-      count: _count,
-      child: CellProvider(
-        loader: widget.loader,
-        child: WrapGridStatusNotifiers(
-          stateController: widget.loader.state,
-          child: widget.child,
-        ),
-      ),
+    return NotifierRegistryHolder.inherit(
+      context,
+      [
+        (child) => GridElementCountNotifier(
+              count: _count,
+              child: CellProvider<T>(
+                loader: widget.loader,
+                child: WrapGridStatusNotifiers(
+                  stateController: widget.loader.state,
+                  child: child,
+                ),
+              ),
+            )
+      ],
+      widget.child,
     );
   }
 }

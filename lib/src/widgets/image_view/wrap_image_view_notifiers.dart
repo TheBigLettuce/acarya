@@ -19,12 +19,12 @@ import '../notifiers/tag_refresh.dart';
 class WrapImageViewNotifiers<T extends Cell> extends StatefulWidget {
   final void Function() onTagRefresh;
   final T currentCell;
-  final InheritedWidget Function(Widget child)? registerNotifiers;
+  // final InheritedWidget Function(Widget child)? registerNotifiers;
   final Widget child;
 
   const WrapImageViewNotifiers(
       {super.key,
-      required this.registerNotifiers,
+      // required this.registerNotifiers,
       required this.onTagRefresh,
       required this.currentCell,
       required this.child});
@@ -78,10 +78,9 @@ class WrapImageViewNotifiersState<T extends Cell>
                     child: LoadingProgressNotifier(
                       progress: _loadingProgress,
                       child: AppBarVisibilityNotifier(
-                          isShown: _isAppbarShown,
-                          child: widget.registerNotifiers == null
-                              ? widget.child
-                              : widget.registerNotifiers!(widget.child)),
+                        isShown: _isAppbarShown,
+                        child: widget.child,
+                      ),
                     )),
               )),
         ));

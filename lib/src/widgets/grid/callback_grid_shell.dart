@@ -88,11 +88,8 @@ class _Notifiers extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (registerNotifiers == null) {
-      return child;
-    }
-
     return GridFooterNotifier(
-        size: footerSize, child: registerNotifiers!(child));
+        size: footerSize,
+        child: registerNotifiers == null ? child : registerNotifiers!(child));
   }
 }

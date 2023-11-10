@@ -57,8 +57,7 @@ class _SinglePostState extends State<SinglePost> {
     super.dispose();
   }
 
-  void _launch(Color overlayColor,
-      [Booru? replaceBooru, int? replaceId]) async {
+  void _launch([Booru? replaceBooru, int? replaceId]) async {
     if (inProcessLoading) {
       return;
     }
@@ -101,10 +100,12 @@ class _SinglePostState extends State<SinglePost> {
         builder: (context) {
           return ImageView(
             key: key,
-            registerNotifiers: (child) => TagManagerNotifier(
-                tagManager: widget.tagManager,
-                child: BooruAPINotifier(api: booru, child: child)),
-            updateTagScrollPos: (_, __) {},
+            startingCell: 0,
+            currentCell: value,
+            // registerNotifiers: (child) => TagManagerNotifier(
+            //     tagManager: widget.tagManager,
+            //     child: BooruAPINotifier(api: booru, child: child)),
+            // updateTagScrollPos: (_, __) {},
             download: (_) {
               Downloader.g.add(
                   DownloadFile.d(
@@ -114,20 +115,20 @@ class _SinglePostState extends State<SinglePost> {
                       thumbUrl: value.previewUrl),
                   Settings.fromDb());
             },
-            cellCount: 1,
+            // cellCount: 1,
             addIcons: (p) => [
-              BooruGridActions.favorites(context, p),
+              // BooruGridActions.favorites(context, p),
               BooruGridActions.download(context, booru)
             ],
-            scrollUntill: (_) {},
+            // scrollUntill: (_) {},
             onExit: () {},
             focusMain: () {},
-            startingCell: 0,
-            getCell: (_) => value,
+            // startingCell: 0,
+            // getCell: (_) => value,
             onNearEnd: () {
               return Future.value(1);
             },
-            systemOverlayRestoreColor: overlayColor,
+            // systemOverlayRestoreColor: overlayColor,
           );
         },
       )).then((_) {
@@ -208,12 +209,7 @@ class _SinglePostState extends State<SinglePost> {
                                       } else {
                                         try {
                                           final f = value.split("_");
-                                          _launch(
-                                              Theme.of(context)
-                                                  .colorScheme
-                                                  .background
-                                                  .withOpacity(0.5),
-                                              Booru.fromPrefix(f[0])!,
+                                          _launch(Booru.fromPrefix(f[0])!,
                                               int.parse(f[1]));
                                         } catch (_) {}
                                       }
@@ -277,8 +273,7 @@ class _SinglePostState extends State<SinglePost> {
                 onInit: (controller) => arrowSpinningController = controller,
                 effects: const [RotateEffect()],
                 autoPlay: false),
-            onPressed: () => _launch(
-                Theme.of(context).colorScheme.background.withOpacity(0.5)),
+            onPressed: () => _launch(),
           )
         ],
       ),

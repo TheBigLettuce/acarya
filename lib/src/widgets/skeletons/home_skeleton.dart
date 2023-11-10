@@ -17,11 +17,11 @@ import 'skeleton_state.dart';
 class HomeSkeleton extends StatelessWidget {
   final String pageDescription;
   final SkeletonState state;
-  final Widget Function(BuildContext) f;
   final int selectedRoute;
   final Widget? navBar;
+  final Widget child;
 
-  const HomeSkeleton(this.pageDescription, this.state, this.f,
+  const HomeSkeleton(this.pageDescription, this.state, this.child,
       {super.key, required this.selectedRoute, required this.navBar});
 
   @override
@@ -46,7 +46,7 @@ class HomeSkeleton extends StatelessWidget {
               MediaQuery.systemGestureInsetsOf(context) == EdgeInsets.zero,
           key: state.scaffoldKey,
           bottomNavigationBar: navBar,
-          body: GestureDeadZones(child: Builder(builder: f)),
+          body: GestureDeadZones(child: child),
         ),
       ),
     );

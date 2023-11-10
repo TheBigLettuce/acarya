@@ -247,7 +247,7 @@ class NoteGallery extends NoteBase implements Cell {
   }
 
   @override
-  Contentable fileDisplay() {
+  Contentable fileDisplay(BuildContext context) {
     final size = Size(width.toDouble(), height.toDouble());
 
     if (isVideo) {

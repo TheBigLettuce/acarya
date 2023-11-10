@@ -6,32 +6,22 @@
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 import 'package:flutter/material.dart';
-import 'package:gallery/src/db/schemas/settings.dart';
-import 'package:gallery/src/interfaces/cell.dart';
+import 'package:gallery/src/db/state_restoration.dart';
 
-import '../../grid_metadata.dart';
+class StateRestorationProvider extends InheritedWidget {
+  final StateRestoration state;
 
-class NotesLayout<T extends Cell> extends StatefulWidget {
-  // final GridColumn columns;
+  const StateRestorationProvider(
+      {super.key, required this.state, required super.child});
 
-  // final GridMetadata<T> metadata;
+  static StateRestoration? maybeOf(BuildContext context) {
+    final widget =
+        context.dependOnInheritedWidgetOfExactType<StateRestorationProvider>();
 
-  // final T Function(int) getOriginalCell;
-
-  const NotesLayout({
-    super.key,
-    // required this.columns,
-    // required this.getOriginalCell,
-    // required this.metadata,
-  });
-
-  @override
-  State<NotesLayout> createState() => _NotesLayoutState();
-}
-
-class _NotesLayoutState extends State<NotesLayout> {
-  @override
-  Widget build(BuildContext context) {
-    return const Placeholder();
+    return widget?.state;
   }
+
+  @override
+  bool updateShouldNotify(StateRestorationProvider oldWidget) =>
+      oldWidget.state != state;
 }

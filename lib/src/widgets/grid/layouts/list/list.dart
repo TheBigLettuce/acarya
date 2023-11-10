@@ -11,14 +11,14 @@ import 'package:gallery/src/interfaces/cell.dart';
 import '../../grid_metadata.dart';
 
 class ListLayout<T extends Cell> extends StatefulWidget {
-  final GridMetadata<T> metadata;
+  // final GridMetadata<T> metadata;
 
   // final T Function(int) getOriginalCell;
 
   const ListLayout({
     super.key,
     // required this.getOriginalCell,
-    required this.metadata,
+    // required this.metadata,
   });
 
   @override

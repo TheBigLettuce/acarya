@@ -8,26 +8,20 @@
 part of 'grid.dart';
 
 class _GridBody<T extends Cell> extends StatelessWidget {
-  final GridMetadata<T> metadata;
-  final GridAspectRatio aspectRatio;
-  final GridColumn columns;
   final void Function(BuildContext, int)? download;
-  final void Function(BuildContext, T, int) onPressed;
 
   const _GridBody({
     super.key,
-    required this.aspectRatio,
-    required this.columns,
     required this.download,
-    required this.metadata,
-    required this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
     return SliverGrid.builder(
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          childAspectRatio: aspectRatio.value, crossAxisCount: columns.number),
+          childAspectRatio:
+              GridMetadataProvider.aspectRatioOf<T>(context).value,
+          crossAxisCount: GridMetadataProvider.columnsOf<T>(context).number),
       itemCount: GridElementCountNotifier.of(context),
       itemBuilder: (context, indx) {
         final t1 = DateTime.now();
@@ -37,14 +31,11 @@ class _GridBody<T extends Cell> extends StatelessWidget {
 
         return WrappedSelection(
           thisIndx: indx,
-          child: GridCell(
+          child: GridCell<T>(
             key: cell.uniqueKey(),
-            cell: cell.getCellData(false, context: context),
-            hidealias: metadata.hideAlias,
+            cell: cell,
             indx: indx,
             download: download,
-            tight: metadata.tight,
-            onPressed: (context) => onPressed(context, cell, indx),
           ),
         );
       },

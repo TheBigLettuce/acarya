@@ -21,6 +21,7 @@ import 'package:gallery/src/widgets/empty_widget.dart';
 import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
 import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/layouts/notes/notes.dart';
+import 'package:gallery/src/widgets/notifiers/cell_provider.dart';
 import 'package:gallery/src/widgets/skeletons/grid_skeleton_state.dart';
 import 'package:gallery/src/widgets/skeletons/grid_skeleton.dart';
 import 'package:isar/isar.dart';
@@ -49,26 +50,28 @@ class _NotePageContainer<T extends Cell> {
           onTap: () {
             Navigator.push(context, MaterialPageRoute(
               builder: (context) {
-                final overlayColor =
-                    Theme.of(context).colorScheme.background.withOpacity(0.5);
+                // final overlayColor =
+                //     Theme.of(context).colorScheme.background.withOpacity(0.5);
 
                 return ImageView<T>(
-                    updateTagScrollPos: (_, __) {},
-                    cellCount: 1,
-                    scrollUntill: (_) {},
-                    startingCell: 0,
-                    onExit: () {},
-                    onEmptyNotes: () {
-                      WidgetsBinding.instance
-                          .scheduleFrameCallback((timeStamp) {
-                        Navigator.pop(context);
-                      });
-                    },
-                    noteInterface: noteInterface,
-                    getCell: (idx) => e1,
-                    onNearEnd: null,
-                    focusMain: () => state.mainFocus,
-                    systemOverlayRestoreColor: overlayColor);
+                  // updateTagScrollPos: (_, __) {},
+                  // cellCount: 1,
+                  // scrollUntill: (_) {},
+                  // startingCell: 0,
+                  currentCell: e1,
+                  startingCell: 0,
+                  onExit: () {},
+                  onEmptyNotes: () {
+                    WidgetsBinding.instance.scheduleFrameCallback((timeStamp) {
+                      Navigator.pop(context);
+                    });
+                  },
+                  // noteInterface: noteInterface,
+                  // getCell: (idx) => e1,
+                  onNearEnd: null,
+                  focusMain: () => state.mainFocus,
+                  // systemOverlayRestoreColor: overlayColor
+                );
               },
             ));
           },
@@ -109,9 +112,10 @@ class _NotePageContainer<T extends Cell> {
         //     showAppBar: false,
         //     layout: NoteLayout<T>(GridColumn.three, getText)),
         child: NotesLayout(
-            columns: GridColumn.three,
-            getOriginalCell: throw "",
-            metadata: GridMetadata<T>(gridActions: addActions)),
+            // columns: GridColumn.three,
+            // getOriginalCell: throw "",
+            // metadata: GridMetadata<T>(gridActions: addActions)
+            ),
       ),
       canPop: true);
 

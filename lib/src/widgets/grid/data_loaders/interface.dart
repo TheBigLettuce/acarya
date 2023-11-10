@@ -207,9 +207,6 @@ class BackgroundCellLoader<T extends Cell, I>
     await for (final ControlMessage e in rx) {
       switch (e) {
         case Data<T>():
-          if (e.clearBeforeInsert) {
-            db.write((i) => i.collection<I, T>().clear());
-          }
           db.write((i) => db.collection<I, T>().putAll(e.l));
           if (e.end) {
             port.send(LoaderState.idle);
@@ -219,7 +216,9 @@ class BackgroundCellLoader<T extends Cell, I>
           break;
         case Reset():
           db.write((i) => i.collection<I, T>().clear());
-          port.send(LoaderState.idle);
+          if (!e.silent) {
+            port.send(LoaderState.idle);
+          }
         default:
       }
     }
@@ -368,8 +367,9 @@ class BooruAPILoaderStateController implements LoaderStateController {
   bool end = false;
 
   BooruAPILoaderStateController(BackgroundCellLoader<Post, String> loader,
-      this.api, this.excluded, this.tags)
+      this.api, this.excluded, this.tags, int? lastId)
       : _events = loader._isolateEvents,
+        currentLast = lastId,
         _send = loader._send;
 
   void _stateChange(LoaderState s) {
@@ -403,7 +403,7 @@ class BooruAPILoaderStateController implements LoaderStateController {
     _notify = f;
   }
 
-  void _sendPosts((List<Post>, int?) value, bool reset) {
+  void _sendPosts((List<Post>, int?) value) {
     final last = value.$1.lastOrNull;
     if (last == null) {
       _stateChange(LoaderState.idle);
@@ -421,7 +421,7 @@ class BooruAPILoaderStateController implements LoaderStateController {
       currentLast = last.postId;
     }
 
-    _send.send(Data<Post>(value.$1, end: true, clearBeforeInsert: reset));
+    _send.send(Data<Post>(value.$1, end: true));
   }
 
   @mustCallSuper
@@ -436,9 +436,7 @@ class BooruAPILoaderStateController implements LoaderStateController {
 
       _stateChange(LoaderState.loading);
 
-      api
-          .fromPost(last!, tags, excluded)
-          .then((value) => _sendPosts(value, false));
+      api.fromPost(last!, tags, excluded).then(_sendPosts);
     }
   }
 
@@ -447,8 +445,9 @@ class BooruAPILoaderStateController implements LoaderStateController {
   void reset() {
     if (currentState == LoaderState.idle && _currentSubscription != null) {
       _stateChange(LoaderState.loading);
+      _send.send(const Reset(true));
       end = false;
-      api.page(0, tags, excluded).then((value) => _sendPosts(value, true));
+      api.page(0, tags, excluded).then(_sendPosts);
     }
   }
 
@@ -471,113 +470,15 @@ sealed class ControlMessage {
 
 @immutable
 class Reset extends ControlMessage {
-  const Reset();
+  final bool silent;
+
+  const Reset([this.silent = false]);
 }
 
 @immutable
 class Data<T extends Cell> extends ControlMessage {
   final List<T> l;
   final bool end;
-  final bool clearBeforeInsert;
 
-  const Data(this.l, {this.end = false, this.clearBeforeInsert = false});
+  const Data(this.l, {this.end = false});
 }
-
-// @immutable
-// class _State extends _ControlMessage {
-//   final State state;
-
-//   const _State(this.state);
-// }
-
-// class CellLoader<T extends Cell> implements DataLoader<T> {
-//   final Isar _instance;
-//   T Function(T)? _transform;
-//   StreamSubscription<void>? _status;
-
-//   @override
-//   final IndexCellTokenizer<T> tokenizer;
-
-//   @override
-//   void dispose() {
-//     _status?.cancel();
-//   }
-
-//   void _throwOnDifferentToken(SourceToken other) {
-//     if (!tokenizer.sourceTokenMatches(other)) {
-//       throw "Source differs:\nWant ${tokenizer._sourceToken}, but got $other";
-//     }
-//   }
-
-//   @override
-//   Iterable<T> getMany(Iterable<DataToken> tokens) sync* {
-//     assert(_status != null);
-//     for (final e in tokens) {
-//       _throwOnDifferentToken(e.originalSource);
-
-//       final cell = _instance.collection<T>().getSync(e.data)!;
-
-//       yield _transform != null ? _transform!(cell) : cell;
-//     }
-//   }
-
-//   @override
-//   T? getSingle(DataToken token) {
-//     assert(_status != null);
-
-//     _throwOnDifferentToken(token.originalSource);
-
-//     final cell = _instance.collection<T>().getSync(token.data);
-
-//     return cell == null
-//         ? cell
-//         : _transform != null
-//             ? _transform!(cell)
-//             : cell;
-//   }
-
-//   @override
-//   void listenStatus(void Function(int p1) f) {
-//     assert(_status == null);
-//     if (_status != null) {
-//       return;
-//     }
-
-//     _status =
-//         _instance.collection<T>().watchLazy(fireImmediately: true).listen((_) {
-//       f(_instance.collection<T>().countSync());
-//     });
-//   }
-
-//   @override
-//   void transformData(T Function(T p1) f) {
-//     assert(_status == null);
-
-//     _transform = f;
-//   }
-
-//   CellLoader(this.tokenizer, {required Isar instance}) : _instance = instance;
-// }
-
-// class IndexCellTokenizer<T extends Cell> implements Tokenizer<T> {
-//   final SourceToken _sourceToken;
-
-//   @override
-//   bool sourceTokenMatches(SourceToken other) {
-//     return _sourceToken == other;
-//   }
-
-//   @override
-//   Iterable<DataToken> tokenForMany(Iterable<T> data) sync* {
-//     for (final e in data) {
-//       yield DataToken(e.isarId!, _sourceToken);
-//     }
-//   }
-
-//   @override
-//   DataToken tokenForSingle(T data) {
-//     return DataToken(data.isarId!, _sourceToken);
-//   }
-
-//   const IndexCellTokenizer(this._sourceToken);
-// }

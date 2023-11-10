@@ -33,7 +33,7 @@ class StateRestoration {
 
   void updateScrollPosition(double pos,
       {double? infoPos, int? selectedCell, int? page}) {
-    final prev = _mainGrid.gridStates.get(copy.name)!;
+    final prev = current;
 
     _mainGrid.write((i) => i.gridStates.put(prev.copy(false,
         scrollPositionGrid: pos,

@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:gallery/src/interfaces/contentable.dart';
+import 'package:gallery/src/widgets/notifiers/cell_provider.dart';
 import 'package:gallery/src/widgets/video/photo_gallery_page_video.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
@@ -22,9 +23,12 @@ mixin ImageViewPageTypeMixin<T extends Cell> on State<ImageView<T>> {
   ImageProvider? fakeProvider;
 
   PhotoViewGalleryPageOptions galleryBuilder(BuildContext context, int indx) {
-    final fileContent = widget.predefinedIndexes != null
-        ? widget.getCell(widget.predefinedIndexes![indx]).fileDisplay()
-        : widget.getCell(indx).fileDisplay();
+    final fileContent = CellProvider.getOf<T>(
+            context,
+            widget.predefinedIndexes != null
+                ? widget.predefinedIndexes![indx]
+                : indx)
+        .fileDisplay(context);
 
     return switch (fileContent) {
       AndroidImage() =>

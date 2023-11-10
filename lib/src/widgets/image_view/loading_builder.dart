@@ -9,15 +9,15 @@ import 'dart:developer';
 
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
-import 'package:gallery/src/pages/image_view.dart';
 import 'package:gallery/src/widgets/image_view/wrap_image_view_notifiers.dart';
+import 'package:gallery/src/widgets/notifiers/cell_provider.dart';
 import 'package:gallery/src/widgets/notifiers/loading_progress.dart';
 import 'package:logging/logging.dart';
 import 'package:palette_generator/palette_generator.dart';
 
 import '../../interfaces/cell.dart';
 
-mixin ImageViewLoadingBuilderMixin<T extends Cell> on State<ImageView<T>> {
+mixin ImageViewLoadingBuilderMixin<T extends Cell> {
   Widget loadingBuilder(
     BuildContext context,
     ImageChunkEvent? event,
@@ -45,7 +45,9 @@ mixin ImageViewLoadingBuilderMixin<T extends Cell> on State<ImageView<T>> {
     }
 
     try {
-      final t = widget.getCell(idx).getCellData(false, context: context).thumb;
+      final t = CellProvider.getOf<T>(context, idx)
+          .getCellData(false, context: context)
+          .thumb;
       if (t == null) {
         return const SizedBox.shrink();
       }

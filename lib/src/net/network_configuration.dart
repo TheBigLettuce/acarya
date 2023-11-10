@@ -5,33 +5,21 @@
 // This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
-import 'package:flutter/material.dart';
-import 'package:gallery/src/db/schemas/settings.dart';
-import 'package:gallery/src/interfaces/cell.dart';
+import 'dart:io';
 
-import '../../grid_metadata.dart';
+import 'package:dio/dio.dart';
+import 'package:gallery/src/interfaces/booru.dart';
+import 'package:meta/meta.dart';
 
-class NotesLayout<T extends Cell> extends StatefulWidget {
-  // final GridColumn columns;
+@immutable
+class NetworkConfiguration {
+  final String userAgent;
 
-  // final GridMetadata<T> metadata;
+  Map<String, String> asHeaders() => {
+        if (userAgent.isNotEmpty) HttpHeaders.userAgentHeader: userAgent,
+      };
 
-  // final T Function(int) getOriginalCell;
-
-  const NotesLayout({
-    super.key,
-    // required this.columns,
-    // required this.getOriginalCell,
-    // required this.metadata,
+  const NetworkConfiguration({
+    this.userAgent = "",
   });
-
-  @override
-  State<NotesLayout> createState() => _NotesLayoutState();
-}
-
-class _NotesLayoutState extends State<NotesLayout> {
-  @override
-  Widget build(BuildContext context) {
-    return const Placeholder();
-  }
 }

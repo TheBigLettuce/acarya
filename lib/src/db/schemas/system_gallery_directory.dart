@@ -61,7 +61,7 @@ class SystemGalleryDirectory implements Cell {
   String alias(bool isList) => name;
 
   @override
-  Contentable fileDisplay() => const EmptyContent();
+  Contentable fileDisplay(BuildContext context) => const EmptyContent();
 
   @override
   String fileDownloadUrl() => "";

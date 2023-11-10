@@ -8,21 +8,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:gallery/src/interfaces/cell.dart';
+import 'package:gallery/src/widgets/grid/grid_metadata.dart';
+import 'package:gallery/src/widgets/notifiers/cell_provider.dart';
 import 'package:transparent_image/transparent_image.dart';
 import '../loading_error_widget.dart';
+import '../notifiers/grid_metadata.dart';
 import 'cell_data.dart';
 import 'callback_grid_shell.dart';
 import 'sticker.dart';
 
 /// The cell of [CallbackGridShell].
-class GridCell<T extends CellData> extends StatefulWidget {
+class GridCell<T extends Cell> extends StatefulWidget {
   final T _data;
   final int indx;
-  final void Function(BuildContext context)? onPressed;
-  final bool hideAlias;
+  // final bool hideAlias;
 
   /// If [tight] is true, margin between the [GridCell]s on the grid is tight.
-  final bool tight;
+  // final bool tight;
   // final void Function()? onLongPress;
   final void Function(BuildContext context, int)? download;
 
@@ -41,29 +44,34 @@ class GridCell<T extends CellData> extends StatefulWidget {
     super.key,
     required T cell,
     required this.indx,
-    required this.onPressed,
-    required this.tight,
+    // required this.tight,
     required this.download,
-    bool? hidealias,
+    // bool? hidealias,
     this.shadowOnTop = false,
     this.circle = false,
     this.ignoreStickers = false,
-  })  : _data = cell,
-        hideAlias = hidealias ?? false;
+  }) : _data = cell;
 
   @override
-  State<GridCell> createState() => _GridCellState();
+  State<GridCell<T>> createState() => _GridCellState();
 }
 
-class _GridCellState<T extends CellData> extends State<GridCell<T>> {
+class _GridCellState<T extends Cell> extends State<GridCell<T>> {
   @override
   Widget build(BuildContext context) {
+    final data = widget._data.getCellData(
+        GridMetadataProvider.isListOf<T>(context),
+        context: context);
+
+    final onPressed = GridMetadataProvider.onPressedOf<T>(context);
+
     return InkWell(
       borderRadius: BorderRadius.circular(15.0),
-      onTap: widget.onPressed == null
+      onTap: onPressed == null
           ? null
           : () {
-              widget.onPressed!(context);
+              onPressed(context, widget.indx);
+              // widget.onPressed!(context);
             },
       focusColor: Theme.of(context).colorScheme.primary,
       onDoubleTap: widget.download != null
@@ -73,7 +81,9 @@ class _GridCellState<T extends CellData> extends State<GridCell<T>> {
             }
           : null,
       child: Card(
-          margin: widget.tight ? const EdgeInsets.all(0.5) : null,
+          margin: GridMetadataProvider.tightOf<T>(context)
+              ? const EdgeInsets.all(0.5)
+              : null,
           elevation: 0,
           color: Theme.of(context).cardColor.withOpacity(0),
           child: ClipPath(
@@ -104,7 +114,7 @@ class _GridCellState<T extends CellData> extends State<GridCell<T>> {
                           ? const ShimmerLoadingIndicator()
                           : child.animate().fadeIn();
                     },
-                    image: widget._data.thumb ?? MemoryImage(kTransparentImage),
+                    image: data.thumb ?? MemoryImage(kTransparentImage),
                     alignment: Alignment.center,
                     color: widget.shadowOnTop
                         ? Colors.black.withOpacity(0.5)
@@ -116,15 +126,14 @@ class _GridCellState<T extends CellData> extends State<GridCell<T>> {
                     height: constraints.maxHeight,
                   );
                 })),
-                if (widget._data.stickers.isNotEmpty &&
-                    !widget.ignoreStickers) ...[
+                if (data.stickers.isNotEmpty && !widget.ignoreStickers) ...[
                   Align(
                     alignment: Alignment.topRight,
                     child: Padding(
                         padding: const EdgeInsets.all(8),
                         child: Wrap(
                           direction: Axis.vertical,
-                          children: widget._data.stickers
+                          children: data.stickers
                               .where((element) => element.right)
                               .map((e) => StickerWidget(e))
                               .toList(),
@@ -134,13 +143,14 @@ class _GridCellState<T extends CellData> extends State<GridCell<T>> {
                       padding: const EdgeInsets.all(8),
                       child: Wrap(
                         direction: Axis.vertical,
-                        children: widget._data.stickers
+                        children: data.stickers
                             .where((element) => !element.right)
                             .map((e) => StickerWidget(e))
                             .toList(),
                       ))
                 ],
-                if (!widget.hideAlias && !widget.shadowOnTop)
+                if (!GridMetadataProvider.hideAliasOf<T>(context) &&
+                    !widget.shadowOnTop)
                   Container(
                     alignment: Alignment.bottomCenter,
                     decoration: BoxDecoration(
@@ -155,7 +165,7 @@ class _GridCellState<T extends CellData> extends State<GridCell<T>> {
                     child: Padding(
                         padding: const EdgeInsets.all(6),
                         child: Text(
-                          widget._data.name,
+                          data.name,
                           softWrap: false,
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,

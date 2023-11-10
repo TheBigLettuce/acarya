@@ -96,7 +96,7 @@ import 'search_and_focus.dart';
 class GridAppBar extends StatelessWidget {
   final List<Widget> actions;
   final PreferredSizeWidget? bottomWidget;
-  final SearchAndFocus? search;
+  // final SearchAndFocus? search;
   final Widget leading;
   final Widget title;
   final bool centerTitle;
@@ -107,7 +107,7 @@ class GridAppBar extends StatelessWidget {
       required this.bottomWidget,
       required this.centerTitle,
       required this.leading,
-      required this.search,
+      // required this.search,
       required this.title});
 
   @override
@@ -122,8 +122,8 @@ class GridAppBar extends StatelessWidget {
       leading: leading,
       pinned: true,
       stretch: true,
-      snap: IsSelectingNotifier.of(context),
-      floating: IsSelectingNotifier.of(context),
+      snap: !IsSelectingNotifier.of(context),
+      floating: !IsSelectingNotifier.of(context),
       bottom: bottomWidget ??
           const _BottomWidget(
               preferredSize: Size.fromHeight(4),

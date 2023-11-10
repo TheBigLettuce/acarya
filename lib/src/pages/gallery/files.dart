@@ -498,118 +498,28 @@ class _GalleryFilesState extends State<GalleryFiles>
   GridMetadata<SystemGalleryDirectoryFile> _makeMetadata(
           BuildContext context) =>
       GridMetadata(
-          hideAlias: state.settings.galleryFiles.hideName,
-          tight: true,
-          // search: SearchAndFocus(
-          //     searchWidget(context, hint: widget.dirName), searchFocus),
-          gridActions: widget.callback != null
-              ? []
-              : extra.isTrash
-                  ? [
-                      _restoreFromTrash(),
-                    ]
-                  : [
-                      _bulkRename(),
-                      _saveTagsAction(),
-                      _addToFavoritesAction(null),
-                      _deleteAction(),
-                      _copyAction(),
-                      _moveAction(),
-                    ],
-          appBarActions: [
-            if (widget.callback == null && extra.isTrash)
-              IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                        context,
-                        DialogRoute(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: Text(
-                                    "Are you sure you want to empty the trash?"),
-                                content: Text(
-                                  "This is permanent", // TODO: change
-                                  style: TextStyle(
-                                      color: Colors.red.harmonizeWith(
-                                          Theme.of(context)
-                                              .colorScheme
-                                              .primary)),
-                                ),
-                                actions: [
-                                  TextButton(
-                                      onPressed: () {
-                                        PlatformFunctions.emptyTrash();
-                                        Navigator.pop(context);
-                                      },
-                                      child: Text(
-                                          AppLocalizations.of(context)!.yes)),
-                                  TextButton(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                      },
-                                      child: Text(
-                                          AppLocalizations.of(context)!.no))
-                                ],
-                              );
-                            }));
-                  },
-                  icon: const Icon(Icons.delete_sweep_outlined)),
-            if (widget.callback != null)
-              IconButton(
-                  onPressed: () {
-                    // if (state.gridKey.currentState?.mutationInterface
-                    //         ?.isRefreshing !=
-                    //     false) {
-                    //   return;
-                    // }
-
-                    // final upTo = state
-                    //     .gridKey.currentState?.mutationInterface?.cellCount;
-                    // if (upTo == null) {
-                    //   return;
-                    // }
-
-                    // try {
-                    //   final n = math.Random.secure().nextInt(upTo);
-
-                    //   widget.callback?.call(state
-                    //       .gridKey.currentState!.mutationInterface!
-                    //       .getCell(n));
-                    // } catch (e) {
-                    //   log("getting random number",
-                    //       level: Level.WARNING.value, error: e);
-                    //   return;
-                    // }
-
-                    // if (widget.callback!.returnBack) {
-                    //   Navigator.pop(context);
-                    //   Navigator.pop(context);
-                    // }
-                  },
-                  icon: const Icon(Icons.casino_outlined)),
-            gridSettingsButton(state.settings.galleryFiles,
-                selectRatio: (ratio) => state.settings
-                    .copy(
-                        galleryFiles: state.settings.galleryFiles
-                            .copy(aspectRatio: ratio))
-                    .save(),
-                selectHideName: (hideNames) => state.settings
-                    .copy(
-                        galleryFiles: state.settings.galleryFiles
-                            .copy(hideName: hideNames))
-                    .save(),
-                selectListView: (listView) => state.settings
-                    .copy(
-                        galleryFiles: state.settings.galleryFiles
-                            .copy(listView: listView))
-                    .save(),
-                selectGridColumn: (columns) => state.settings
-                    .copy(
-                        galleryFiles:
-                            state.settings.galleryFiles.copy(columns: columns))
-                    .save()),
-          ]);
+        aspectRatio: state.settings.galleryFiles.aspectRatio,
+        columns: state.settings.galleryFiles.columns,
+        hideAlias: state.settings.galleryFiles.hideName,
+        tight: true,
+        isList: false,
+        // search: SearchAndFocus(
+        //     searchWidget(context, hint: widget.dirName), searchFocus),
+        gridActions: widget.callback != null
+            ? []
+            : extra.isTrash
+                ? [
+                    _restoreFromTrash(),
+                  ]
+                : [
+                    _bulkRename(),
+                    _saveTagsAction(),
+                    _addToFavoritesAction(null),
+                    _deleteAction(),
+                    _copyAction(),
+                    _moveAction(),
+                  ],
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -687,14 +597,113 @@ class _GalleryFilesState extends State<GalleryFiles>
                 child: state.settings.galleryFiles.listView
                     ? ListLayout(
                         // getOriginalCell: widget.api.directCell,
-                        metadata: _makeMetadata(context))
+                        // metadata: _makeMetadata(context)
+                        )
                     : GridLayout(
-                        aspectRatio: state.settings.galleryFiles.aspectRatio,
-                        columns: state.settings.galleryFiles.columns,
                         loader: extra.loader,
                         // getOriginalCell: widget.api.directCell,
                         download: null,
-                        metadata: _makeMetadata(context),
+                        appBarActions: [
+                          if (widget.callback == null && extra.isTrash)
+                            IconButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                      context,
+                                      DialogRoute(
+                                          context: context,
+                                          builder: (context) {
+                                            return AlertDialog(
+                                              title: Text(
+                                                  "Are you sure you want to empty the trash?"),
+                                              content: Text(
+                                                "This is permanent", // TODO: change
+                                                style: TextStyle(
+                                                    color: Colors.red
+                                                        .harmonizeWith(
+                                                            Theme.of(context)
+                                                                .colorScheme
+                                                                .primary)),
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                    onPressed: () {
+                                                      PlatformFunctions
+                                                          .emptyTrash();
+                                                      Navigator.pop(context);
+                                                    },
+                                                    child: Text(
+                                                        AppLocalizations.of(
+                                                                context)!
+                                                            .yes)),
+                                                TextButton(
+                                                    onPressed: () {
+                                                      Navigator.pop(context);
+                                                    },
+                                                    child: Text(
+                                                        AppLocalizations.of(
+                                                                context)!
+                                                            .no))
+                                              ],
+                                            );
+                                          }));
+                                },
+                                icon: const Icon(Icons.delete_sweep_outlined)),
+                          if (widget.callback != null)
+                            IconButton(
+                                onPressed: () {
+                                  // if (state.gridKey.currentState?.mutationInterface
+                                  //         ?.isRefreshing !=
+                                  //     false) {
+                                  //   return;
+                                  // }
+
+                                  // final upTo = state
+                                  //     .gridKey.currentState?.mutationInterface?.cellCount;
+                                  // if (upTo == null) {
+                                  //   return;
+                                  // }
+
+                                  // try {
+                                  //   final n = math.Random.secure().nextInt(upTo);
+
+                                  //   widget.callback?.call(state
+                                  //       .gridKey.currentState!.mutationInterface!
+                                  //       .getCell(n));
+                                  // } catch (e) {
+                                  //   log("getting random number",
+                                  //       level: Level.WARNING.value, error: e);
+                                  //   return;
+                                  // }
+
+                                  // if (widget.callback!.returnBack) {
+                                  //   Navigator.pop(context);
+                                  //   Navigator.pop(context);
+                                  // }
+                                },
+                                icon: const Icon(Icons.casino_outlined)),
+                          gridSettingsButton(state.settings.galleryFiles,
+                              selectRatio: (ratio) => state.settings
+                                  .copy(
+                                      galleryFiles: state.settings.galleryFiles
+                                          .copy(aspectRatio: ratio))
+                                  .save(),
+                              selectHideName: (hideNames) => state.settings
+                                  .copy(
+                                      galleryFiles: state.settings.galleryFiles
+                                          .copy(hideName: hideNames))
+                                  .save(),
+                              selectListView: (listView) => state.settings
+                                  .copy(
+                                      galleryFiles: state.settings.galleryFiles
+                                          .copy(listView: listView))
+                                  .save(),
+                              selectGridColumn: (columns) => state.settings
+                                  .copy(
+                                      galleryFiles: state.settings.galleryFiles
+                                          .copy(columns: columns))
+                                  .save()),
+                        ],
+                        // metadata: _makeMetadata(context),
                       ),
               ),
               noDrawer: widget.callback != null,

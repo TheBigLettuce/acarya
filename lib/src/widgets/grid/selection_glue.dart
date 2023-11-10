@@ -7,11 +7,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:gallery/src/interfaces/cell.dart';
+import 'package:gallery/src/widgets/grid/grid_action.dart';
 
 import 'selection_interface.dart';
 
 class SelectionGlue<T extends Cell> {
-  final void Function(SelectionInterface<T> selection) open;
+  final void Function(BuildContext context, SelectionInterface<T> selection)
+      open;
   final void Function() close;
   final bool Function() isOpen;
   final bool Function() keyboardVisible;
@@ -19,7 +21,7 @@ class SelectionGlue<T extends Cell> {
   static SelectionGlue<T> empty<T extends Cell>(BuildContext context) =>
       SelectionGlue(
           close: () {},
-          open: (__) {},
+          open: (_, __) {},
           isOpen: () => false,
           keyboardVisible: () => MediaQuery.viewInsetsOf(context).bottom != 0);
 

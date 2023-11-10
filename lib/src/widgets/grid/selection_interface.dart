@@ -9,7 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gallery/src/interfaces/cell.dart';
-import 'package:gallery/src/widgets/notifiers/get_cell.dart';
+import 'package:gallery/src/widgets/notifiers/cell_provider.dart';
+import 'package:gallery/src/widgets/notifiers/grid_metadata.dart';
 import 'package:gallery/src/widgets/notifiers/selection_glue.dart';
 
 class SelectionInterface<T extends Cell> {
@@ -29,6 +30,8 @@ class SelectionInterface<T extends Cell> {
     _lastSelected = null;
   }
 
+  int count() => _selected.length;
+
   bool isSelected(BuildContext context, int indx) =>
       indx.isNegative ? false : _selected.containsKey(indx);
 
@@ -38,7 +41,7 @@ class SelectionInterface<T extends Cell> {
     }
 
     if (_selected.isEmpty) {
-      SelectionGlueNotifier.of<T>(context).open(this);
+      SelectionGlueNotifier.of<T>(context).open(context, this);
     }
 
     _selected[id] = selection;
@@ -63,7 +66,9 @@ class SelectionInterface<T extends Cell> {
 
   void selectUnselectUntil(BuildContext context, int indx,
       {List<int>? selectFrom}) {
-    if (_lastSelected != null) {
+    if (_lastSelected == null) {
+      selectOrUnselect(context, indx);
+    } else {
       final last = selectFrom?.indexOf(_lastSelected!) ?? _lastSelected!;
       indx = selectFrom?.indexOf(indx) ?? indx;
       if (_lastSelected == indx) {
@@ -71,7 +76,7 @@ class SelectionInterface<T extends Cell> {
       }
 
       final selection = !isSelected(context, indx);
-      final getCell = CellProvider.of<T, int>(context);
+      final getCell = CellProvider.of<T>(context);
 
       if (indx < last) {
         for (var i = last; i >= indx; i--) {

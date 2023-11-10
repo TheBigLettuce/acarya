@@ -10,7 +10,9 @@ import 'dart:developer';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:gallery/src/interfaces/cell.dart';
+import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/sticker.dart';
+import 'package:gallery/src/widgets/notifiers/grid_metadata.dart';
 import 'package:logging/logging.dart';
 import 'package:palette_generator/palette_generator.dart';
 
@@ -40,14 +42,15 @@ mixin ImageViewPaletteMixin<T extends Cell> on State<ImageView<T>> {
       previousPallete = currentPalette;
       currentPalette = value;
       addInfo = currentCell.addInfo(context, () {
-        widget.updateTagScrollPos(scrollController.offset, currentPage);
+        // widget.updateTagScrollPos(scrollController.offset, currentPage);
       },
           AddInfoColorData(
             borderColor: Theme.of(context).colorScheme.outlineVariant,
             foregroundColor: value.mutedColor?.bodyTextColor
                     .harmonizeWith(Theme.of(context).colorScheme.primary) ??
                 kListTileColorInInfo,
-            systemOverlayColor: widget.systemOverlayRestoreColor,
+            systemOverlayColor:
+                Theme.of(context).colorScheme.background.withOpacity(0.5),
           ));
 
       final b = currentCell.addButtons(context);

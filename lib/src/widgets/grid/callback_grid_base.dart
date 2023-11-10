@@ -5,14 +5,13 @@
 // This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:gallery/src/interfaces/cell.dart';
-import 'package:gallery/src/widgets/notifiers/get_cell.dart';
+import 'package:gallery/src/widgets/notifiers/cell_provider.dart';
 import 'package:gallery/src/widgets/notifiers/grid_footer.dart';
 
 import '../notifiers/selection_glue.dart';
+import '../notifiers/state_restoration.dart';
 
 class CallbackGridBase<T extends Cell> extends StatefulWidget {
   final Widget? appBar;
@@ -38,24 +37,34 @@ class _CallbackGridBaseState<T extends Cell>
     super.initState();
 
     scrollController.addListener(() {
-      // final h = MediaQuery.sizeOf(context).height;
-
-      // final height = h - h * 0.80;
-
       if (scrollController.position.pixels >=
-          scrollController.position.maxScrollExtent * 0.80) {
+              scrollController.position.maxScrollExtent * 0.80 &&
+          scrollController.position.maxScrollExtent != 0 &&
+          scrollController.position.pixels != 0) {
         final state = CellProvider.stateOf<T>(context);
 
         state.next();
       }
-
-      // if (!_state.isRefreshing &&
-      //     _state.cellCount != 0 &&
-      //     (controller.offset / controller.positions.first.maxScrollExtent) >=
-      //         1 - (height / controller.positions.first.maxScrollExtent)) {
-      //   _state._loadNext(context);
-      // }
     });
+
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      scrollController.position.isScrollingNotifier
+          .addListener(_saveScrollingState);
+
+      final restore = StateRestorationProvider.maybeOf(context);
+      if (restore != null) {
+        scrollController.jumpTo(restore.copy.scrollPositionGrid);
+      }
+    });
+  }
+
+  void _saveScrollingState() {
+    if (!scrollController.position.isScrollingNotifier.value) {
+      final restore = StateRestorationProvider.maybeOf(context);
+      if (restore != null) {
+        restore.updateScrollPosition(scrollController.offset);
+      }
+    }
   }
 
   @override
@@ -69,16 +78,13 @@ class _CallbackGridBaseState<T extends Cell>
   Widget build(BuildContext context) {
     return RefreshIndicator(
         onRefresh: widget.onRefresh,
-        child: PrimaryScrollController(
+        child: CustomScrollView(
           controller: scrollController,
-          child: CustomScrollView(
-            controller: scrollController,
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              if (widget.appBar != null) widget.appBar!,
-              _Padding<T>(child: widget.child),
-            ],
-          ),
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            if (widget.appBar != null) widget.appBar!,
+            _Padding<T>(child: widget.child),
+          ],
         ));
   }
 }
@@ -309,42 +315,7 @@ class _Padding<T extends Cell> extends StatelessWidget {
 //   final overlayColor =
 //       Theme.of(context).colorScheme.background.withOpacity(0.5);
 
-//   Navigator.push(context, MaterialPageRoute(builder: (context) {
-//     return ImageView<T>(
-//         key: imageViewKey,
-//         registerNotifiers: widget.registerNotifiers,
-//         systemOverlayRestoreColor: overlayColor,
-//         updateTagScrollPos: (pos, selectedCell) => widget.updateScrollPosition
-//             ?.call(offsetGrid, infoPos: pos, selectedCell: selectedCell),
-//         scrollUntill: _scrollUntill,
-//         pageChange: widget.pageChangeImage,
-//         onExit: () {
-//           inImageView = false;
-//           widget.onExitImageView?.call();
-//         },
-//         addIcons: widget.addIconsImage,
-//         focusMain: () {
-//           widget.mainFocus.requestFocus();
-//         },
-//         infoScrollOffset: offset,
-//         predefinedIndexes: segTranslation,
-//         getCell: _state.getCell,
-//         noteInterface: widget.noteInterface,
-//         cellCount: _state.cellCount,
-//         download: widget.download,
-//         startingCell: segTranslation != null
-//             ? () {
-//                 for (final (i, e) in segTranslation!.indexed) {
-//                   if (e == startingCell) {
-//                     return i;
-//                   }
-//                 }
 
-//                 return 0;
-//               }()
-//             : startingCell,
-//         onNearEnd: widget.loadNext == null ? null : _state._onNearEnd);
-//   }));
 // }
 
 // late final controller =

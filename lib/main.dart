@@ -132,10 +132,11 @@ void main() async {
 
   await BackgroundCellLoader<Post, String>.cache(kMainGridLoaderKey, () {
     final settings = Settings.fromDb();
+    final db = DbsOpen.primaryGrid(settings.selectedBooru);
 
     return (
       (db, idx) => db.posts.where().sortByPostIdDesc().findFirst(offset: idx),
-      DbsOpen.primaryGrid(settings.selectedBooru),
+      db,
       kPrimaryGridSchemas,
       (loader) {
         final tagManager = TagManager.fromEnum(settings.selectedBooru, true);
@@ -144,7 +145,8 @@ void main() async {
             loader,
             BooruAPI.fromEnum(settings.selectedBooru, page: null),
             tagManager.excluded,
-            "");
+            "",
+            db.posts.where().sortByPostIdDesc().findFirst()?.postId);
       },
     );
   }).init();

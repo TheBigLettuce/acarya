@@ -16,6 +16,7 @@ import 'package:gallery/src/interfaces/cell.dart';
 import 'package:gallery/src/widgets/grid/cell_data.dart';
 import 'package:gallery/src/db/state_restoration.dart';
 import 'package:gallery/src/db/schemas/settings.dart';
+import 'package:gallery/src/widgets/notifiers/network_configuration.dart';
 import 'package:gallery/src/widgets/translation_notes.dart';
 import 'package:html_unescape/html_unescape_small.dart';
 import 'package:isar/isar.dart';
@@ -184,7 +185,7 @@ class PostBase implements Cell {
 
   @override
   List<(IconData, void Function()?)>? addStickers(BuildContext context) {
-    final icons = _stickers(fileDisplay(), context);
+    final icons = _stickers(fileDisplay(context), context);
 
     return icons.isEmpty ? null : icons;
   }
@@ -266,7 +267,7 @@ class PostBase implements Cell {
   String alias(bool isList) => isList ? tags.join(" ") : postId.toString();
 
   @override
-  Contentable fileDisplay() {
+  Contentable fileDisplay(BuildContext context) {
     String url = switch (Settings.fromDb().quality) {
       DisplayQuality.original => fileUrl,
       DisplayQuality.sample => sampleUrl
@@ -282,7 +283,8 @@ class PostBase implements Cell {
     if (typeHalf[0] == "image") {
       ImageProvider provider;
       try {
-        provider = NetworkImage(url);
+        provider = NetworkImage(url,
+            headers: NetworkConfigurationProvider.of(context).asHeaders());
       } catch (e) {
         provider = MemoryImage(kTransparentImage);
       }
@@ -307,15 +309,16 @@ class PostBase implements Cell {
   @override
   CellData getCellData(bool isList, {required BuildContext context}) {
     ImageProvider provider;
-    try {
-      provider = CachedNetworkImageProvider(
-        previewUrl,
-      );
-    } catch (_) {
-      provider = MemoryImage(kTransparentImage);
-    }
+    // try {
+    provider = CachedNetworkImageProvider(
+      previewUrl,
+      headers: NetworkConfigurationProvider.of(context).asHeaders(),
+    );
+    // } catch (_) {
+    //   provider = MemoryImage(kTransparentImage);
+    // }
 
-    final content = fileDisplay();
+    final content = fileDisplay(context);
 
     return CellData(thumb: provider, name: alias(isList), stickers: [
       if (Settings.isFavorite(fileUrl))

@@ -55,7 +55,7 @@ abstract class Cell {
   /// This can be unimplemented.
   /// Not implementing this assumes that clicking on the grid will take to an other page,
   /// requires [CallbackGridShell.overrideOnPress] to be not null, which makes [fileDisplay] never to be called.
-  Contentable fileDisplay();
+  Contentable fileDisplay(BuildContext context);
 
   /// Url to the file to download.
   /// This can be unimplemented.

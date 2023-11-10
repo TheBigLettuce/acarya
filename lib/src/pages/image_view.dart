@@ -20,6 +20,9 @@ import 'package:gallery/src/widgets/image_view/wrap_image_view_notifiers.dart';
 import 'package:gallery/src/widgets/image_view/wrap_image_view_skeleton.dart';
 import 'package:gallery/src/widgets/image_view/wrap_image_view_theme.dart';
 import 'package:gallery/src/plugs/platform_fullscreens.dart';
+import 'package:gallery/src/widgets/notifiers/cell_provider.dart';
+import 'package:gallery/src/widgets/notifiers/grid_element_count.dart';
+import 'package:gallery/src/widgets/notifiers/state_restoration.dart';
 import 'package:logging/logging.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -57,45 +60,31 @@ class NoteInterface<T extends Cell> {
 }
 
 class ImageView<T extends Cell> extends StatefulWidget {
-  final int startingCell;
-  final T Function(int i) getCell;
-  final int cellCount;
-  final void Function(int post) scrollUntill;
-  final void Function(double? pos, int? selectedCell) updateTagScrollPos;
   final Future<int> Function()? onNearEnd;
   final List<GridAction<T>> Function(T)? addIcons;
   final void Function(int i)? download;
-  final double? infoScrollOffset;
-  final Color systemOverlayRestoreColor;
   final void Function(ImageViewState<T> state)? pageChange;
   final void Function() onExit;
   final void Function() focusMain;
 
   final List<int>? predefinedIndexes;
 
-  final InheritedWidget Function(Widget child)? registerNotifiers;
-
-  final NoteInterface<T>? noteInterface;
   final void Function()? onEmptyNotes;
+
+  final int startingCell;
+  final T currentCell;
 
   const ImageView(
       {super.key,
-      required this.updateTagScrollPos,
-      required this.cellCount,
-      required this.scrollUntill,
-      required this.startingCell,
       required this.onExit,
       this.predefinedIndexes,
-      required this.getCell,
       required this.onNearEnd,
+      required this.currentCell,
       required this.focusMain,
-      this.noteInterface,
-      required this.systemOverlayRestoreColor,
       this.pageChange,
+      required this.startingCell,
       this.onEmptyNotes,
-      this.infoScrollOffset,
       this.download,
-      this.registerNotifiers,
       this.addIcons});
 
   @override
@@ -108,23 +97,19 @@ class ImageViewState<T extends Cell> extends State<ImageView<T>>
         ImageViewPaletteMixin<T>,
         ImageViewLoadingBuilderMixin<T> {
   final mainFocus = FocusNode();
+  final scrollController = ScrollController();
+
+  late final controller = PageController(initialPage: widget.startingCell);
+
   final GlobalKey<ScaffoldState> key = GlobalKey();
   final GlobalKey<WrapImageViewNotifiersState> wrapNotifiersKey = GlobalKey();
   final GlobalKey<WrapImageViewThemeState> wrapThemeKey = GlobalKey();
   final GlobalKey<NoteListState> noteListKey = GlobalKey();
 
-  late final ScrollController scrollController =
-      ScrollController(initialScrollOffset: widget.infoScrollOffset ?? 0);
+  PlatformFullscreensPlug? fullscreenPlug;
 
-  late final PageController controller =
-      PageController(initialPage: widget.startingCell);
-
-  late final PlatformFullscreensPlug fullscreenPlug =
-      choosePlatformFullscreenPlug(widget.systemOverlayRestoreColor);
-
-  late T currentCell;
+  late T currentCell = widget.currentCell;
   late int currentPage = widget.startingCell;
-  late int cellCount = widget.cellCount;
 
   final noteTextController = TextEditingController();
 
@@ -138,20 +123,19 @@ class ImageViewState<T extends Cell> extends State<ImageView<T>>
 
     WakelockPlus.enable();
 
+    // currentCell = CellProvider.getOf<T>(context, widget.startingCell);
+
     WidgetsBinding.instance.scheduleFrameCallback((_) {
-      if (widget.infoScrollOffset != null) {
-        key.currentState?.openEndDrawer();
-      }
+      // if (widget.infoScrollOffset != null) {
+      //   key.currentState?.openEndDrawer();
+      // }
 
-      fullscreenPlug.setTitle(currentCell.alias(true));
+      fullscreenPlug = choosePlatformFullscreenPlug(
+          Theme.of(context).colorScheme.surface.withOpacity(0.8));
+
+      fullscreenPlug?.setTitle(currentCell.alias(true));
       _loadNext(widget.startingCell);
-    });
 
-    currentCell = widget.getCell(widget.startingCell);
-
-    widget.updateTagScrollPos(null, widget.startingCell);
-
-    WidgetsBinding.instance.scheduleFrameCallback((timeStamp) {
       final b = makeImageViewBindings(context, key, controller,
           download: widget.download == null
               ? null
@@ -170,14 +154,18 @@ class ImageViewState<T extends Cell> extends State<ImageView<T>>
       extractPalette(context, currentCell, key, scrollController, currentPage,
           _resetAnimation);
     });
+
+    // StateRestorationProvider.maybeOf(context).
+
+    // widget.updateTagScrollPos(null, widget.startingCell);
   }
 
   @override
   void dispose() {
-    fullscreenPlug.unfullscreen();
+    fullscreenPlug?.unfullscreen();
 
     WakelockPlus.disable();
-    widget.updateTagScrollPos(null, null);
+    // widget.updateTagScrollPos(null, null);
     controller.dispose();
 
     widget.onExit();
@@ -203,7 +191,7 @@ class ImageViewState<T extends Cell> extends State<ImageView<T>>
   }
 
   void refreshImage() {
-    var i = currentCell.fileDisplay();
+    var i = currentCell.fileDisplay(context);
     if (i is NetImage) {
       PaintingBinding.instance.imageCache.evict(i.provider);
 
@@ -220,10 +208,10 @@ class ImageViewState<T extends Cell> extends State<ImageView<T>>
       return;
     }
 
-    cellCount = count;
+    // cellCount = count;
 
-    if (cellCount == 1) {
-      final newCell = widget.getCell(0);
+    if (count == 1) {
+      final newCell = CellProvider.getOf<T>(context, 0);
       if (newCell == currentCell) {
         return;
       }
@@ -231,10 +219,9 @@ class ImageViewState<T extends Cell> extends State<ImageView<T>>
 
       currentCell = newCell;
       hardRefresh();
-    } else if (currentPage > cellCount - 1) {
+    } else if (currentPage > count - 1) {
       controller.previousPage(duration: 200.ms, curve: Curves.linearToEaseOut);
-    } else if (widget
-            .getCell(currentPage)
+    } else if (CellProvider.getOf<T>(context, currentPage)
             .getCellData(false, context: context)
             .thumb !=
         currentCell.getCellData(false, context: context).thumb) {
@@ -246,14 +233,16 @@ class ImageViewState<T extends Cell> extends State<ImageView<T>>
             duration: 200.ms, curve: Curves.linearToEaseOut);
       }
     } else {
-      currentCell = widget.getCell(currentPage);
+      currentCell = CellProvider.getOf<T>(context, currentPage);
     }
 
     setState(() {});
   }
 
   void _loadNext(int index) {
-    if (index >= cellCount - 3 && !refreshing && widget.onNearEnd != null) {
+    if (index >= GridElementCountNotifier.of(context) - 3 &&
+        !refreshing &&
+        widget.onNearEnd != null) {
       setState(() {
         refreshing = true;
       });
@@ -261,7 +250,6 @@ class ImageViewState<T extends Cell> extends State<ImageView<T>>
         if (context.mounted) {
           setState(() {
             refreshing = false;
-            cellCount = value;
           });
         }
       }).onError((error, stackTrace) {
@@ -272,7 +260,7 @@ class ImageViewState<T extends Cell> extends State<ImageView<T>>
   }
 
   void _onTap() {
-    fullscreenPlug.fullscreen();
+    fullscreenPlug?.fullscreen();
     wrapNotifiersKey.currentState?.toggle();
   }
 
@@ -287,13 +275,13 @@ class ImageViewState<T extends Cell> extends State<ImageView<T>>
     currentPage = index;
     widget.pageChange?.call(this);
     _loadNext(index);
-    widget.updateTagScrollPos(null, index);
+    // widget.updateTagScrollPos(null, index);
 
-    widget.scrollUntill(index);
+    // widget.scrollUntill(index);
 
-    final c = widget.getCell(index);
+    final c = CellProvider.getOf<T>(context, index);
 
-    fullscreenPlug.setTitle(c.alias(true));
+    fullscreenPlug?.setTitle(c.alias(true));
 
     setState(() {
       currentCell = c;
@@ -319,7 +307,6 @@ class ImageViewState<T extends Cell> extends State<ImageView<T>>
       key: wrapNotifiersKey,
       onTagRefresh: _onTagRefresh,
       currentCell: currentCell,
-      registerNotifiers: widget.registerNotifiers,
       child: WrapImageViewTheme(
         key: wrapThemeKey,
         currentPalette: currentPalette,
@@ -345,7 +332,8 @@ class ImageViewState<T extends Cell> extends State<ImageView<T>>
                 textController: noteTextController,
                 addNote: () => noteListKey.currentState
                     ?.addNote(currentCell, currentPalette),
-                showAddNoteButton: widget.noteInterface != null,
+                showAddNoteButton: false,
+                // widget.noteInterface != null,
                 children: widget.addIcons
                         ?.call(currentCell)
                         .map(
@@ -365,20 +353,21 @@ class ImageViewState<T extends Cell> extends State<ImageView<T>>
               onPageChanged: _onPageChanged,
               onLongPress: _onLongPress,
               pageController: controller,
-              notes: widget.noteInterface == null
-                  ? null
-                  : NoteList<T>(
-                      key: noteListKey,
-                      noteInterface: widget.noteInterface!,
-                      onEmptyNotes: widget.onEmptyNotes,
-                      backgroundColor: currentPalette?.dominantColor?.color
-                              .harmonizeWith(
-                                  Theme.of(context).colorScheme.primary) ??
-                          Colors.black,
-                    ),
+              notes: null,
+              // widget.noteInterface == null
+              //     ? null
+              //     : NoteList<T>(
+              //         key: noteListKey,
+              //         noteInterface: widget.noteInterface!,
+              //         onEmptyNotes: widget.onEmptyNotes,
+              //         backgroundColor: currentPalette?.dominantColor?.color
+              //                 .harmonizeWith(
+              //                     Theme.of(context).colorScheme.primary) ??
+              //             Colors.black,
+              //       ),
               loadingBuilder: (context, event, idx) => loadingBuilder(context,
                   event, idx, currentPage, wrapNotifiersKey, currentPalette),
-              itemCount: cellCount,
+              itemCount: GridElementCountNotifier.of(context),
               onTap: _onTap,
               builder: galleryBuilder,
               decoration: BoxDecoration(

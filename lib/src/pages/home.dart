@@ -172,13 +172,12 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     return HomeSkeleton(
       "Home",
       state,
-      (context) {
-        return Animate(
-            target: 0,
-            effects: [FadeEffect(duration: 50.ms, begin: 1, end: 0)],
-            controller: controller,
-            child: _currentPage(context));
-      },
+      Animate(
+        target: 0,
+        effects: [FadeEffect(duration: 50.ms, begin: 1, end: 0)],
+        controller: controller,
+        child: _currentPage(context),
+      ),
       navBar: Animate(
           target: glueState.actions == null ? 0 : 1,
           effects: [
