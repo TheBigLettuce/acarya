@@ -31,15 +31,17 @@ class SearchCharacterTitle extends StatelessWidget {
 }
 
 class GridAppBarTitle extends StatelessWidget {
-  final void Function() onPressed;
   final SearchAndFocus? searchWidget;
   final Widget child;
 
   const GridAppBarTitle(
       {super.key,
-      required this.onPressed,
+      // required this.onPressed,
       required this.searchWidget,
       required this.child});
+
+  const GridAppBarTitle.basic({super.key, required this.child})
+      : searchWidget = null;
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +61,7 @@ class GridAppBarTitle extends StatelessWidget {
       ],
       target: IsSelectingNotifier.of(context) ? 1 : 0,
       child: GestureDetector(
-        onTap: onPressed,
+        // onTap: onPressed,
         child: AbsorbPointer(
           child: SizedBox(
             width: 64,

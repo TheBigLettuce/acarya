@@ -30,37 +30,40 @@ class CallbackGridShell<T extends Cell> extends StatelessWidget {
   /// on top of the [child].
   final PreferredSizeWidget? footer;
 
-  final InheritedWidget Function(Widget child)? registerNotifiers;
-
   final Widget? fab;
 
-  final List<Widget> appBarActions;
+  // final List<Widget> appBarActions;
 
-  final SearchAndFocus? search;
+  // final SearchAndFocus? search;
 
   final BackgroundDataLoader<T, int> loader;
 
+  // final Widget? leading;
+
   /// The actual grid widget.
+
+  final Widget? appBar;
+
   final Widget child;
 
   const CallbackGridShell({
     super.key,
     required this.keybinds,
     required this.mainFocus,
-    required this.appBarActions,
+    required this.appBar,
+    // required this.appBarActions,
     required this.loader,
-    this.search,
+    // this.leading,
+    // this.search,
     this.footer,
-    this.registerNotifiers,
     this.fab,
     required this.child,
   });
 
   @override
   Widget build(BuildContext context) {
-    return _Notifiers(
-        footerSize: footer?.preferredSize.height,
-        registerNotifiers: registerNotifiers,
+    return GridFooterNotifier(
+        size: footer?.preferredSize.height,
         child: CallbackShortcuts(
           bindings: keybinds,
           child: Focus(
@@ -73,18 +76,18 @@ class CallbackGridShell<T extends Cell> extends StatelessWidget {
                   onRefresh: () {
                     return Future.value();
                   },
-                  appBar: GridAppBar(
-                      actions: appBarActions,
-                      bottomWidget: null,
-                      centerTitle: true,
-                      leading: Text(""),
-                      // search: widget.metadata.search,
-                      title: GridAppBarTitle(
-                          onPressed: () {},
-                          searchWidget: search,
-                          child: const WrapBadgeCellCountTitleWidget(
-                            child: SearchCharacterTitle(),
-                          ))),
+                  appBar: appBar,
+                  // GridAppBar(
+                  //   actions: appBarActions,
+                  //   bottomWidget: null,
+                  //   centerTitle: true,
+                  //   leading: leading ?? const SizedBox.shrink(),
+                  //   title: GridAppBarTitle(
+                  //       searchWidget: search,
+                  //       child: const WrapBadgeCellCountTitleWidget(
+                  //         child: SearchCharacterTitle(),
+                  //       )),
+                  // ),
                   child: fab == null && footer == null
                       ? child
                       : Stack(
@@ -112,24 +115,5 @@ class CallbackGridShell<T extends Cell> extends StatelessWidget {
                 )),
               )),
         ));
-  }
-}
-
-class _Notifiers extends StatelessWidget {
-  final double? footerSize;
-  final InheritedWidget Function(Widget child)? registerNotifiers;
-  final Widget child;
-
-  const _Notifiers(
-      {super.key,
-      required this.registerNotifiers,
-      required this.footerSize,
-      required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return GridFooterNotifier(
-        size: footerSize,
-        child: registerNotifiers == null ? child : registerNotifiers!(child));
   }
 }

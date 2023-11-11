@@ -107,7 +107,6 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     if (widget.callback != null) {
       if (currentRoute == 0) {
         return GalleryDirectories(
-          glue: glueState.glue(keyboardVisible, setState),
           nestedCallback: widget.callback,
           procPop: _procPop,
           bottomPadding: keyboardVisible() ? 0 : 80,
@@ -124,8 +123,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
           procPop: _procPop,
         ),
       1 => GalleryDirectories(
-          glue: glueState.glue(keyboardVisible, setState),
           procPop: _procPop,
+          glue: glueState.glue(keyboardVisible, setState),
           bottomPadding: keyboardVisible() ? 0 : 80,
         ),
       2 => FavoritesPage(

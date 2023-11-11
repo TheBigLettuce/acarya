@@ -18,7 +18,9 @@ import '../../grid_metadata.dart';
 import '../../wrapped_selection.dart';
 
 class ListLayout<T extends Cell> extends StatelessWidget {
-  const ListLayout({super.key});
+  final void Function(T)? download;
+
+  const ListLayout({super.key, this.download});
 
   @override
   Widget build(BuildContext context) {

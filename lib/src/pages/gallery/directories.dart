@@ -22,10 +22,14 @@ import 'package:gallery/src/db/schemas/favorite_media.dart';
 import 'package:gallery/src/db/schemas/pinned_directories.dart';
 import 'package:gallery/src/db/schemas/tags.dart';
 import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
+import 'package:gallery/src/widgets/grid/grid_app_bar.dart';
 import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/layouts/grid/grid.dart';
+import 'package:gallery/src/widgets/grid/notifiers/notifier_registry_holder.dart';
 import 'package:gallery/src/widgets/grid/search_and_focus.dart';
 import 'package:gallery/src/widgets/grid/segments.dart';
+import 'package:gallery/src/widgets/notifiers/notifier_registry.dart';
+import 'package:gallery/src/widgets/notifiers/selection_glue.dart';
 import 'package:gallery/src/widgets/search_bar/search_filter_grid.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:gallery/src/widgets/skeletons/grid_skeleton_state.dart';
@@ -75,7 +79,7 @@ class GalleryDirectories extends StatefulWidget {
   final bool? noDrawer;
   final bool showBackButton;
   final void Function(bool) procPop;
-  final SelectionGlue<SystemGalleryDirectory> glue;
+  final SelectionGlue<SystemGalleryDirectory>? glue;
   final double bottomPadding;
 
   const GalleryDirectories(
@@ -83,7 +87,7 @@ class GalleryDirectories extends StatefulWidget {
       this.callback,
       this.nestedCallback,
       this.noDrawer,
-      required this.glue,
+      this.glue,
       required this.procPop,
       this.bottomPadding = 0,
       this.showBackButton = false})
@@ -265,213 +269,233 @@ class _GalleryDirectoriesState extends State<GalleryDirectories> {
 
   @override
   Widget build(BuildContext context) {
-    return GridSkeleton<SystemGalleryDirectory>(
-        state,
-        CallbackGridShell<SystemGalleryDirectory>(
-          loader: extra.loader,
-
-          appBarActions: [
-            if (widget.callback != null)
-              IconButton(
-                  onPressed: () async {
-                    try {
-                      widget.callback!(
-                          null,
-                          await PlatformFunctions.chooseDirectory(
-                              temporary: true));
-                      // ignore: use_build_context_synchronously
-                      Navigator.pop(context);
-                    } catch (e) {
-                      log("new folder in android_directories",
-                          level: Level.SEVERE.value, error: e);
-                      // ignore: use_build_context_synchronously
-                      Navigator.pop(context);
-                    }
-                  },
-                  icon: const Icon(Icons.create_new_folder_outlined)),
-            gridSettingsButton(state.settings.galleryDirectories,
-                selectRatio: (ratio) => state.settings
-                    .copy(
-                        galleryDirectories: state.settings.galleryDirectories
-                            .copy(aspectRatio: ratio))
-                    .save(),
-                selectHideName: (hideNames) => state.settings
-                    .copy(
-                        galleryDirectories: state.settings.galleryDirectories
-                            .copy(hideName: hideNames))
-                    .save(),
-                selectListView: null,
-                selectGridColumn: (columns) => state.settings
-                    .copy(
-                        galleryDirectories: state.settings.galleryDirectories
-                            .copy(columns: columns))
-                    .save()),
-          ],
-          keybinds: const {},
-          // initalScrollPosition: 0,
-          // scaffoldKey: state.scaffoldKey,
-          // onBack:
-          //     widget.showBackButton ? () => Navigator.pop(context) : null,
-          // systemNavigationInsets: EdgeInsets.only(
-          //     bottom: MediaQuery.of(context).systemGestureInsets.bottom +
-          //         (widget.glue.isOpen() && !widget.glue.keyboardVisible()
-          //             ? 80
-          //             : widget.bottomPadding)),
-          // hasReachedEnd: () => true,
-          // showCount: true,
-          // selectionGlue: widget.glue,
-          // addFabPadding: widget.callback != null ||
-          //     widget.nestedCallback != null ||
-          //     !widget.glue.isOpen(),
-          // hideAlias: state.settings.galleryDirectories.hideName,
-          mainFocus: state.mainFocus,
-          footer: widget.callback?.preview,
-          // initalCellCount: widget.callback != null
-          //     ? extra.db.systemGalleryDirectorys.countSync()
-          //     : 0,
-          // searchWidget: SearchAndFocus(
-          //     searchWidget(context,
-          //         hint: AppLocalizations.of(context)!.directoriesHint),
-          //     searchFocus),
-          // refresh: () {
-          //   if (widget.callback != null) {
-          //     PlatformFunctions.trashThumbId().then((value) {
-          //       try {
-          //         setState(() {
-          //           trashThumbId = value;
-          //         });
-          //       } catch (_) {}
-          //     });
-          //     return Future.value(
-          //         extra.db.systemGalleryDirectorys.countSync());
-          //   } else {
-          //     _refresh();
-
-          //     return null;
-          //   }
-          // },
-          // showSearchBarFirst: widget.callback != null,
-          // overrideOnPress: (context, cell) {
-          //   if (widget.callback != null) {
-          //     widget.callback!.c(cell, null).then((_) {
-          //       Navigator.pop(context);
-          //     });
-          //   } else {
-          //     final d = cell;
-
-          //     Navigator.push(
-          //         context,
-          //         MaterialPageRoute(
-          //           builder: (context) => switch (cell.bucketId) {
-          //             "favorites" => GalleryFiles(
-          //                 api: extra.favorites(),
-          //                 callback: widget.nestedCallback,
-          //                 dirName: "favorites",
-          //                 bucketId: "favorites"),
-          //             "trash" => GalleryFiles(
-          //                 api: extra.trash(),
-          //                 callback: widget.nestedCallback,
-          //                 dirName: "trash",
-          //                 bucketId: "trash"),
-          //             String() => GalleryFiles(
-          //                 api: api.files(d),
-          //                 dirName: d.name,
-          //                 callback: widget.nestedCallback,
-          //                 bucketId: d.bucketId)
-          //           },
-          //         ));
-          //   }
-          // },
-          // progressTicker: stream.stream,
-          // description: GridDescription(
-
-          // bottomWidget:
-          //     widget.callback != null || widget.nestedCallback != null
-          //         ? CopyMovePreview.hintWidget(
-          //             context,
-          //             widget.callback != null
-          //                 ? widget.callback!.description
-          //                 : widget.nestedCallback!.description)
-          //         : null,
-
-          // ),
-          child: GridLayout<SystemGalleryDirectory>(
-            segments: _makeSegments(context),
-
-            // aspectRatio: state.settings.galleryDirectories.aspectRatio,
-            // columns: state.settings.galleryDirectories.columns,
-            // getOriginalCell: api.directCell,
-            download: null,
-            // metadata: GridMetadata(
-
-            //   hideAlias: state.settings.galleryDirectories.hideName,
-            //   // search: SearchAndFocus(
-            //   //     searchWidget(context,
-            //   //         hint: AppLocalizations.of(context)!.directoriesHint),
-            //   //     searchFocus),
-            //   gridActions: widget.callback != null ||
-            //           widget.nestedCallback != null
-            //       ? [
-            //           if (widget.callback == null || widget.callback!.joinable)
-            //             SystemGalleryDirectoriesActions.joinedDirectories(
-            //                 context, extra, widget.nestedCallback)
-            //         ]
-            //       : [
-            //           FavoritesActions.addToGroup(context, (selected) {
-            //             final t = selected.first.tag;
-            //             for (final e in selected.skip(1)) {
-            //               if (t != e.tag) {
-            //                 return null;
-            //               }
-            //             }
-
-            //             return t;
-            //           }, (selected, value) {
-            //             if (value.isEmpty) {
-            //               PostTags.g.removeDirectoriesTag(
-            //                   selected.map((e) => e.bucketId));
-            //             } else {
-            //               PostTags.g.setDirectoriesTag(
-            //                   selected.map((e) => e.bucketId), value);
-            //             }
-
-            //             _refresh();
-
-            //             Navigator.pop(context);
-            //           }),
-            //           SystemGalleryDirectoriesActions.blacklist(context, extra),
-            //           SystemGalleryDirectoriesActions.joinedDirectories(
-            //               context, extra, widget.nestedCallback)
-            //         ],
-            // ),
+    return NotifierRegistryHolder(
+      l: [
+        if (widget.glue != null)
+          (child) => SelectionGlueNotifier(glue: widget.glue!, child: child),
+        ...NotifierRegistry.basicNotifiers<SystemGalleryDirectory>(
+          context,
+          GridMetadata(
+            gridActions: [],
+            aspectRatio: state.settings.galleryDirectories.aspectRatio,
+            columns: state.settings.galleryDirectories.columns,
+            isList: state.settings.galleryDirectories.listView,
           ),
-        ),
-        noDrawer: widget.noDrawer ?? false,
-        canPop: widget.callback != null || widget.nestedCallback != null
-            ? true
-            // ? currentFilteringMode() == FilteringMode.noFilter &&
-            // searchTextController.text.isEmpty &&
-            // !widget.glue.isOpen() &&
-            // state.gridKey.currentState?.showSearchBar != true
-            : false, overrideOnPop: (pop, hideAppBar) {
-      // final filterMode = currentFilteringMode();
-      // if (filterMode != FilteringMode.noFilter ||
-      //     searchTextController.text.isNotEmpty) {
-      //   resetSearch();
-      //   return;
-      // }
+        )
+      ],
+      child: GridSkeleton<SystemGalleryDirectory>(
+          state,
+          CallbackGridShell<SystemGalleryDirectory>(
+            loader: extra.loader,
+            appBar: GridAppBar.basic(
+              actions: [
+                if (widget.callback != null)
+                  IconButton(
+                      onPressed: () async {
+                        try {
+                          widget.callback!(
+                              null,
+                              await PlatformFunctions.chooseDirectory(
+                                  temporary: true));
+                          // ignore: use_build_context_synchronously
+                          Navigator.pop(context);
+                        } catch (e) {
+                          log("new folder in android_directories",
+                              level: Level.SEVERE.value, error: e);
+                          // ignore: use_build_context_synchronously
+                          Navigator.pop(context);
+                        }
+                      },
+                      icon: const Icon(Icons.create_new_folder_outlined)),
+                gridSettingsButton(state.settings.galleryDirectories,
+                    selectRatio: (ratio) => state.settings
+                        .copy(
+                            galleryDirectories: state
+                                .settings.galleryDirectories
+                                .copy(aspectRatio: ratio))
+                        .save(),
+                    selectHideName: (hideNames) => state.settings
+                        .copy(
+                            galleryDirectories: state
+                                .settings.galleryDirectories
+                                .copy(hideName: hideNames))
+                        .save(),
+                    selectListView: null,
+                    selectGridColumn: (columns) => state.settings
+                        .copy(
+                            galleryDirectories: state
+                                .settings.galleryDirectories
+                                .copy(columns: columns))
+                        .save()),
+              ],
+            ),
 
-      // if (widget.glue.isOpen()) {
-      //   state.gridKey.currentState?.selection.reset();
-      //   return;
-      // }
+            keybinds: const {},
+            // initalScrollPosition: 0,
+            // scaffoldKey: state.scaffoldKey,
+            // onBack:
+            //     widget.showBackButton ? () => Navigator.pop(context) : null,
+            // systemNavigationInsets: EdgeInsets.only(
+            //     bottom: MediaQuery.of(context).systemGestureInsets.bottom +
+            //         (widget.glue.isOpen() && !widget.glue.keyboardVisible()
+            //             ? 80
+            //             : widget.bottomPadding)),
+            // hasReachedEnd: () => true,
+            // showCount: true,
+            // selectionGlue: widget.glue,
+            // addFabPadding: widget.callback != null ||
+            //     widget.nestedCallback != null ||
+            //     !widget.glue.isOpen(),
+            // hideAlias: state.settings.galleryDirectories.hideName,
+            mainFocus: state.mainFocus,
+            footer: widget.callback?.preview,
+            // initalCellCount: widget.callback != null
+            //     ? extra.db.systemGalleryDirectorys.countSync()
+            //     : 0,
+            // searchWidget: SearchAndFocus(
+            //     searchWidget(context,
+            //         hint: AppLocalizations.of(context)!.directoriesHint),
+            //     searchFocus),
+            // refresh: () {
+            //   if (widget.callback != null) {
+            //     PlatformFunctions.trashThumbId().then((value) {
+            //       try {
+            //         setState(() {
+            //           trashThumbId = value;
+            //         });
+            //       } catch (_) {}
+            //     });
+            //     return Future.value(
+            //         extra.db.systemGalleryDirectorys.countSync());
+            //   } else {
+            //     _refresh();
 
-      if (hideAppBar()) {
-        setState(() {});
-        return;
-      }
+            //     return null;
+            //   }
+            // },
+            // showSearchBarFirst: widget.callback != null,
+            // overrideOnPress: (context, cell) {
+            //   if (widget.callback != null) {
+            //     widget.callback!.c(cell, null).then((_) {
+            //       Navigator.pop(context);
+            //     });
+            //   } else {
+            //     final d = cell;
 
-      widget.procPop(pop);
-    });
+            //     Navigator.push(
+            //         context,
+            //         MaterialPageRoute(
+            //           builder: (context) => switch (cell.bucketId) {
+            //             "favorites" => GalleryFiles(
+            //                 api: extra.favorites(),
+            //                 callback: widget.nestedCallback,
+            //                 dirName: "favorites",
+            //                 bucketId: "favorites"),
+            //             "trash" => GalleryFiles(
+            //                 api: extra.trash(),
+            //                 callback: widget.nestedCallback,
+            //                 dirName: "trash",
+            //                 bucketId: "trash"),
+            //             String() => GalleryFiles(
+            //                 api: api.files(d),
+            //                 dirName: d.name,
+            //                 callback: widget.nestedCallback,
+            //                 bucketId: d.bucketId)
+            //           },
+            //         ));
+            //   }
+            // },
+            // progressTicker: stream.stream,
+            // description: GridDescription(
+
+            // bottomWidget:
+            //     widget.callback != null || widget.nestedCallback != null
+            //         ? CopyMovePreview.hintWidget(
+            //             context,
+            //             widget.callback != null
+            //                 ? widget.callback!.description
+            //                 : widget.nestedCallback!.description)
+            //         : null,
+
+            // ),
+            child: GridLayout<SystemGalleryDirectory>(
+              segments: _makeSegments(context),
+
+              // aspectRatio: state.settings.galleryDirectories.aspectRatio,
+              // columns: state.settings.galleryDirectories.columns,
+              // getOriginalCell: api.directCell,
+              download: null,
+              // metadata: GridMetadata(
+
+              //   hideAlias: state.settings.galleryDirectories.hideName,
+              //   // search: SearchAndFocus(
+              //   //     searchWidget(context,
+              //   //         hint: AppLocalizations.of(context)!.directoriesHint),
+              //   //     searchFocus),
+              //   gridActions: widget.callback != null ||
+              //           widget.nestedCallback != null
+              //       ? [
+              //           if (widget.callback == null || widget.callback!.joinable)
+              //             SystemGalleryDirectoriesActions.joinedDirectories(
+              //                 context, extra, widget.nestedCallback)
+              //         ]
+              //       : [
+              //           FavoritesActions.addToGroup(context, (selected) {
+              //             final t = selected.first.tag;
+              //             for (final e in selected.skip(1)) {
+              //               if (t != e.tag) {
+              //                 return null;
+              //               }
+              //             }
+
+              //             return t;
+              //           }, (selected, value) {
+              //             if (value.isEmpty) {
+              //               PostTags.g.removeDirectoriesTag(
+              //                   selected.map((e) => e.bucketId));
+              //             } else {
+              //               PostTags.g.setDirectoriesTag(
+              //                   selected.map((e) => e.bucketId), value);
+              //             }
+
+              //             _refresh();
+
+              //             Navigator.pop(context);
+              //           }),
+              //           SystemGalleryDirectoriesActions.blacklist(context, extra),
+              //           SystemGalleryDirectoriesActions.joinedDirectories(
+              //               context, extra, widget.nestedCallback)
+              //         ],
+              // ),
+            ),
+          ),
+          noDrawer: widget.noDrawer ?? false,
+          canPop: widget.callback != null || widget.nestedCallback != null
+              ? true
+              // ? currentFilteringMode() == FilteringMode.noFilter &&
+              // searchTextController.text.isEmpty &&
+              // !widget.glue.isOpen() &&
+              // state.gridKey.currentState?.showSearchBar != true
+              : false, overrideOnPop: (pop, hideAppBar) {
+        // final filterMode = currentFilteringMode();
+        // if (filterMode != FilteringMode.noFilter ||
+        //     searchTextController.text.isNotEmpty) {
+        //   resetSearch();
+        //   return;
+        // }
+
+        // if (widget.glue.isOpen()) {
+        //   state.gridKey.currentState?.selection.reset();
+        //   return;
+        // }
+
+        if (hideAppBar()) {
+          setState(() {});
+          return;
+        }
+
+        widget.procPop(pop);
+      }),
+    );
   }
 }

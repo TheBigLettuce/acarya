@@ -21,6 +21,7 @@ import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/cell_loader.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/read_only_loader.dart';
+import 'package:gallery/src/widgets/grid/grid_app_bar.dart';
 import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/layouts/grid/grid.dart';
 import 'package:gallery/src/widgets/grid/notifiers/notifier_registry_holder.dart';
@@ -299,6 +300,7 @@ class _FavoritesPageState extends State<FavoritesPage>
     favoritesWatcher.cancel();
 
     state.dispose();
+    loader.dispose();
     // disposeSearch();
 
     super.dispose();
@@ -312,21 +314,23 @@ class _FavoritesPageState extends State<FavoritesPage>
           state,
           CallbackGridShell<FavoriteBooru>(
               loader: loader,
-              appBarActions: [
-                gridSettingsButton(state.settings.favorites,
-                    selectHideName: null,
-                    selectRatio: (ratio) => state.settings
-                        .copy(
-                            favorites: state.settings.favorites
-                                .copy(aspectRatio: ratio))
-                        .save(),
-                    selectListView: null,
-                    selectGridColumn: (columns) => state.settings
-                        .copy(
-                            favorites:
-                                state.settings.favorites.copy(columns: columns))
-                        .save())
-              ],
+              appBar: GridAppBar.basic(
+                actions: [
+                  gridSettingsButton(state.settings.favorites,
+                      selectHideName: null,
+                      selectRatio: (ratio) => state.settings
+                          .copy(
+                              favorites: state.settings.favorites
+                                  .copy(aspectRatio: ratio))
+                          .save(),
+                      selectListView: null,
+                      selectGridColumn: (columns) => state.settings
+                          .copy(
+                              favorites: state.settings.favorites
+                                  .copy(columns: columns))
+                          .save())
+                ],
+              ),
               keybinds: const {},
               // showCount: true,
               // systemNavigationInsets: EdgeInsets.only(

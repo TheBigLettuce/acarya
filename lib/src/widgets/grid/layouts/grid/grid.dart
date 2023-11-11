@@ -32,7 +32,7 @@ class GridLayout<T extends Cell> extends StatelessWidget {
 
   final Segments<T>? segments;
 
-  const GridLayout({super.key, required this.download, this.segments});
+  const GridLayout({super.key, this.download, this.segments});
 
   void _download(BuildContext context, int i) {
     download?.call(CellProvider.getOf<T>(context, i));

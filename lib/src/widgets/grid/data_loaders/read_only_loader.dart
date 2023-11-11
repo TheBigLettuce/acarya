@@ -49,7 +49,7 @@ class ReadOnlyDataLoader<T, J, ID> implements BackgroundDataLoader<T, J> {
 
   @override
   void send(ControlMessage m) {
-    assert(true, ".send on ReadOnlyDataLoader should not be used");
+    assert(false, ".send on ReadOnlyDataLoader should not be used");
   }
 
   @override

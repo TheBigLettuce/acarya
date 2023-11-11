@@ -9,6 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:gallery/src/widgets/notifiers/is_refreshing.dart';
 import 'package:gallery/src/widgets/notifiers/is_selecting.dart';
 
+import 'app_bar/grid_app_bar_title.dart';
+import 'app_bar/wrap_badge_cell_count_title_widget.dart';
 import 'search_and_focus.dart';
 
 // void _onTitlePressed() {
@@ -109,6 +111,22 @@ class GridAppBar extends StatelessWidget {
       required this.leading,
       // required this.search,
       required this.title});
+
+  const GridAppBar.basic(
+      {super.key,
+      this.actions = const [],
+      this.bottomWidget,
+      this.leading = const SizedBox.shrink(),
+      bool showCount = true})
+      : centerTitle = true,
+        title = !showCount
+            ? const GridAppBarTitle.basic(
+                child: SearchCharacterTitle(),
+              )
+            : const GridAppBarTitle.basic(
+                child: WrapBadgeCellCountTitleWidget(
+                child: SearchCharacterTitle(),
+              ));
 
   @override
   Widget build(BuildContext context) {

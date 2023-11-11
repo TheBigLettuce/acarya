@@ -27,24 +27,40 @@ class NotifierRegistry extends InheritedWidget {
   const NotifierRegistry(
       {super.key, required this.notifiers, required super.child});
 
+  static List<InheritedWidget Function(Widget)> basicNotifiers<T extends Cell>(
+      BuildContext context, GridMetadata<T> metadata) {
+    return [
+      (child) => NetworkConfigurationProvider(
+            configuration: const NetworkConfiguration(),
+            child: GridMetadataProvider<T>(
+              metadata: metadata,
+              child: child,
+            ),
+          )
+    ];
+  }
+
   static List<InheritedWidget Function(Widget)>
       genericNotifiers<T extends Cell>(
           BuildContext context,
-          SelectionGlue<T> glue,
+          SelectionGlue<T>? glue,
           GridMetadata<T> metadata,
           NoteInterface<T> notes) {
     return [
       (child) => NetworkConfigurationProvider(
-          configuration: const NetworkConfiguration(),
-          child: GlueHolder<T>(
-            glue: glue,
+            configuration: const NetworkConfiguration(),
             child: GridMetadataProvider<T>(
                 metadata: metadata,
                 child: NoteInterfaceProvider<T>(
                   interface: notes,
-                  child: child,
+                  child: glue != null
+                      ? GlueHolder<T>(
+                          glue: glue,
+                          child: child,
+                        )
+                      : child,
                 )),
-          ))
+          )
     ];
   }
 

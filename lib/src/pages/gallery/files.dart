@@ -22,6 +22,7 @@ import 'package:gallery/src/db/schemas/system_gallery_directory_file.dart';
 import 'package:gallery/src/db/schemas/favorite_media.dart';
 import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
 import 'package:gallery/src/widgets/grid/grid_action.dart';
+import 'package:gallery/src/widgets/grid/grid_app_bar.dart';
 import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/layouts/grid/grid.dart';
 import 'package:gallery/src/widgets/grid/layouts/list/list.dart';
@@ -215,58 +216,56 @@ class _GalleryFilesState extends State<GalleryFiles>
       builder: (context) {
         return WrappedGridPage<SystemGalleryDirectory>(
             scaffoldKey: GlobalKey(),
-            f: (glue) => GalleryDirectories(
-                  showBackButton: true,
-                  glue: glue,
-                  procPop: (_) {},
-                  callback: CallbackDescription(
-                      move
-                          ? AppLocalizations.of(context)!.chooseMoveDestination
-                          : AppLocalizations.of(context)!.chooseCopyDestination,
-                      (chosen, newDir) {
-                    if (chosen == null && newDir == null) {
-                      throw "both are empty";
-                    }
+            child: GalleryDirectories(
+              showBackButton: true,
+              // glue: glue,
+              procPop: (_) {},
+              callback: CallbackDescription(
+                  move
+                      ? AppLocalizations.of(context)!.chooseMoveDestination
+                      : AppLocalizations.of(context)!.chooseCopyDestination,
+                  (chosen, newDir) {
+                if (chosen == null && newDir == null) {
+                  throw "both are empty";
+                }
 
-                    if (chosen != null && chosen.bucketId == widget.bucketId) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text(move
-                              ? AppLocalizations.of(context)!.cantMoveSameDest
-                              : AppLocalizations.of(context)!
-                                  .cantCopySameDest)));
-                      return Future.value();
-                    }
+                if (chosen != null && chosen.bucketId == widget.bucketId) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(move
+                          ? AppLocalizations.of(context)!.cantMoveSameDest
+                          : AppLocalizations.of(context)!.cantCopySameDest)));
+                  return Future.value();
+                }
 
-                    if (chosen?.bucketId == "favorites") {
-                      _favoriteOrUnfavorite(context, selected);
-                    } else if (chosen?.bucketId == "trash") {
-                      if (!move) {
-                        ScaffoldMessenger.of(context)
-                            .showSnackBar(const SnackBar(
-                                content: Text(
-                          "Can't copy files to the trash. Use move.", // TODO: change
-                        )));
-                        return Future.value();
-                      }
-
-                      return _deleteDialog(context, selected);
-                    } else {
-                      PlatformFunctions.copyMoveFiles(
-                          chosen?.relativeLoc, chosen?.volumeName, selected,
-                          move: move, newDir: newDir);
-                    }
-
+                if (chosen?.bucketId == "favorites") {
+                  _favoriteOrUnfavorite(context, selected);
+                } else if (chosen?.bucketId == "trash") {
+                  if (!move) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text(
+                      "Can't copy files to the trash. Use move.", // TODO: change
+                    )));
                     return Future.value();
-                  },
-                      preview: PreferredSize(
-                        preferredSize: const Size.fromHeight(52),
-                        child: CopyMovePreview(
-                          files: selected,
-                          size: 52,
-                        ),
-                      ),
-                      joinable: false),
-                ));
+                  }
+
+                  return _deleteDialog(context, selected);
+                } else {
+                  PlatformFunctions.copyMoveFiles(
+                      chosen?.relativeLoc, chosen?.volumeName, selected,
+                      move: move, newDir: newDir);
+                }
+
+                return Future.value();
+              },
+                  preview: PreferredSize(
+                    preferredSize: const Size.fromHeight(52),
+                    child: CopyMovePreview(
+                      files: selected,
+                      size: 52,
+                    ),
+                  ),
+                  joinable: false),
+            ));
       },
     ));
   }
@@ -525,210 +524,210 @@ class _GalleryFilesState extends State<GalleryFiles>
   Widget build(BuildContext context) {
     return WrappedGridPage<SystemGalleryDirectoryFile>(
         scaffoldKey: state.scaffoldKey,
-        f: (glue) => GridSkeleton<SystemGalleryDirectoryFile>(
-              state,
-              CallbackGridShell<SystemGalleryDirectoryFile>(
-                loader: extra.loader,
+        child: GridSkeleton<SystemGalleryDirectoryFile>(
+          state,
+          CallbackGridShell<SystemGalleryDirectoryFile>(
+            loader: extra.loader,
+            appBar: GridAppBar.basic(
+              actions: [
+                if (widget.callback == null && extra.isTrash)
+                  IconButton(
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            DialogRoute(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: Text(
+                                        "Are you sure you want to empty the trash?"),
+                                    content: Text(
+                                      "This is permanent", // TODO: change
+                                      style: TextStyle(
+                                          color: Colors.red.harmonizeWith(
+                                              Theme.of(context)
+                                                  .colorScheme
+                                                  .primary)),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                          onPressed: () {
+                                            PlatformFunctions.emptyTrash();
+                                            Navigator.pop(context);
+                                          },
+                                          child: Text(
+                                              AppLocalizations.of(context)!
+                                                  .yes)),
+                                      TextButton(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                          },
+                                          child: Text(
+                                              AppLocalizations.of(context)!.no))
+                                    ],
+                                  );
+                                }));
+                      },
+                      icon: const Icon(Icons.delete_sweep_outlined)),
+                if (widget.callback != null)
+                  IconButton(
+                      onPressed: () {
+                        // if (state.gridKey.currentState?.mutationInterface
+                        //         ?.isRefreshing !=
+                        //     false) {
+                        //   return;
+                        // }
 
-                appBarActions: [
-                  if (widget.callback == null && extra.isTrash)
-                    IconButton(
-                        onPressed: () {
-                          Navigator.push(
-                              context,
-                              DialogRoute(
-                                  context: context,
-                                  builder: (context) {
-                                    return AlertDialog(
-                                      title: Text(
-                                          "Are you sure you want to empty the trash?"),
-                                      content: Text(
-                                        "This is permanent", // TODO: change
-                                        style: TextStyle(
-                                            color: Colors.red.harmonizeWith(
-                                                Theme.of(context)
-                                                    .colorScheme
-                                                    .primary)),
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                            onPressed: () {
-                                              PlatformFunctions.emptyTrash();
-                                              Navigator.pop(context);
-                                            },
-                                            child: Text(
-                                                AppLocalizations.of(context)!
-                                                    .yes)),
-                                        TextButton(
-                                            onPressed: () {
-                                              Navigator.pop(context);
-                                            },
-                                            child: Text(
-                                                AppLocalizations.of(context)!
-                                                    .no))
-                                      ],
-                                    );
-                                  }));
-                        },
-                        icon: const Icon(Icons.delete_sweep_outlined)),
-                  if (widget.callback != null)
-                    IconButton(
-                        onPressed: () {
-                          // if (state.gridKey.currentState?.mutationInterface
-                          //         ?.isRefreshing !=
-                          //     false) {
-                          //   return;
-                          // }
+                        // final upTo = state
+                        //     .gridKey.currentState?.mutationInterface?.cellCount;
+                        // if (upTo == null) {
+                        //   return;
+                        // }
 
-                          // final upTo = state
-                          //     .gridKey.currentState?.mutationInterface?.cellCount;
-                          // if (upTo == null) {
-                          //   return;
-                          // }
+                        // try {
+                        //   final n = math.Random.secure().nextInt(upTo);
 
-                          // try {
-                          //   final n = math.Random.secure().nextInt(upTo);
+                        //   widget.callback?.call(state
+                        //       .gridKey.currentState!.mutationInterface!
+                        //       .getCell(n));
+                        // } catch (e) {
+                        //   log("getting random number",
+                        //       level: Level.WARNING.value, error: e);
+                        //   return;
+                        // }
 
-                          //   widget.callback?.call(state
-                          //       .gridKey.currentState!.mutationInterface!
-                          //       .getCell(n));
-                          // } catch (e) {
-                          //   log("getting random number",
-                          //       level: Level.WARNING.value, error: e);
-                          //   return;
-                          // }
+                        // if (widget.callback!.returnBack) {
+                        //   Navigator.pop(context);
+                        //   Navigator.pop(context);
+                        // }
+                      },
+                      icon: const Icon(Icons.casino_outlined)),
+                gridSettingsButton(state.settings.galleryFiles,
+                    selectRatio: (ratio) => state.settings
+                        .copy(
+                            galleryFiles: state.settings.galleryFiles
+                                .copy(aspectRatio: ratio))
+                        .save(),
+                    selectHideName: (hideNames) => state.settings
+                        .copy(
+                            galleryFiles: state.settings.galleryFiles
+                                .copy(hideName: hideNames))
+                        .save(),
+                    selectListView: (listView) => state.settings
+                        .copy(
+                            galleryFiles: state.settings.galleryFiles
+                                .copy(listView: listView))
+                        .save(),
+                    selectGridColumn: (columns) => state.settings
+                        .copy(
+                            galleryFiles: state.settings.galleryFiles
+                                .copy(columns: columns))
+                        .save()),
+              ],
+            ),
 
-                          // if (widget.callback!.returnBack) {
-                          //   Navigator.pop(context);
-                          //   Navigator.pop(context);
-                          // }
-                        },
-                        icon: const Icon(Icons.casino_outlined)),
-                  gridSettingsButton(state.settings.galleryFiles,
-                      selectRatio: (ratio) => state.settings
-                          .copy(
-                              galleryFiles: state.settings.galleryFiles
-                                  .copy(aspectRatio: ratio))
-                          .save(),
-                      selectHideName: (hideNames) => state.settings
-                          .copy(
-                              galleryFiles: state.settings.galleryFiles
-                                  .copy(hideName: hideNames))
-                          .save(),
-                      selectListView: (listView) => state.settings
-                          .copy(
-                              galleryFiles: state.settings.galleryFiles
-                                  .copy(listView: listView))
-                          .save(),
-                      selectGridColumn: (columns) => state.settings
-                          .copy(
-                              galleryFiles: state.settings.galleryFiles
-                                  .copy(columns: columns))
-                          .save()),
-                ],
-                // key: state.gridKey,
-                keybinds: const {},
-                // initalScrollPosition: 0,
-                // scaffoldKey: state.scaffoldKey,
+            // key: state.gridKey,
+            keybinds: const {},
+            // initalScrollPosition: 0,
+            // scaffoldKey: state.scaffoldKey,
 
-                // hasReachedEnd: () => true,
-                // addFabPadding: true,
-                // selectionGlue: glue,
+            // hasReachedEnd: () => true,
+            // addFabPadding: true,
+            // selectionGlue: glue,
 
-                // addIconsImage: (cell) {
-                //   return widget.callback != null
-                //       ? [
-                //           _chooseAction(),
-                //         ]
-                //       : extra.isTrash
-                //           ? [
-                //               _restoreFromTrash(),
-                //             ]
-                //           : [
-                //               _addToFavoritesAction(cell),
-                //               _deleteAction(),
-                //               _copyAction(),
-                //               _moveAction()
-                //             ];
-                // },
-                // showCount: true,
+            // addIconsImage: (cell) {
+            //   return widget.callback != null
+            //       ? [
+            //           _chooseAction(),
+            //         ]
+            //       : extra.isTrash
+            //           ? [
+            //               _restoreFromTrash(),
+            //             ]
+            //           : [
+            //               _addToFavoritesAction(cell),
+            //               _deleteAction(),
+            //               _copyAction(),
+            //               _moveAction()
+            //             ];
+            // },
+            // showCount: true,
 
-                mainFocus: state.mainFocus,
-                // refresh: extra.supportsDirectRefresh
-                //     ? () async {
-                //         final i = await widget.api.refresh();
+            mainFocus: state.mainFocus,
+            // refresh: extra.supportsDirectRefresh
+            //     ? () async {
+            //         final i = await widget.api.refresh();
 
-                //         performSearch(searchTextController.text);
+            //         performSearch(searchTextController.text);
 
-                //         return i;
-                //       }
-                //     : () {
-                //         _refresh();
-                //         return null;
-                //       },
-                // inlineMenuButtonItems: true,
-                // noteInterface: NoteGallery.interface((
-                //     {int? replaceIndx, bool addNote = false, int? removeNote}) {
-                //   if (state.gridKey.currentState?.mutationInterface
-                //           ?.isRefreshing ==
-                //       true) {
-                //     return;
-                //   }
+            //         return i;
+            //       }
+            //     : () {
+            //         _refresh();
+            //         return null;
+            //       },
+            // inlineMenuButtonItems: true,
+            // noteInterface: NoteGallery.interface((
+            //     {int? replaceIndx, bool addNote = false, int? removeNote}) {
+            //   if (state.gridKey.currentState?.mutationInterface
+            //           ?.isRefreshing ==
+            //       true) {
+            //     return;
+            //   }
 
-                //   _refresh();
-                // }),
-                // onBack: () {
-                //   final filterMode = currentFilteringMode();
-                //   if (filterMode != FilteringMode.noFilter) {
-                //     resetSearch();
-                //     return;
-                //   }
-                //   Navigator.pop(context);
-                // },
-                // progressTicker: stream.stream,
-                // description: GridDescription(
-                //     bottomWidget: widget.callback != null
-                //         ? CopyMovePreview.hintWidget(context,
-                //             AppLocalizations.of(context)!.chooseFileNotice)
-                //         : null,
-                //     layout: ),
-                child: state.settings.galleryFiles.listView
-                    ? ListLayout(
-                        // getOriginalCell: widget.api.directCell,
-                        // metadata: _makeMetadata(context)
-                        )
-                    : GridLayout(
-                        // getOriginalCell: widget.api.directCell,
-                        download: null,
+            //   _refresh();
+            // }),
+            // onBack: () {
+            //   final filterMode = currentFilteringMode();
+            //   if (filterMode != FilteringMode.noFilter) {
+            //     resetSearch();
+            //     return;
+            //   }
+            //   Navigator.pop(context);
+            // },
+            // progressTicker: stream.stream,
+            // description: GridDescription(
+            //     bottomWidget: widget.callback != null
+            //         ? CopyMovePreview.hintWidget(context,
+            //             AppLocalizations.of(context)!.chooseFileNotice)
+            //         : null,
+            //     layout: ),
+            child: state.settings.galleryFiles.listView
+                ? const ListLayout(
+                    // getOriginalCell: widget.api.directCell,
+                    // metadata: _makeMetadata(context)
+                    )
+                : const GridLayout(
+                    // getOriginalCell: widget.api.directCell,
 
-                        // metadata: _makeMetadata(context),
-                      ),
-              ),
-              noDrawer: widget.callback != null,
-              canPop: true,
-              //  currentFilteringMode() == FilteringMode.noFilter &&
-              // searchTextController.text.isEmpty &&
-              // !glue.isOpen() &&
-              // state.gridKey.currentState?.showSearchBar != true,
-              overrideOnPop: (pop, hideAppBar) {
-                // final filterMode = currentFilteringMode();
-                // if (filterMode != FilteringMode.noFilter ||
-                //     searchTextController.text.isNotEmpty) {
-                //   resetSearch();
-                //   setState(() {});
-                //   return;
-                // }
+                    // metadata: _makeMetadata(context),
+                    ),
+          ),
+          noDrawer: widget.callback != null,
+          canPop: true,
+          //  currentFilteringMode() == FilteringMode.noFilter &&
+          // searchTextController.text.isEmpty &&
+          // !glue.isOpen() &&
+          // state.gridKey.currentState?.showSearchBar != true,
+          overrideOnPop: (pop, hideAppBar) {
+            // final filterMode = currentFilteringMode();
+            // if (filterMode != FilteringMode.noFilter ||
+            //     searchTextController.text.isNotEmpty) {
+            //   resetSearch();
+            //   setState(() {});
+            //   return;
+            // }
 
-                // if (glue.isOpen()) {
-                //   state.gridKey.currentState?.selection.reset();
-                //   return;
-                // }
+            // if (glue.isOpen()) {
+            //   state.gridKey.currentState?.selection.reset();
+            //   return;
+            // }
 
-                if (hideAppBar()) {
-                  setState(() {});
-                  return;
-                }
-              },
-            ));
+            if (hideAppBar()) {
+              setState(() {});
+              return;
+            }
+          },
+        ));
   }
 }

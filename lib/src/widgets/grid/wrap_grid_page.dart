@@ -7,17 +7,18 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:gallery/src/pages/booru/main.dart';
 
 import '../../interfaces/cell.dart';
 import 'selection_glue.dart';
 import 'selection_glue_state.dart';
 
 class WrappedGridPage<T extends Cell> extends StatefulWidget {
-  final Widget Function(SelectionGlue<T> glue) f;
   final GlobalKey<ScaffoldState> scaffoldKey;
+  final Widget child;
 
   const WrappedGridPage(
-      {super.key, required this.scaffoldKey, required this.f});
+      {super.key, required this.scaffoldKey, required this.child});
 
   @override
   State<WrappedGridPage<T>> createState() => _WrappedGridPageState();
@@ -44,8 +45,11 @@ class _WrappedGridPageState<T extends Cell> extends State<WrappedGridPage<T>>
               child: glueState.actions?.isNotEmpty ?? false
                   ? GlueBottomAppBar(glueState.actions!)
                   : const SizedBox.shrink()),
-      body: widget.f(glueState.glue<T>(
-          () => MediaQuery.viewInsetsOf(context).bottom != 0, setState)),
+      body: GlueHolder(
+        glue: glueState.glue<T>(
+            () => MediaQuery.viewInsetsOf(context).bottom != 0, setState),
+        child: widget.child,
+      ),
     );
   }
 }

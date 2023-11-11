@@ -20,6 +20,7 @@ import 'package:gallery/src/net/network_configuration.dart';
 import 'package:gallery/src/pages/booru/random.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/cell_loader.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
+import 'package:gallery/src/widgets/grid/grid_app_bar.dart';
 import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/layouts/grid/grid.dart';
 import 'package:gallery/src/widgets/grid/layouts/list/list.dart';
@@ -108,39 +109,16 @@ class MainBooruGrid extends StatefulWidget {
   State<MainBooruGrid> createState() => _MainBooruGridState();
 }
 
-// class GridMetadataHolder extends StatelessWidget {
-
-//   const GridMetadataHolder({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return const Placeholder();
-//   }
-// }
-
 class _MainBooruGridState extends State<MainBooruGrid> {
   late final StreamSubscription<Settings?> settingsWatcher;
   late final StreamSubscription favoritesWatcher;
 
-  // late final BooruAPI api;
   late final StateRestoration restore;
-  // late final TagManager tagManager;
 
   late final loader =
       BackgroundCellLoader<Post, String>.cached(kMainGridLoaderKey);
 
-//  () {
-//     final db = DbsOpen.primaryGrid(Settings.fromDb().selectedBooru);
-//     final e = db.posts.where().findFirst()!;
-
-//     return ((db, idx) => db.posts.get(e.fileUrl), db, kPrimaryGridSchemas);
-//   }
-
   late final List<InheritedWidget Function(Widget)> registrer;
-
-  int? currentSkipped;
-
-  bool reachedEnd = false;
 
   final state = GridSkeletonState<Post>();
 
@@ -185,7 +163,6 @@ class _MainBooruGridState extends State<MainBooruGrid> {
             state: restore,
             child: child,
           ),
-
       ...NotifierRegistry.genericNotifiers<Post>(
         context,
         widget.glue,
@@ -194,7 +171,7 @@ class _MainBooruGridState extends State<MainBooruGrid> {
           aspectRatio: state.settings.booru.aspectRatio,
           columns: state.settings.booru.columns,
           onPressed: GridMetadata.launchImageView<Post>,
-          hideAlias: true,
+          hideAlias: false,
           gridActions: [
             BooruGridActions.download(context),
             BooruGridActions.favorites(context, null, showDeleteSnackbar: true)
@@ -202,19 +179,6 @@ class _MainBooruGridState extends State<MainBooruGrid> {
         ),
         NoteBooru.interface(setState),
       )
-      // (child) {
-      //   return NetworkConfigurationProvider(
-      //       configuration: const NetworkConfiguration(),
-      //       child: GlueHolder<Post>(
-      //         glue: widget.glue,
-      //         child: GridMetadataProvider<Post>(
-
-      //             child: NoteInterfaceProvider<Post>(
-
-      //               child: child,
-      //             )),
-      //       ));
-      // },
     ];
 
     settingsWatcher = Settings.watch((s) {
@@ -249,18 +213,18 @@ class _MainBooruGridState extends State<MainBooruGrid> {
         state,
         CallbackGridShell<Post>(
           loader: loader,
-          appBarActions: [
-            const BookmarkButton(),
-            MainBooruGrid.gridButton(state.settings)
-          ],
+          appBar: GridAppBar.basic(
+            showCount: false,
+            actions: [
+              const BookmarkButton(),
+              MainBooruGrid.gridButton(state.settings)
+            ],
+          ),
           keybinds: const {},
           mainFocus: state.mainFocus,
           child: state.settings.booru.listView
               ? const ListLayout<Post>()
-              : const GridLayout<Post>(download: null
-
-                  // metadata:,
-                  ),
+              : const GridLayout<Post>(),
         ),
         canPop: true,
         // !widget.glue.isOpen() &&
@@ -282,18 +246,6 @@ class _MainBooruGridState extends State<MainBooruGrid> {
     );
   }
 }
-
-// class NetworkConfigurationHolder extends StatelessWidget {
-//   final NetworkConfiguration configuration;
-//   final Widget child;
-
-//   const NetworkConfigurationHolder({super.key, required this.configuration, required this.child });
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return
-//   }
-// }
 
 // Future<int> _clearAndRefresh() async {
 //   try {

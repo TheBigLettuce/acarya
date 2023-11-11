@@ -78,7 +78,7 @@ class BooruAPILoaderStateController implements LoaderStateController {
     }
 
     if (value.$2 != null) {
-      if (value.$2! > last.postId) {
+      if (value.$2! < last.postId) {
         currentLast = value.$2;
       } else {
         currentLast = last.postId;
@@ -125,8 +125,8 @@ class BooruAPILoaderStateController implements LoaderStateController {
     _currentSubscription?.cancel();
     _currentSubscription = null;
     _notify = null;
-    currentLast = null;
-    end = false;
+    // currentLast = null;
+    // end = false;
     // api.close();
   }
 }

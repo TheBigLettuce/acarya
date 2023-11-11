@@ -138,6 +138,8 @@ void main() async {
     final state =
         StateRestoration(db, settings.selectedBooru.string, settings.safeMode);
 
+    print(db.posts.where().sortByPostId().findFirst()?.postId);
+
     return (
       (db, idx) => db.posts.where().sortByPostIdDesc().findFirst(offset: idx),
       db,
@@ -150,7 +152,7 @@ void main() async {
             BooruAPI.fromEnum(settings.selectedBooru, page: state.copy.page),
             tagManager.excluded,
             "",
-            db.posts.where().sortByPostIdDesc().findFirst()?.postId,
+            db.posts.where().sortByPostId().findFirst()?.postId,
             onPostsLoaded: (api) {
           state.updatePage(api.currentPage);
         });

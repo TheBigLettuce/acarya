@@ -15,6 +15,12 @@ import 'package:gallery/src/db/initalize_db.dart';
 import 'package:gallery/src/db/schemas/settings.dart';
 import 'package:gallery/src/db/schemas/download_file.dart';
 import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
+import 'package:gallery/src/widgets/grid/data_loaders/read_only_loader.dart';
+import 'package:gallery/src/widgets/grid/grid_app_bar.dart';
+import 'package:gallery/src/widgets/grid/grid_metadata.dart';
+import 'package:gallery/src/widgets/grid/layouts/grid/grid.dart';
+import 'package:gallery/src/widgets/grid/notifiers/notifier_registry_holder.dart';
+import 'package:gallery/src/widgets/notifiers/notifier_registry.dart';
 import 'package:gallery/src/widgets/search_bar/search_filter_grid.dart';
 import 'package:gallery/src/widgets/skeletons/grid_skeleton_state.dart';
 import 'package:isar/isar.dart';
@@ -33,25 +39,15 @@ class Downloads extends StatefulWidget {
   State<Downloads> createState() => _DownloadsState();
 }
 
-class _DownloadsState extends State<Downloads>
-// with SearchFilterGrid<DownloadFile>
-{
-  // final loader = LinearIsarLoader<DownloadFile>(DownloadFileSchema, Dbs.g.main,
-  //     (offset, limit, s, sort, mode) {
-  //   return Dbs.g.main.downloadFiles
-  //       .where()
-  //       .sortByInProgressDesc()
-  //       // .offset(offset)
-  //       // .limit(limit)
-  //       .findAll(offset: offset, limit: limit);
-  // });
-
+class _DownloadsState extends State<Downloads> {
   late final StreamSubscription<void> _updates;
 
-  late final state = GridSkeletonState<DownloadFile>(
-      // filter: loader.filter,
-      // transform: (cell, sort) => cell,
-      );
+  late final state = GridSkeletonState<DownloadFile>();
+
+  final loader = ReadOnlyDataLoader<DownloadFile, int, String>(
+      Dbs.g.main,
+      (db, idx) =>
+          db.downloadFiles.where().sortByDateDesc().findFirst(offset: idx));
 
   AnimationController? refreshController;
   AnimationController? deleteController;
@@ -75,6 +71,7 @@ class _DownloadsState extends State<Downloads>
     _updates.cancel();
     // disposeSearch();
     state.dispose();
+    loader.dispose();
 
     super.dispose();
   }
@@ -118,8 +115,56 @@ class _DownloadsState extends State<Downloads>
   @override
   Widget build(BuildContext context) {
     return WrappedGridPage<DownloadFile>(
-        scaffoldKey: state.scaffoldKey, f: (glue) => Placeholder()
-        // GridSkeleton(
+        scaffoldKey: state.scaffoldKey,
+        child: NotifierRegistryHolder(
+          l: NotifierRegistry.basicNotifiers<DownloadFile>(
+              context,
+              const GridMetadata(
+                gridActions: [],
+                aspectRatio: GridAspectRatio.one,
+                columns: GridColumn.two,
+                isList: true,
+              )),
+          child: CallbackGridShell<DownloadFile>(
+            keybinds: {},
+            appBar: GridAppBar.basic(
+              leading: const BackButton(),
+              actions: [
+                IconButton(
+                    onPressed: () {
+                      if (deleteController != null) {
+                        deleteController!.forward(from: 0);
+                      }
+                      Downloader.g.removeAll();
+                    },
+                    icon: const Icon(Icons.close).animate(
+                        onInit: (controller) => deleteController = controller,
+                        effects: const [FlipEffect(begin: 1, end: 0)],
+                        autoPlay: false)),
+              ],
+            ),
+            mainFocus: state.mainFocus,
+            loader: loader,
+            child: const GridLayout<DownloadFile>(download: null),
+          ),
+        ));
+  }
+}
+   // filter: loader.filter,
+      // transform: (cell, sort) => cell,
+
+  // final loader = LinearIsarLoader<DownloadFile>(DownloadFileSchema, Dbs.g.main,
+  //     (offset, limit, s, sort, mode) {
+  //   return Dbs.g.main.downloadFiles
+  //       .where()
+  //       .sortByInProgressDesc()
+  //       // .offset(offset)
+  //       // .limit(limit)
+  //       .findAll(offset: offset, limit: limit);
+  // });
+
+
+     // GridSkeleton(
         //       state,
         //       (context) => CallbackGridShell<DownloadFile>(
         //           key: state.gridKey,
@@ -133,18 +178,6 @@ class _DownloadsState extends State<Downloads>
         //           showCount: true,
         //           onBack: () => Navigator.pop(context),
         //           menuButtonItems: [
-        //             IconButton(
-        //                 onPressed: () {
-        //                   if (deleteController != null) {
-        //                     deleteController!.forward(from: 0);
-        //                   }
-        //                   Downloader.g.removeAll();
-        //                 },
-        //                 icon: const Icon(Icons.close).animate(
-        //                     onInit: (controller) =>
-        //                         deleteController = controller,
-        //                     effects: const [FlipEffect(begin: 1, end: 0)],
-        //                     autoPlay: false)),
         //           ],
         //           inlineMenuButtonItems: true,
         //           immutable: false,
@@ -177,6 +210,3 @@ class _DownloadsState extends State<Downloads>
         //         }
         //       },
         //     )
-        );
-  }
-}

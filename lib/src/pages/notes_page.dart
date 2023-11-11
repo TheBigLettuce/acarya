@@ -21,9 +21,14 @@ import 'package:gallery/src/widgets/empty_widget.dart';
 import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/dummy_loader.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
+import 'package:gallery/src/widgets/grid/data_loaders/read_only_loader.dart';
+import 'package:gallery/src/widgets/grid/grid_app_bar.dart';
 import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/layouts/notes/notes.dart';
+import 'package:gallery/src/widgets/grid/notifiers/notifier_registry_holder.dart';
+import 'package:gallery/src/widgets/grid/selection_glue.dart';
 import 'package:gallery/src/widgets/notifiers/cell_provider.dart';
+import 'package:gallery/src/widgets/notifiers/notifier_registry.dart';
 import 'package:gallery/src/widgets/skeletons/grid_skeleton_state.dart';
 import 'package:gallery/src/widgets/skeletons/grid_skeleton.dart';
 import 'package:isar/isar.dart';
@@ -39,9 +44,10 @@ import '../widgets/grid/wrap_grid_page.dart';
 
 const kNoteLoadCount = 30;
 
-class _NotePageContainer<T extends Cell> {
+class _NotePageContainer<T extends Cell, ID> {
   final state = GridSkeletonState<T>();
   // final PagingIsarLoader<T> notes;
+  final ReadOnlyDataLoader<T, int, ID> loader;
   final List<T> Function(String text) filterFnc;
   final NoteInterface<T> noteInterface;
   final List<GridAction<T>> addActions;
@@ -50,29 +56,34 @@ class _NotePageContainer<T extends Cell> {
   Iterable<Widget> filter(BuildContext context, SearchController controller) {
     return filterFnc(controller.text).map((e1) => ListTile(
           onTap: () {
+            final r = NotifierRegistry.registrerOf(context);
+
             Navigator.push(context, MaterialPageRoute(
               builder: (context) {
                 // final overlayColor =
                 //     Theme.of(context).colorScheme.background.withOpacity(0.5);
 
-                return ImageView<T>(
-                  // updateTagScrollPos: (_, __) {},
-                  // cellCount: 1,
-                  // scrollUntill: (_) {},
-                  // startingCell: 0,
-                  currentCell: e1,
-                  startingCell: 0,
-                  onExit: () {},
-                  onEmptyNotes: () {
-                    WidgetsBinding.instance.scheduleFrameCallback((timeStamp) {
-                      Navigator.pop(context);
-                    });
-                  },
-                  // noteInterface: noteInterface,
-                  // getCell: (idx) => e1,
-                  onNearEnd: null,
-                  focusMain: () => state.mainFocus,
-                  // systemOverlayRestoreColor: overlayColor
+                return r!(
+                  ImageView<T>(
+                    // updateTagScrollPos: (_, __) {},
+                    // cellCount: 1,
+                    // scrollUntill: (_) {},
+                    // startingCell: 0,
+                    currentCell: e1,
+                    startingCell: 0,
+                    onExit: () {},
+                    onEmptyNotes: () {
+                      WidgetsBinding.instance
+                          .scheduleFrameCallback((timeStamp) {
+                        Navigator.pop(context);
+                      });
+                    },
+                    // noteInterface: noteInterface,
+                    // getCell: (idx) => e1,
+                    onNearEnd: null,
+                    focusMain: () => state.mainFocus,
+                    // systemOverlayRestoreColor: overlayColor
+                  ),
                 );
               },
             ));
@@ -91,45 +102,57 @@ class _NotePageContainer<T extends Cell> {
         ).animate().fadeIn());
   }
 
-  Widget widget(BuildContext context) => GridSkeleton<T>(
-      state,
-      CallbackGridShell(
-        loader: DummyBackgroundLoader(),
-        appBarActions: [],
-        // key: state.gridKey,
-        keybinds: const {},
-        // initalScrollPosition: 0,
-        // scaffoldKey: state.scaffoldKey,
-        // onBack: () {
-        //   Navigator.pop(context);
-        // },
-        // hasReachedEnd: notes.reachedEnd,
-        // selectionGlue: SelectionGlue.empty(context),
-        mainFocus: state.mainFocus,
-        // refresh: notes.refresh,
-        // noteInterface: noteInterface,
-        // addIconsImage: (_) => addActions,
-        // initalCellCount: notes.count(),
-        // loadNext: notes.next,
-        // description: GridDescription<T>([],
-        //     keybindsDescription: "Notes page",
-        //     showAppBar: false,
-        //     layout: NoteLayout<T>(GridColumn.three, getText)),
-        child: NotesLayout(
-            // columns: GridColumn.three,
-            // getOriginalCell: throw "",
-            // metadata: GridMetadata<T>(gridActions: addActions)
+  Widget widget(BuildContext context) => NotifierRegistryHolder(
+        l: NotifierRegistry.genericNotifiers<T>(
+          context,
+          SelectionGlue.empty(context),
+          GridMetadata(
+              gridActions: addActions,
+              aspectRatio: GridAspectRatio.one,
+              columns: GridColumn.three,
+              isList: false),
+          noteInterface,
+        ),
+        child: GridSkeleton<T>(
+            state,
+            CallbackGridShell<T>(
+              loader: loader,
+              appBar: null,
+              // key: state.gridKey,
+              keybinds: const {},
+              // initalScrollPosition: 0,
+              // scaffoldKey: state.scaffoldKey,
+              // onBack: () {
+              //   Navigator.pop(context);
+              // },
+              // hasReachedEnd: notes.reachedEnd,
+              // selectionGlue: SelectionGlue.empty(context),
+              mainFocus: state.mainFocus,
+              // refresh: notes.refresh,
+              // noteInterface: noteInterface,
+              // addIconsImage: (_) => addActions,
+              // initalCellCount: notes.count(),
+              // loadNext: notes.next,
+              // description: GridDescription<T>([],
+              //     keybindsDescription: "Notes page",
+              //     showAppBar: false,
+              //     layout: NoteLayout<T>(GridColumn.three, getText)),
+              child: NotesLayout<T>(
+                  // getOriginalCell: throw "",
+                  // metadata: GridMetadata<T>(gridActions: addActions)
+                  ),
             ),
-      ),
-      canPop: true);
+            canPop: true),
+      );
 
   void dispose() {
     state.dispose();
+    loader.dispose();
     // notes.dispose(force: true);
   }
 
   _NotePageContainer(List<IsarGeneratedSchema> schemas, this.noteInterface,
-      {required Iterable<T> Function(int) loadNext,
+      {required this.loader,
       required this.filterFnc,
       this.addActions = const [],
       required this.getText});
@@ -152,18 +175,19 @@ class _NotesPageState extends State<NotesPage>
   late final StreamSubscription<void> booruNotesWatcher;
   late final StreamSubscription<void> galleryNotesWatcher;
 
-  late final _NotePageContainer<NoteBooru> booruContainer =
-      _NotePageContainer<NoteBooru>(
+  late final _NotePageContainer<NoteBooru, String> booruContainer =
+      _NotePageContainer(
           [NoteBooruSchema],
           NoteBooru.interfaceSelf(() {
             // booruContainer.state.gridKey.currentState?.refresh(() =>
             //     booruContainer.notes.loadUntil(booruContainer.notes.count()));
           }),
-          loadNext: (count) => Dbs.g.blacklisted.noteBoorus
-              .where()
-              // .offset(count)
-              // .limit(kNoteLoadCount)
-              .findAll(offset: count, limit: kNoteLoadCount),
+          loader: ReadOnlyDataLoader(
+              Dbs.g.blacklisted,
+              (db, idx) => db.noteBoorus
+                  .where()
+                  .sortByPostIdDesc()
+                  .findFirst(offset: idx)),
           filterFnc: (text) {
             return Dbs.g.blacklisted.noteBoorus
                 .where()
@@ -172,19 +196,20 @@ class _NotesPageState extends State<NotesPage>
                 .findAll(limit: 15);
           },
           getText: (cell) => cell.currentText());
-  late final _NotePageContainer<NoteGallery> galleryContainer =
-      _NotePageContainer<NoteGallery>(
+  late final _NotePageContainer<NoteGallery, int> galleryContainer =
+      _NotePageContainer(
           [NoteGallerySchema],
           NoteGallery.interfaceSelf(() {
             // galleryContainer.state.gridKey.currentState?.refresh(() =>
             //     galleryContainer.notes
             //         .loadUntil(galleryContainer.notes.count()));
           }),
-          loadNext: (count) => Dbs.g.main.noteGallerys
-              .where()
-              // .offset(count)
-              // .limit(kNoteLoadCount)
-              .findAll(offset: count, limit: kNoteLoadCount),
+          loader: ReadOnlyDataLoader(
+              Dbs.g.main,
+              (db, idx) => db.noteGallerys
+                  .where()
+                  .sortByIdDesc()
+                  .findFirst(offset: idx)),
           filterFnc: (text) {
             return Dbs.g.main.noteGallerys
                 .where()
@@ -227,34 +252,34 @@ class _NotesPageState extends State<NotesPage>
                           MaterialPageRoute(builder: (context) {
                         return WrappedGridPage<SystemGalleryDirectory>(
                             scaffoldKey: GlobalKey(),
-                            f: (glue) => GalleryDirectories(
-                                  glue: glue,
-                                  procPop: (p) {},
-                                  nestedCallback: CallbackDescriptionNested(
-                                      "Choose file", (chosen) async {
-                                    final s = selected.first;
-                                    final data = chosen.getCellData(false,
-                                        context: context);
-                                    final colors = await PaletteGenerator
-                                        .fromImageProvider(data.thumb!);
+                            child: GalleryDirectories(
+                              procPop: (p) {},
+                              nestedCallback: CallbackDescriptionNested(
+                                  "Choose file", (chosen) async {
+                                final s = selected.first;
+                                final data =
+                                    chosen.getCellData(false, context: context);
+                                final colors =
+                                    await PaletteGenerator.fromImageProvider(
+                                        data.thumb!);
 
-                                    NoteGallery.add(chosen.id,
-                                        text: s.text,
-                                        height: chosen.height,
-                                        width: chosen.width,
-                                        backgroundColor:
-                                            colors.dominantColor?.color,
-                                        textColor:
-                                            colors.dominantColor?.bodyTextColor,
-                                        isVideo: chosen.isVideo,
-                                        isGif: chosen.isGif,
-                                        originalUri: chosen.originalUri);
-                                    NoteGallery.removeAll(s.id);
+                                NoteGallery.add(chosen.id,
+                                    text: s.text,
+                                    height: chosen.height,
+                                    width: chosen.width,
+                                    backgroundColor:
+                                        colors.dominantColor?.color,
+                                    textColor:
+                                        colors.dominantColor?.bodyTextColor,
+                                    isVideo: chosen.isVideo,
+                                    isGif: chosen.isGif,
+                                    originalUri: chosen.originalUri);
+                                NoteGallery.removeAll(s.id);
 
-                                    // galleryContainer.state.gridKey.currentState
-                                    //     ?.refresh();
-                                  }, returnBack: true),
-                                ));
+                                // galleryContainer.state.gridKey.currentState
+                                //     ?.refresh();
+                              }, returnBack: true),
+                            ));
                       }));
                     },
                     false,

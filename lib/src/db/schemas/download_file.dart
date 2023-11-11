@@ -35,6 +35,7 @@ class DownloadFile implements Cell {
 
   final String thumbUrl;
 
+  @Index()
   final DateTime date;
 
   final String site;
