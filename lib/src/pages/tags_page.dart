@@ -11,8 +11,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gallery/src/db/schemas/tags.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:gallery/src/interfaces/booru_api/booru.dart';
+import 'package:gallery/src/widgets/restart_widget.dart';
 
-import '../interfaces/booru_api/booru_api.dart';
 import '../db/state_restoration.dart';
 import '../widgets/search_bar/autocomplete/autocomplete_widget.dart';
 import '../widgets/single_post.dart';
@@ -21,7 +22,7 @@ import '../widgets/tags_widget.dart';
 class TagsPage extends StatefulWidget {
   final TagManager tagManager;
   final FocusNode mainFocus;
-  final BooruAPI booru;
+  final Booru booru;
 
   const TagsPage(
       {super.key,
@@ -185,8 +186,8 @@ class _TagsPageState extends State<TagsPage> with TickerProviderStateMixin {
                 deleteAllController.reverse(from: 1);
               });
             },
-            onPress: (t) => widget.tagManager.onTagPressed(
-                context, t.tag, widget.booru.booru, true)).animate(
+            onPress: (t) => widget.tagManager
+                .onTagPressed(context, t.tag, widget.booru, true)).animate(
             controller: deleteAllController,
             effects: [
               FadeEffect(
@@ -206,7 +207,9 @@ class _TagsPageState extends State<TagsPage> with TickerProviderStateMixin {
                   },
                   widget.tagManager.excluded.add,
                   () => widget.mainFocus.requestFocus(),
-                  widget.booru.completeTag,
+                  (s) => widget.booru
+                      .functions()
+                      .completeTag(RestartWidget.contextlessClient, s),
                   excludedFocus,
                   submitOnPress: true,
                   roundBorders: true,

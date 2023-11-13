@@ -13,7 +13,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:gallery/src/db/schemas/post.dart';
 import 'package:gallery/src/db/state_restoration.dart';
-import 'package:gallery/src/interfaces/booru_api/booru_api.dart';
+import 'package:gallery/src/interfaces/booru_api/booru_api_state.dart';
 import 'package:gallery/src/net/downloader.dart';
 import 'package:gallery/src/plugs/gallery.dart';
 import 'package:gallery/src/plugs/platform_channel.dart';
@@ -146,7 +146,8 @@ void main() async {
 
         return BooruAPILoaderStateController(
             loader,
-            BooruAPI.fromEnum(settings.selectedBooru, page: state.copy.page),
+            BooruAPIState.fromEnum(settings.selectedBooru,
+                page: state.copy.page),
             tagManager.excluded,
             "",
             db.posts.where().sortByPostId().findFirst()?.postId,

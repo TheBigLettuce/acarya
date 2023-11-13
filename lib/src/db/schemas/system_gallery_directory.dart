@@ -79,7 +79,7 @@ class SystemGalleryDirectory implements Cell {
     final bucketId = result[1]! as String;
 
     return SystemGalleryDirectory(
-      tag: PostTags.g.directoryTag(bucketId) ?? "",
+      tag: "",
       thumbFileId: result[0]! as int,
       bucketId: bucketId,
       name: result[2]! as String,

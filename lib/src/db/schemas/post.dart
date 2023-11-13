@@ -28,7 +28,6 @@ import 'package:transparent_image/transparent_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-import '../../interfaces/booru_api/booru_api.dart';
 import '../../interfaces/contentable.dart';
 import '../../interfaces/filtering/filtering_mode.dart';
 import '../../plugs/platform_channel.dart';
@@ -126,11 +125,8 @@ class PostBase implements Cell {
       IconButton(
         icon: const Icon(Icons.public),
         onPressed: () {
-          final booru =
-              BooruAPI.fromEnum(Booru.fromPrefix(prefix)!, page: null);
-          launchUrl(booru.browserLink(postId),
+          launchUrl(Booru.fromPrefix(prefix)!.functions().browserLink(postId),
               mode: LaunchMode.externalApplication);
-          booru.close();
         },
       ),
       if (Platform.isAndroid)
@@ -172,8 +168,7 @@ class PostBase implements Cell {
                       builder: (context) {
                         return TranslationNotes(
                           postId: postId,
-                          api: BooruAPI.fromEnum(Booru.fromPrefix(prefix)!,
-                              page: null),
+                          booru: Booru.fromPrefix(prefix)!,
                         );
                       },
                     ),
@@ -249,7 +244,7 @@ class PostBase implements Cell {
         ),
         if (tags.contains("translated"))
           TranslationNotes.tile(context, colors.foregroundColor, postId,
-              () => BooruAPI.fromEnum(Booru.fromPrefix(prefix)!, page: null)),
+              Booru.fromPrefix(prefix)!),
       ],
       filename(),
       supplyTags: tags,

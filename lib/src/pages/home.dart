@@ -17,7 +17,6 @@ import '../db/initalize_db.dart';
 import '../db/post_tags.dart';
 import '../db/schemas/settings.dart';
 import '../db/state_restoration.dart';
-import '../interfaces/booru_api/booru_api.dart';
 import '../widgets/grid/selection/selection_glue_state.dart';
 import '../widgets/skeletons/home_skeleton.dart';
 import '../widgets/skeletons/skeleton_state.dart';
@@ -138,8 +137,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
           child: TagsPage(
             tagManager:
                 TagManager.fromEnum(Settings.fromDb().selectedBooru, true),
-            booru:
-                BooruAPI.fromEnum(Settings.fromDb().selectedBooru, page: null),
+            booru: Settings.fromDb().selectedBooru,
             mainFocus: state.mainFocus,
           )),
       4 => PopScope(

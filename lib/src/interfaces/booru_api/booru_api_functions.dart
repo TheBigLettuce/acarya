@@ -5,28 +5,23 @@
 // This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
-import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 
-import '../../interfaces/booru_api/booru_api_state.dart';
+import '../../db/schemas/post.dart';
 
-class BooruAPINotifier extends InheritedWidget {
-  final BooruAPIState api;
+/// Booru API functions which do not require any state.
+abstract class BooruAPIFunctions {
+  /// Get a single post by it's id.
+  /// This is used in many places, like tags and single post loading in the "Tags" page.
+  Future<Post> singlePost(Dio client, int id);
 
-  static BooruAPIState of(BuildContext context) {
-    return maybeOf(context)!;
-  }
+  /// Get the post's notes.
+  /// Usually used for translations.
+  Future<Iterable<String>> notes(Dio client, int postId);
 
-  static BooruAPIState? maybeOf(BuildContext context) {
-    final widget =
-        context.dependOnInheritedWidgetOfExactType<BooruAPINotifier>();
+  /// Tag completition, this shouldn't present more than 10 at a time.
+  Future<List<String>> completeTag(Dio client, String tag);
 
-    return widget?.api;
-  }
-
-  @override
-  bool updateShouldNotify(BooruAPINotifier oldWidget) {
-    return api != oldWidget.api;
-  }
-
-  const BooruAPINotifier({super.key, required this.api, required super.child});
+  /// Constructs a link to the post to be loaded in the browser, outside the app.
+  Uri browserLink(int id);
 }

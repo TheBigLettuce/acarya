@@ -5,6 +5,11 @@
 // This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
+import 'package:gallery/src/net/booru/danbooru.dart';
+import 'package:gallery/src/net/booru/gelbooru.dart';
+
+import 'booru_api_functions.dart';
+
 /// Enum which holds all the currently supported sites by this app.
 /// All of the implementations of [BooruAPI] should be added here.
 /// Prefixes, names and urls should be unique.
@@ -22,6 +27,11 @@ enum Booru {
   /// Url to the booru. All the requests are made to the booru API use this.
   /// Scheme is always assumed to be https.
   final String url;
+
+  BooruAPIFunctions functions() => switch (this) {
+        Booru.gelbooru => const GelbooruFunctions(gelbooru),
+        Booru.danbooru => const DanbooruFunctions(danbooru),
+      };
 
   static Booru? fromPrefix(String prefix) {
     for (var b in Booru.values) {

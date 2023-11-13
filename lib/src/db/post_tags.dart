@@ -10,7 +10,6 @@ import 'dart:io' as io;
 
 import 'package:flutter/material.dart';
 import 'package:gallery/src/interfaces/booru_api/booru.dart';
-import 'package:gallery/src/interfaces/booru_api/booru_api.dart';
 import 'package:gallery/src/db/initalize_db.dart';
 import 'package:gallery/src/plugs/platform_channel.dart';
 import 'package:gallery/src/plugs/download_movers.dart';
@@ -19,6 +18,7 @@ import 'package:gallery/src/db/schemas/local_tag_dictionary.dart';
 import 'package:gallery/src/db/schemas/local_tags.dart';
 import 'package:gallery/src/db/schemas/post.dart';
 import 'package:gallery/src/db/schemas/settings.dart';
+import 'package:gallery/src/widgets/restart_widget.dart';
 import 'package:html_unescape/html_unescape_small.dart';
 import 'package:isar/isar.dart';
 import 'package:logging/logging.dart';
@@ -61,23 +61,20 @@ class PostTags {
   /// Resolves to an empty list in case of any error.
   Future<List<String>> loadFromDissassemble(
       String filename, DisassembleResult dissassembled) async {
-    final api = BooruAPI.fromEnum(dissassembled.booru, page: null);
-
     try {
-      final post = await api.singlePost(dissassembled.id);
+      final post = await dissassembled.booru
+          .functions()
+          .singlePost(RestartWidget.contextlessClient, dissassembled.id);
       if (post.tags.isEmpty) {
         return [];
       }
 
       tagsDb.write((i) => i.localTags.put(LocalTags(filename, post.tags)));
 
-      api.close();
-
       return post.tags;
     } catch (e, trace) {
       log("fetching post for tags",
           level: Level.SEVERE.value, error: e, stackTrace: trace);
-      api.close();
       return [];
     }
   }

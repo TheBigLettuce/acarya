@@ -8,7 +8,8 @@
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:gallery/src/interfaces/booru_api/booru.dart';
-import 'package:gallery/src/interfaces/booru_api/booru_api.dart';
+import 'package:gallery/src/interfaces/booru_api/booru_api_functions.dart';
+import 'package:gallery/src/interfaces/booru_api/booru_api_state.dart';
 import 'package:gallery/src/db/schemas/settings.dart';
 import 'package:gallery/src/interfaces/booru_api/strip_html.dart';
 import 'package:gallery/src/interfaces/booru_api/unsaveable_cookie_jar.dart';
@@ -25,39 +26,22 @@ List<String> _fromGelbooruTags(List<dynamic> l) {
   return l.map((e) => HtmlUnescape().convert(e["name"] as String)).toList();
 }
 
-class Gelbooru implements BooruAPI {
-  final UnsaveableCookieJar cookieJar;
+class GelbooruFunctions implements BooruAPIFunctions {
+  const GelbooruFunctions(this._booru);
+
+  final Booru _booru;
 
   @override
-  final Dio client;
-
-  @override
-  final Booru booru;
-
-  @override
-  int? get currentPage => _page;
-
-  @override
-  final bool wouldBecomeStale = true;
-
-  int _page = 0;
-
-  @override
-  void setCookies(List<Cookie> cookies) {
-    cookieJar.replaceDirectly(Uri.parse(booru.url), cookies);
-  }
-
-  @override
-  Uri browserLink(int id) => Uri.https(booru.url, "/index.php", {
+  Uri browserLink(int id) => Uri.https(_booru.url, "/index.php", {
         "page": "post",
         "s": "view",
         "id": id.toString(),
       });
 
   @override
-  Future<Iterable<String>> notes(int postId) async {
+  Future<Iterable<String>> notes(Dio client, int postId) async {
     final resp = await client.getUri(
-        Uri.https(booru.url, "/index.php", {
+        Uri.https(_booru.url, "/index.php", {
           "page": "dapi",
           "s": "note",
           "q": "index",
@@ -78,8 +62,8 @@ class Gelbooru implements BooruAPI {
   }
 
   @override
-  Future<List<String>> completeTag(String t) async {
-    final resp = await client.getUri(Uri.https(booru.url, "/index.php", {
+  Future<List<String>> completeTag(Dio client, String t) async {
+    final resp = await client.getUri(Uri.https(_booru.url, "/index.php", {
       "page": "dapi",
       "s": "tag",
       "q": "index",
@@ -94,6 +78,64 @@ class Gelbooru implements BooruAPI {
     }
 
     return _fromGelbooruTags(resp.data["tag"]);
+  }
+
+  @override
+  Future<Post> singlePost(Dio client, int id) async {
+    try {
+      final resp = await client.getUri(Uri.https(_booru.url, "/index.php", {
+        "page": "dapi",
+        "s": "post",
+        "q": "index",
+        "id": id.toString(),
+        "json": "1"
+      }));
+
+      if (resp.statusCode != 200) {
+        throw "status is not 200";
+      }
+
+      final json = resp.data["post"];
+      if (json == null) {
+        throw "The post has been not found.";
+      }
+
+      return Gelbooru._fromJson([json[0]], _booru).$1[0];
+    } catch (e) {
+      if (e is DioException) {
+        if (e.response?.statusCode == 403) {
+          return Future.error(CloudflareException());
+        }
+      }
+
+      return Future.error(e);
+    }
+  }
+}
+
+class Gelbooru implements BooruAPIState {
+  final UnsaveableCookieJar cookieJar;
+
+  @override
+  final Dio client;
+
+  @override
+  final Booru booru;
+
+  @override
+  int? get currentPage => _page;
+
+  @override
+  final bool wouldBecomeStale = true;
+
+  int _page = 0;
+
+  @override
+  BooruAPIFunctions get functions => GelbooruFunctions(booru);
+
+  @override
+  void setCookies(List<Cookie> cookies) {
+    cookieJar.replaceDirectly(Uri.parse(booru.url), cookies);
   }
 
   @override
@@ -130,7 +172,7 @@ class Gelbooru implements BooruAPI {
       "pid": p.toString(),
       "json": "1",
       "tags": "${safeModeS()} $excludedTagsString $tags",
-      "limit": BooruAPI.numberOfElementsPerRefresh().toString()
+      "limit": BooruAPIState.numberOfElementsPerRefresh().toString()
     };
 
     try {
@@ -146,45 +188,13 @@ class Gelbooru implements BooruAPI {
         return Future.value((<Post>[], null));
       }
 
-      return _fromJson(json);
+      return _fromJson(json, booru);
     } catch (e) {
       if (e is DioException) {
         if (e.response?.statusCode == 403) {
           return Future.error(CloudflareException());
         }
       }
-      return Future.error(e);
-    }
-  }
-
-  @override
-  Future<Post> singlePost(int id) async {
-    try {
-      final resp = await client.getUri(Uri.https(booru.url, "/index.php", {
-        "page": "dapi",
-        "s": "post",
-        "q": "index",
-        "id": id.toString(),
-        "json": "1"
-      }));
-
-      if (resp.statusCode != 200) {
-        throw "status is not 200";
-      }
-
-      final json = resp.data["post"];
-      if (json == null) {
-        throw "The post has been not found.";
-      }
-
-      return _fromJson([json[0]]).$1[0];
-    } catch (e) {
-      if (e is DioException) {
-        if (e.response?.statusCode == 403) {
-          return Future.error(CloudflareException());
-        }
-      }
-
       return Future.error(e);
     }
   }
@@ -202,7 +212,7 @@ class Gelbooru implements BooruAPI {
         return Future.value(value);
       });
 
-  (List<Post>, int?) _fromJson(List<dynamic> m) {
+  static (List<Post>, int?) _fromJson(List<dynamic> m, Booru booru) {
     final List<Post> list = [];
 
     final dateFormatter = DateFormat("EEE MMM dd HH:mm:ss");

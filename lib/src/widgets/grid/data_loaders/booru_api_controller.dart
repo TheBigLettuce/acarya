@@ -11,11 +11,11 @@ class BooruAPILoaderStateController implements LoaderStateController {
   final Stream _events;
   final SendPort _send;
 
-  final BooruAPI api;
+  final BooruAPIState api;
   final BooruTagging excluded;
   final String tags;
 
-  final void Function(BooruAPI) onPostsLoaded;
+  final void Function(BooruAPIState) onPostsLoaded;
 
   LoaderState _state = LoaderState.idle;
   StreamSubscription? _currentSubscription;
@@ -25,7 +25,7 @@ class BooruAPILoaderStateController implements LoaderStateController {
 
   bool end = false;
 
-  static void _doNothing(BooruAPI _) {}
+  static void _doNothing(BooruAPIState _) {}
 
   BooruAPILoaderStateController(
     BackgroundCellLoader<Post, String> loader,

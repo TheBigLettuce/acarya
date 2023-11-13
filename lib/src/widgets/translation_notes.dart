@@ -6,15 +6,18 @@
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 import 'package:flutter/material.dart';
-
-import '../interfaces/booru_api/booru_api.dart';
+import 'package:gallery/src/interfaces/booru_api/booru.dart';
+import 'package:gallery/src/widgets/restart_widget.dart';
 
 class TranslationNotes extends StatefulWidget {
-  final int postId;
-  final BooruAPI api;
+  const TranslationNotes(
+      {super.key, required this.booru, required this.postId});
 
-  static Widget tile(BuildContext context, Color foregroundColor, int postId,
-      BooruAPI Function() api) {
+  final int postId;
+  final Booru booru;
+
+  static Widget tile(
+      BuildContext context, Color foregroundColor, int postId, Booru booru) {
     return ListTile(
       textColor: foregroundColor,
       title: Text("Has translations"),
@@ -27,7 +30,7 @@ class TranslationNotes extends StatefulWidget {
               builder: (context) {
                 return TranslationNotes(
                   postId: postId,
-                  api: api(),
+                  booru: booru,
                 );
               },
             ));
@@ -35,20 +38,14 @@ class TranslationNotes extends StatefulWidget {
     );
   }
 
-  const TranslationNotes({super.key, required this.api, required this.postId});
-
   @override
   State<TranslationNotes> createState() => _TranslationNotesState();
 }
 
 class _TranslationNotesState extends State<TranslationNotes> {
-  late final future = widget.api.notes(widget.postId);
-
-  @override
-  void dispose() {
-    widget.api.close();
-    super.dispose();
-  }
+  late final future = widget.booru
+      .functions()
+      .notes(RestartWidget.contextlessClient, widget.postId);
 
   @override
   Widget build(BuildContext context) {

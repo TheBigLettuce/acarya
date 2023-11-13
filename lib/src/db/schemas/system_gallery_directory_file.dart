@@ -14,7 +14,6 @@ import 'package:gallery/src/db/schemas/favorite_media.dart';
 import 'package:gallery/src/db/schemas/note_gallery.dart';
 import 'package:gallery/src/db/schemas/thumbnail.dart';
 import 'package:gallery/src/net/downloader.dart';
-import 'package:gallery/src/interfaces/booru_api/booru_api.dart';
 import 'package:gallery/src/db/post_tags.dart';
 import 'package:gallery/src/interfaces/cell.dart';
 import 'package:gallery/src/widgets/grid/cell/cell_data.dart';
@@ -22,6 +21,7 @@ import 'package:gallery/src/db/initalize_db.dart';
 import 'package:gallery/src/plugs/platform_channel.dart';
 import 'package:gallery/src/db/schemas/download_file.dart';
 import 'package:gallery/src/db/schemas/post.dart';
+import 'package:gallery/src/widgets/restart_widget.dart';
 import 'package:isar/isar.dart';
 import 'package:logging/logging.dart';
 import 'package:transparent_image/transparent_image.dart';
@@ -118,7 +118,7 @@ class SystemGalleryDirectoryFile implements Cell {
                       builder: (context) {
                         return TranslationNotes(
                           postId: res!.id,
-                          api: BooruAPI.fromEnum(res.booru, page: null),
+                          booru: res.booru,
                         );
                       },
                     ),
@@ -149,9 +149,10 @@ class SystemGalleryDirectoryFile implements Cell {
       if (size == 0 && res != null)
         IconButton(
             onPressed: () {
-              final api = BooruAPI.fromEnum(res!.booru, page: null);
-
-              api.singlePost(res.id).then((post) {
+              res!.booru
+                  .functions()
+                  .singlePost(RestartWidget.contextlessClient, res.id)
+                  .then((post) {
                 PlatformFunctions.deleteFiles([this]);
 
                 PostTags.g.addTagsPost(post.filename(), post.tags, true);
@@ -159,7 +160,7 @@ class SystemGalleryDirectoryFile implements Cell {
                 Downloader.g.add(
                     DownloadFile.d(
                         url: post.fileDownloadUrl(),
-                        site: api.booru.url,
+                        site: res!.booru.url,
                         name: post.filename(),
                         thumbUrl: post.previewUrl),
                     Settings.fromDb());
@@ -168,20 +169,14 @@ class SystemGalleryDirectoryFile implements Cell {
                     level: Level.SEVERE.value,
                     error: error,
                     stackTrace: stackTrace);
-              }).whenComplete(() {
-                api.close();
               });
             },
             icon: const Icon(Icons.download_outlined)),
       if (res != null)
         IconButton(
             onPressed: () {
-              final api = BooruAPI.fromEnum(res!.booru, page: null);
-
-              launchUrl(api.browserLink(res.id),
+              launchUrl(res!.booru.functions().browserLink(res.id),
                   mode: LaunchMode.externalApplication);
-
-              api.close();
             },
             icon: const Icon(Icons.public)),
       IconButton(
@@ -301,8 +296,8 @@ class SystemGalleryDirectoryFile implements Cell {
             subtitle: "${height}px"),
         addInfoTile(colors: colors, title: "Size", subtitle: kbMbSize(size)),
         if (res != null && tagsFlat.contains("translated"))
-          TranslationNotes.tile(context, colors.foregroundColor, res.id,
-              () => BooruAPI.fromEnum(res!.booru, page: null)),
+          TranslationNotes.tile(
+              context, colors.foregroundColor, res.id, res.booru),
       ],
       name,
       // temporary: plug.temporary,

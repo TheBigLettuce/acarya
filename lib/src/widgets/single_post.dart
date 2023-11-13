@@ -14,13 +14,13 @@ import 'package:gallery/src/interfaces/booru_api/booru.dart';
 import 'package:gallery/src/net/downloader.dart';
 import 'package:gallery/src/pages/image_view.dart';
 import 'package:gallery/src/db/schemas/favorite_booru.dart';
+import 'package:gallery/src/widgets/restart_widget.dart';
 import 'package:logging/logging.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../db/schemas/post.dart';
-import '../interfaces/booru_api/booru_api.dart';
 import '../db/initalize_db.dart';
 import '../db/state_restoration.dart';
 import '../db/schemas/download_file.dart';
@@ -37,7 +37,6 @@ class SinglePost extends StatefulWidget {
 }
 
 class _SinglePostState extends State<SinglePost> {
-  final defaultBooru = BooruAPI.fromSettings();
   final controller = TextEditingController();
   final menuController = MenuController();
 
@@ -50,7 +49,6 @@ class _SinglePostState extends State<SinglePost> {
   void dispose() {
     arrowSpinningController = null;
     controller.dispose();
-    defaultBooru.close();
 
     super.dispose();
   }
@@ -61,13 +59,7 @@ class _SinglePostState extends State<SinglePost> {
     }
 
     inProcessLoading = true;
-
-    BooruAPI booru;
-    if (replaceBooru != null) {
-      booru = BooruAPI.fromEnum(replaceBooru, page: null);
-    } else {
-      booru = defaultBooru;
-    }
+    final selectedBooru = replaceBooru ?? Settings.fromDb().selectedBooru;
 
     try {
       arrowSpinningController?.repeat();
@@ -75,14 +67,18 @@ class _SinglePostState extends State<SinglePost> {
       final Post value;
 
       if (replaceId != null) {
-        value = await booru.singlePost(replaceId);
+        value = await selectedBooru
+            .functions()
+            .singlePost(RestartWidget.contextlessClient, replaceId);
       } else {
         final n = int.tryParse(controller.text);
         if (n == null) {
           throw AppLocalizations.of(context)!.notANumber(controller.text);
         }
 
-        value = await booru.singlePost(n);
+        value = await selectedBooru
+            .functions()
+            .singlePost(RestartWidget.contextlessClient, n);
       }
 
       final key = GlobalKey<ImageViewState>();
@@ -108,7 +104,7 @@ class _SinglePostState extends State<SinglePost> {
               Downloader.g.add(
                   DownloadFile.d(
                       url: value.fileDownloadUrl(),
-                      site: booru.booru.url,
+                      site: selectedBooru.url,
                       name: value.filename(),
                       thumbUrl: value.previewUrl),
                   Settings.fromDb());
@@ -148,9 +144,6 @@ class _SinglePostState extends State<SinglePost> {
       arrowSpinningController!.reverse();
     }
 
-    if (replaceBooru != null) {
-      booru.close();
-    }
     inProcessLoading = false;
   }
 

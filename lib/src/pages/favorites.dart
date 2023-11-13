@@ -11,7 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:gallery/src/db/schemas/note.dart';
 import 'package:gallery/src/widgets/grid/actions/favorites.dart';
 import 'package:gallery/src/net/downloader.dart';
-import 'package:gallery/src/interfaces/booru_api/booru_api.dart';
+import 'package:gallery/src/interfaces/booru_api/booru_api_state.dart';
 import 'package:gallery/src/db/initalize_db.dart';
 import 'package:gallery/src/db/schemas/favorite_booru.dart';
 import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
@@ -48,7 +48,7 @@ class FavoritesPage extends StatefulWidget {
 class _FavoritesPageState extends State<FavoritesPage>
 // with SearchFilterGrid<FavoriteBooru>
 {
-  final booru = BooruAPI.fromSettings();
+  final booru = BooruAPIState.fromSettings();
   late final StreamSubscription<Settings?> settingsWatcher;
   late final StreamSubscription favoritesWatcher;
 

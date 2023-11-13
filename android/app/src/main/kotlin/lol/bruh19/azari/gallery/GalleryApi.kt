@@ -262,10 +262,11 @@ class GalleryApi(private val binaryMessenger: BinaryMessenger) {
         }
     }
 
-    fun notify(secondary: Boolean, callback: (Result<Unit>) -> Unit) {
+    fun notify(secondary: Boolean?, callback: (Result<Unit>) -> Unit) {
         val c = binaryMessenger.send(
             "lol.bruh19.azari.gallery.api.notify",
-            ByteBuffer.allocate(1).put((if (secondary) 1.toUByte() else 0.toUByte()).toByte())
+            ByteBuffer.allocate(1)
+                .put((if (secondary == null) 2.toUByte() else if (secondary) 1.toUByte() else 0.toUByte()).toByte())
         )
 //        val channel = BasicMessageChannel<Any?>(
 //            binaryMessenger,

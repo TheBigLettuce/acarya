@@ -21,6 +21,7 @@ import 'package:gallery/src/db/schemas/favorite_media.dart';
 import 'package:gallery/src/db/schemas/pinned_directories.dart';
 import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
 import 'package:gallery/src/widgets/grid/app_bar/grid_app_bar.dart';
+import 'package:gallery/src/widgets/grid/data_loaders/cell_loader.dart';
 import 'package:gallery/src/widgets/grid/metadata/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/layouts/grid.dart';
 import 'package:gallery/src/widgets/grid/metadata/segments.dart';
@@ -118,6 +119,7 @@ class _GalleryDirectoriesState extends State<GalleryDirectories> {
   @override
   void initState() {
     super.initState();
+    BackgroundCellLoader.directories().state.reset();
     if (widget.callback != null) {
       // extra.setTemporarySet((i, end) {
       //   stream.add(i);
@@ -161,10 +163,11 @@ class _GalleryDirectoriesState extends State<GalleryDirectories> {
   @override
   void dispose() {
     // stream.close();
-    settingsWatcher.cancel();
+    // settingsWatcher.cancel();
     // disposeSearch();
     // state.dispose();
-    Dbs.g.clearTemporaryImages();
+    // Dbs.g.clearTemporaryImages();
+    state.dispose();
 
     super.dispose();
   }

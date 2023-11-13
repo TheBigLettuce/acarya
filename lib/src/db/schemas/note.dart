@@ -23,7 +23,6 @@ import 'package:isar/isar.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../interfaces/booru_api/booru_api.dart';
 import '../../interfaces/cell.dart';
 import '../../plugs/platform_channel.dart';
 import 'settings.dart';
@@ -248,10 +247,8 @@ class NoteBooru extends NoteBase implements Cell {
       IconButton(
         icon: const Icon(Icons.public),
         onPressed: () {
-          final api = BooruAPI.fromEnum(booru, page: null);
-          launchUrl(api.browserLink(postId),
+          launchUrl(booru.functions().browserLink(postId),
               mode: LaunchMode.externalApplication);
-          api.close();
         },
       ),
       if (Platform.isAndroid)

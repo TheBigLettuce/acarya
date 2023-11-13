@@ -20,7 +20,6 @@ import 'package:gallery/src/db/schemas/thumbnail.dart';
 import 'package:gallery/src/interfaces/booru_api/booru.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
-import '../interfaces/booru_api/booru_api.dart';
 import 'schemas/system_gallery_directory.dart';
 import 'schemas/system_gallery_directory_file.dart';
 import 'schemas/directory_tags.dart';

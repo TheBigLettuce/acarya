@@ -216,7 +216,7 @@ internal class Mover(
                     }
 
                     CoroutineScope(coContext).launch {
-                        galleryApi.notify(op.dir) {
+                        galleryApi.notify(null) {
 
                         }
                     }
@@ -634,7 +634,7 @@ internal class Mover(
         if (locker.exist(id)) {
             return Pair("", 0)
         }
-        
+
         val thumb = if (network) Glide.with(context).asBitmap().load(uri).submit()
             .get() else context.contentResolver.loadThumbnail(uri, Size(320, 320), null)
         val stream = ByteArrayOutputStream()

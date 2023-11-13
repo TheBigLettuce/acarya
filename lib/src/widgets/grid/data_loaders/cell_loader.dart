@@ -8,13 +8,15 @@
 import 'dart:async';
 import 'dart:isolate';
 
+import 'package:flutter/services.dart';
 import 'package:gallery/src/db/initalize_db.dart';
 import 'package:gallery/src/db/schemas/post.dart';
 import 'package:gallery/src/db/schemas/system_gallery_directory.dart';
 import 'package:gallery/src/db/schemas/system_gallery_directory_file.dart';
-import 'package:gallery/src/interfaces/booru_api/booru_api.dart';
+import 'package:gallery/src/interfaces/booru_api/booru_api_state.dart';
 import 'package:gallery/src/interfaces/cell.dart';
 import 'package:gallery/src/interfaces/tags.dart';
+import 'package:gallery/src/plugs/platform_channel.dart';
 import 'package:isar/isar.dart';
 import 'package:meta/meta.dart';
 import 'package:gallery/src/interfaces/filtering/filtering_mode.dart';
@@ -45,11 +47,14 @@ class BackgroundCellLoader<T extends Cell, I>
         makeTransformer,
     required this.handler,
     this.disposable = true,
+    String? debugName,
   })  : _makeState = makeState,
+        _debugName = debugName,
         _makeTransformer = makeTransformer {
     transformer = _makeTransformer?.call(this);
   }
 
+  final String? _debugName;
   final Isar _instance;
   final List<IsarGeneratedSchema> _schemas;
   final T? Function(Isar, int) _getCell;
@@ -102,11 +107,13 @@ class BackgroundCellLoader<T extends Cell, I>
     }
     _initCalled = true;
 
-    _rx = ReceivePort("Loader(Port): ${_instance.directory}/${_instance.name}");
+    _rx = ReceivePort(
+        "Loader(Port): ${_debugName ?? _instance.directory}/${_instance.name}");
     _isolate = await Isolate.spawn(
       handler,
       (_rx.sendPort, _schemas, _instance.directory, _instance.name),
-      debugName: "Loader: ${_instance.directory}/${_instance.name}",
+      debugName:
+          "Loader: ${_debugName ?? _instance.directory}/${_instance.name}",
     );
 
     _isolateEvents = _rx.asBroadcastStream();
@@ -175,16 +182,33 @@ class BackgroundCellLoader<T extends Cell, I>
       _cache[kAndroidFilesSecondaryLoaderKey] as FilesLoader;
 
   static Future<void> cacheDirectories() async {
+    if (_cache[kAndroidGalleryLoaderKey] != null) {
+      return;
+    }
+
+    final db = DbsOpen.androidGalleryDirectories(temporary: true);
     _cache[kAndroidGalleryLoaderKey] = DirectoriesLoader(
-        (db, idx) => null, DbsOpen.androidGalleryFiles(), kFilesSchemas,
-        makeState: (instance) => CellLoaderStateController(instance),
+        (db, idx) => db.systemGalleryDirectorys
+            .where()
+            .sortByLastModifiedDesc()
+            .findFirst(offset: idx),
+        db,
+        kDirectoriesSchemas,
+        makeState: (instance) =>
+            CellLoaderStateController(instance, onReset: (_) {
+              instance.send(const Reset());
+              PlatformFunctions.refreshGallery();
+            }),
         handler: CellLoaderHandlers.directories,
         makeTransformer: (instance) => CellDataTransformer(
-            instance,
-            (_, cell) => cell,
-            (_) => 0,
-            FilteringMode.noFilter,
-            SortingMode.none));
+              instance,
+              (_, cell) => cell,
+              (instance) => db.systemGalleryDirectorys.count(),
+              FilteringMode.noFilter,
+              SortingMode.none,
+            ),
+        debugName: "Android Directories",
+        disposable: false);
 
     await _cache[kAndroidGalleryLoaderKey]!.init();
 
@@ -192,19 +216,29 @@ class BackgroundCellLoader<T extends Cell, I>
   }
 
   static Future<void> cacheFiles() async {
-    FilesLoader make() => FilesLoader(
-        (db, idx) => null, DbsOpen.androidGalleryFiles(), kFilesSchemas,
-        handler: CellLoaderHandlers.files,
-        makeState: (instance) => CellLoaderStateController(instance),
-        makeTransformer: (instance) => CellDataTransformer(
-            instance,
-            (_, cell) => cell,
-            (_) => 0,
-            FilteringMode.noFilter,
-            SortingMode.none));
+    if (_cache[kAndroidFilesSecondaryLoaderKey] != null ||
+        _cache[kAndroidFilesPrimaryLoaderKey] != null) {
+      return;
+    }
 
-    _cache[kAndroidFilesPrimaryLoaderKey] = make();
-    _cache[kAndroidFilesSecondaryLoaderKey] = make();
+    final db = DbsOpen.androidGalleryFiles();
+
+    FilesLoader make(String debugName) =>
+        FilesLoader((db, idx) => null, db, kFilesSchemas,
+            handler: CellLoaderHandlers.files,
+            makeState: (instance) => CellLoaderStateController(instance),
+            makeTransformer: (instance) => CellDataTransformer(
+                  instance,
+                  (_, cell) => cell,
+                  (_) => db.systemGalleryDirectoryFiles.count(),
+                  FilteringMode.noFilter,
+                  SortingMode.none,
+                ),
+            debugName: debugName,
+            disposable: false);
+
+    _cache[kAndroidFilesPrimaryLoaderKey] = make("Android Files Primary");
+    _cache[kAndroidFilesSecondaryLoaderKey] = make("Android Files Secondary");
 
     await _cache[kAndroidFilesPrimaryLoaderKey]!.init();
     await _cache[kAndroidFilesSecondaryLoaderKey]!.init();
@@ -242,7 +276,8 @@ class BackgroundCellLoader<T extends Cell, I>
   }
 }
 
-typedef DirectoriesLoader = BackgroundCellLoader<SystemGalleryDirectory, int>;
+typedef DirectoriesLoader
+    = BackgroundCellLoader<SystemGalleryDirectory, String>;
 typedef FilesLoader = BackgroundCellLoader<SystemGalleryDirectoryFile, int>;
 
 typedef HandlerFn = void Function(HandlerPayload);
@@ -255,14 +290,103 @@ typedef HandlerPayload = (
 );
 
 abstract class CellLoaderHandlers {
-  static void directories<SystemGalleryDirectory, int>(
-      HandlerPayload record) async {
+  static void directories(HandlerPayload record) async {
     final (port, db, rx) = _normalSequence(record);
+
+    await for (final ControlMessage e in rx) {
+      switch (e) {
+        case Reset():
+          db.write((i) => i.systemGalleryDirectorys.clear());
+          if (!e.silent) {
+            port.send(LoaderState.idle);
+          }
+        case Binary():
+          if (e.type != BackgroundCellLoader.directoryBinaryType) {
+            throw "directories handler supports binary messages only of type BackgroundCellLoader.directoryBinaryType";
+          }
+
+          final decoded = const _GalleryApiCodec().decodeMessage(e.data);
+
+          final directories = decoded[0] as List<Object?>;
+          final inRefresh = decoded[1] as bool;
+          final empty = decoded[2] as bool;
+
+          if (empty) {
+            port.send(LoaderState.idle);
+            continue;
+          }
+
+          db.write((i) => i.systemGalleryDirectorys.putAll(directories.cast()));
+
+          if (inRefresh) {
+            port.send(LoaderState.loading);
+          } else {
+            port.send(LoaderState.idle);
+          }
+        case Poll():
+          port.send(e);
+        default:
+          assert(
+              false, "Received unsupported message of type ${e.runtimeType}");
+      }
+    }
+
+    assert(false, "directories handler exited");
   }
 
-  static void files<SystemGalleryDirectoryFile, int>(
-      HandlerPayload record) async {
+  static void files(HandlerPayload record) async {
     final (port, db, rx) = _normalSequence(record);
+    String currentContext = "";
+
+    await for (final ControlMessage e in rx) {
+      switch (e) {
+        case Reset():
+          db.write((i) => i.systemGalleryDirectoryFiles.clear());
+          if (!e.silent) {
+            port.send(LoaderState.idle);
+          }
+        case ChangeContext():
+          if (e.contextStage == BackgroundCellLoader.filesResetContextState) {
+            currentContext = e.data;
+            db.write((i) => i.systemGalleryDirectoryFiles.clear());
+            port.send(LoaderState.idle);
+          }
+        case Binary():
+          if (e.type != BackgroundCellLoader.filesBinaryType) {
+            throw "files handler supports binary messages only of type BackgroundCellLoader.filesBinaryType";
+          }
+          final decoded =
+              const _GalleryApiCodec().decodeMessage(e.data) as List<Object?>;
+
+          final files = decoded[0] as List<SystemGalleryDirectoryFile>;
+          final bucketId = decoded[1] as String;
+          final _ = decoded[2] as int;
+          final inRefresh = decoded[3] as bool;
+          final empty = decoded[4] as bool;
+
+          if (currentContext != bucketId) {
+            continue;
+          }
+
+          if (empty) {
+            port.send(LoaderState.idle);
+            continue;
+          }
+
+          db.write((i) => i.systemGalleryDirectoryFiles.putAll(files));
+
+          if (inRefresh) {
+            port.send(LoaderState.loading);
+          } else {
+            port.send(LoaderState.idle);
+          }
+        case Poll():
+          port.send(e);
+        default:
+          assert(
+              false, "Received unsupported message of type ${e.runtimeType}");
+      }
+    }
   }
 
   static void basic<T extends Cell, I>(HandlerPayload record) async {
@@ -277,7 +401,6 @@ abstract class CellLoaderHandlers {
           } else {
             port.send(LoaderState.loading);
           }
-          break;
         case Reset():
           db.write((i) => i.collection<I, T>().clear());
           if (!e.silent) {
@@ -286,6 +409,8 @@ abstract class CellLoaderHandlers {
         case Poll():
           port.send(e);
         default:
+          assert(
+              false, "Received unsupported message of type ${e.runtimeType}");
       }
     }
   }
@@ -302,159 +427,30 @@ abstract class CellLoaderHandlers {
   }
 }
 
+class _GalleryApiCodec extends StandardMessageCodec {
+  const _GalleryApiCodec();
+  // @override
+  // void writeValue(WriteBuffer buffer, Object? value) {
+  //   if (value is SystemGalleryDirectory) {
+  //     buffer.putUint8(128);
+  //     writeValue(buffer, value.encode());
+  //   } else if (value is DirectoryFile) {
+  //     buffer.putUint8(129);
+  //     writeValue(buffer, value.encode());
+  //   } else {
+  //     super.writeValue(buffer, value);
+  //   }
+  // }
 
-// _GalleryImpl? _global;
-
-// /// Callbacks related to the gallery.
-// class _GalleryImpl implements GalleryApi {
-//   final Isar db;
-//   final bool temporary;
-//   final List<_AndroidGallery> _temporaryApis = [];
-
-//   bool isSavingTags = false;
-
-//   _AndroidGallery? _currentApi;
-
-//   void setup() {
-  
-//   }
-
-//   @override
-//   void updatePictures(List<DirectoryFile?> f, String bucketId, int startTime,
-//       bool inRefresh, bool empty) {
-//     // final st = _currentApi?.currentImages?.startTime;
-
-//     // if (st == null || st > startTime) {
-//     //   return;
-//     // }
-
-//     // if (_currentApi?.currentImages?.isBucketId(bucketId) != true) {
-//     //   return;
-//     // }
-
-//     // final db = _currentApi?.currentImages?.db;
-//     // if (db == null) {
-//     //   return;
-//     // }
-
-//     // if (empty) {
-//     //   _currentApi?.currentImages?.callback
-//     //       ?.call(db.systemGalleryDirectoryFiles.countSync(), inRefresh, true);
-//     //   return;
-//     // }
-
-//     // if (f.isEmpty) {
-//     //   return;
-//     // }
-
-//     // try {
-//     //   final out = f
-//     //       .cast<DirectoryFile>()
-//     //       .map((e) => SystemGalleryDirectoryFile(
-//     //           id: e.id,
-//     //           bucketId: e.bucketId,
-//     //           notesFlat: Dbs.g.main.noteGallerys
-//     //                   .getByIdSync(e.id)
-//     //                   ?.text
-//     //                   .join()
-//     //                   .toLowerCase() ??
-//     //               "",
-//     //           name: e.name,
-//     //           size: e.size,
-//     //           isDuplicate:
-//     //               RegExp(r'[(][0-9].*[)][.][a-zA-Z0-9].*').hasMatch(e.name),
-//     //           isFavorite:
-//     //               Dbs.g.blacklisted.favoriteMedias.getSync(e.id) != null,
-//     //           lastModified: e.lastModified,
-//     //           height: e.height,
-//     //           width: e.width,
-//     //           isGif: e.isGif,
-//     //           isOriginal: PostTags.g.isOriginal(e.name),
-//     //           originalUri: e.originalUri,
-//     //           isVideo: e.isVideo,
-//     //           tagsFlat: PostTags.g.getTagsPost(e.name).join(" ")))
-//     //       .toList();
-
-//     //   db.writeTxnSync(() => db.systemGalleryDirectoryFiles.putAllSync(out));
-//     // } catch (e) {
-//     //   log("updatePictures", level: Level.WARNING.value, error: e);
-//     // }
-
-//     // _currentApi?.currentImages?.callback
-//     //     ?.call(db.systemGalleryDirectoryFiles.countSync(), inRefresh, false);
-//   }
-
-//   @override
-//   void updateDirectories(List<Directory?> d, bool inRefresh, bool empty) {
-//     // if (empty) {
-//     //   _currentApi?.callback
-//     //       ?.call(db.systemGalleryDirectorys.countSync(), inRefresh, true);
-//     //   for (final api in _temporaryApis) {
-//     //     api.temporarySet?.call(db.systemGalleryDirectorys.countSync(), true);
-//     //   }
-//     //   return;
-//     // }
-//     // final blacklisted = Dbs.g.blacklisted.blacklistedDirectorys
-//     //     .where()
-//     //     .anyOf(d.cast<Directory>(),
-//     //         (q, element) => q.bucketIdEqualTo(element.bucketId))
-//     //     .findAllSync();
-//     // final map = <String, void>{for (var i in blacklisted) i.bucketId: Null};
-//     // d = List.from(d);
-//     // d.removeWhere((element) => map.containsKey(element!.bucketId));
-
-//     // final out = d
-//     //     .cast<Directory>()
-//     //     .map((e) => SystemGalleryDirectory(
-//     //         bucketId: e.bucketId,
-//     //         name: e.name,
-//     //         volumeName: e.volumeName,
-//     //         relativeLoc: e.relativeLoc,
-//     //         thumbFileId: e.thumbFileId,
-//     //         lastModified: e.lastModified))
-//     //     .toList();
-
-//     // db.writeTxnSync(() {
-//     //   db.systemGalleryDirectorys.putAllSync(out);
-//     // });
-
-//     // _currentApi?.callback
-//     //     ?.call(db.systemGalleryDirectorys.countSync(), inRefresh, false);
-//     // for (final api in _temporaryApis) {
-//     //   api.temporarySet?.call(db.systemGalleryDirectorys.countSync(), false);
-//     // }
-//   }
-
-//   @override
-//   void notify(String? target) {
-//     // if (target == null || target == _currentApi?.currentImages?.target) {
-//     //   _currentApi?.currentImages?.refreshGrid?.call();
-//     // }
-//     // _currentApi?.refreshGrid?.call();
-//     // for (final api in _temporaryApis) {
-//     //   api.refreshGrid?.call();
-//     // }
-//   }
-
-//   // static GalleryImpl get g => _global!;
-
-//   factory _GalleryImpl(bool temporary) {
-//     if (_global != null) {
-//       return _global!;
-//     }
-
-//     _global = _GalleryImpl._new(
-//         DbsOpen.androidGalleryDirectories(temporary: temporary), temporary);
-//     return _global!;
-//   }
-
-//   void _setCurrentApi(_AndroidGallery api) {
-//     _currentApi = api;
-//   }
-
-//   void _unsetCurrentApi() {
-//     _currentApi = null;
-//   }
-
-//   _GalleryImpl._new(this.db, this.temporary);
-// }
+  @override
+  Object? readValueOfType(int type, ReadBuffer buffer) {
+    switch (type) {
+      case 128:
+        return SystemGalleryDirectory.decode(readValue(buffer)!);
+      case 129:
+        return SystemGalleryDirectoryFile.decode(readValue(buffer)!);
+      default:
+        return super.readValueOfType(type, buffer);
+    }
+  }
+}

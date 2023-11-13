@@ -25,7 +25,7 @@ class AndroidGalleryDirectories implements GalleryAPIDirectories {
   }
 
   @override
-  final BackgroundCellLoader<SystemGalleryDirectory, int> loader;
+  final BackgroundCellLoader<SystemGalleryDirectory, String> loader;
 
   @override
   GalleryAPIFiles joinedDir(
