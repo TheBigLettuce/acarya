@@ -15,7 +15,7 @@ import '../../../db/schemas/download_file.dart';
 import '../../../db/schemas/local_tag_dictionary.dart';
 import '../../../db/schemas/post.dart';
 import '../../../db/schemas/settings.dart';
-import '../grid_action.dart';
+import '../metadata/grid_action.dart';
 
 class BooruGridActions {
   static GridAction<T> download<T extends PostBase>(BuildContext context) {

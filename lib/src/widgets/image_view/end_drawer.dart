@@ -6,7 +6,7 @@
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 import 'package:flutter/material.dart';
-import 'package:gallery/src/widgets/skeletons/drawer/end_drawer_heading.dart';
+import 'package:gallery/src/widgets/end_drawer_heading.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ImageViewEndDrawer extends StatelessWidget {

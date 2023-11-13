@@ -10,6 +10,7 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:gallery/src/interfaces/booru_api/booru.dart';
 import 'package:gallery/src/widgets/notifiers/network_configuration.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as path_util;
@@ -17,12 +18,12 @@ import 'package:gallery/src/db/initalize_db.dart';
 import 'package:gallery/src/db/schemas/post.dart';
 import 'package:gallery/src/interfaces/contentable.dart';
 import 'package:gallery/src/pages/image_view.dart';
-import 'package:gallery/src/widgets/grid/cell_data.dart';
+import 'package:gallery/src/widgets/grid/cell/cell_data.dart';
 import 'package:isar/isar.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../interfaces/booru.dart';
+import '../../interfaces/booru_api/booru_api.dart';
 import '../../interfaces/cell.dart';
 import '../../plugs/platform_channel.dart';
 import 'settings.dart';

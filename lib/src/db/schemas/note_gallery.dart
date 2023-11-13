@@ -12,7 +12,7 @@ import '../../interfaces/cell.dart';
 import '../../interfaces/contentable.dart';
 import '../../pages/image_view.dart';
 import '../../plugs/platform_channel.dart';
-import '../../widgets/grid/cell_data.dart';
+import '../../widgets/grid/cell/cell_data.dart';
 import 'note.dart';
 import 'system_gallery_directory_file.dart';
 

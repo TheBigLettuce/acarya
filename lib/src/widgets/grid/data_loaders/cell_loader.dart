@@ -12,14 +12,19 @@ import 'package:gallery/src/db/initalize_db.dart';
 import 'package:gallery/src/db/schemas/post.dart';
 import 'package:gallery/src/db/schemas/system_gallery_directory.dart';
 import 'package:gallery/src/db/schemas/system_gallery_directory_file.dart';
-import 'package:gallery/src/interfaces/booru.dart';
+import 'package:gallery/src/interfaces/booru_api/booru_api.dart';
 import 'package:gallery/src/interfaces/cell.dart';
 import 'package:gallery/src/interfaces/tags.dart';
 import 'package:isar/isar.dart';
 import 'package:meta/meta.dart';
 import 'package:gallery/src/interfaces/filtering/filtering_mode.dart';
 import 'package:gallery/src/interfaces/filtering/sorting_mode.dart';
-import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
+import 'package:gallery/src/interfaces/background_data_loader/background_data_loader.dart';
+
+import '../../../interfaces/background_data_loader/control_message.dart';
+import '../../../interfaces/background_data_loader/data_transformer.dart';
+import '../../../interfaces/background_data_loader/loader_keys.dart';
+import '../../../interfaces/background_data_loader/loader_state_controller.dart';
 
 part 'cell_controller.dart';
 part 'booru_api_controller.dart';
@@ -296,3 +301,160 @@ abstract class CellLoaderHandlers {
     return (port, db, rx);
   }
 }
+
+
+// _GalleryImpl? _global;
+
+// /// Callbacks related to the gallery.
+// class _GalleryImpl implements GalleryApi {
+//   final Isar db;
+//   final bool temporary;
+//   final List<_AndroidGallery> _temporaryApis = [];
+
+//   bool isSavingTags = false;
+
+//   _AndroidGallery? _currentApi;
+
+//   void setup() {
+  
+//   }
+
+//   @override
+//   void updatePictures(List<DirectoryFile?> f, String bucketId, int startTime,
+//       bool inRefresh, bool empty) {
+//     // final st = _currentApi?.currentImages?.startTime;
+
+//     // if (st == null || st > startTime) {
+//     //   return;
+//     // }
+
+//     // if (_currentApi?.currentImages?.isBucketId(bucketId) != true) {
+//     //   return;
+//     // }
+
+//     // final db = _currentApi?.currentImages?.db;
+//     // if (db == null) {
+//     //   return;
+//     // }
+
+//     // if (empty) {
+//     //   _currentApi?.currentImages?.callback
+//     //       ?.call(db.systemGalleryDirectoryFiles.countSync(), inRefresh, true);
+//     //   return;
+//     // }
+
+//     // if (f.isEmpty) {
+//     //   return;
+//     // }
+
+//     // try {
+//     //   final out = f
+//     //       .cast<DirectoryFile>()
+//     //       .map((e) => SystemGalleryDirectoryFile(
+//     //           id: e.id,
+//     //           bucketId: e.bucketId,
+//     //           notesFlat: Dbs.g.main.noteGallerys
+//     //                   .getByIdSync(e.id)
+//     //                   ?.text
+//     //                   .join()
+//     //                   .toLowerCase() ??
+//     //               "",
+//     //           name: e.name,
+//     //           size: e.size,
+//     //           isDuplicate:
+//     //               RegExp(r'[(][0-9].*[)][.][a-zA-Z0-9].*').hasMatch(e.name),
+//     //           isFavorite:
+//     //               Dbs.g.blacklisted.favoriteMedias.getSync(e.id) != null,
+//     //           lastModified: e.lastModified,
+//     //           height: e.height,
+//     //           width: e.width,
+//     //           isGif: e.isGif,
+//     //           isOriginal: PostTags.g.isOriginal(e.name),
+//     //           originalUri: e.originalUri,
+//     //           isVideo: e.isVideo,
+//     //           tagsFlat: PostTags.g.getTagsPost(e.name).join(" ")))
+//     //       .toList();
+
+//     //   db.writeTxnSync(() => db.systemGalleryDirectoryFiles.putAllSync(out));
+//     // } catch (e) {
+//     //   log("updatePictures", level: Level.WARNING.value, error: e);
+//     // }
+
+//     // _currentApi?.currentImages?.callback
+//     //     ?.call(db.systemGalleryDirectoryFiles.countSync(), inRefresh, false);
+//   }
+
+//   @override
+//   void updateDirectories(List<Directory?> d, bool inRefresh, bool empty) {
+//     // if (empty) {
+//     //   _currentApi?.callback
+//     //       ?.call(db.systemGalleryDirectorys.countSync(), inRefresh, true);
+//     //   for (final api in _temporaryApis) {
+//     //     api.temporarySet?.call(db.systemGalleryDirectorys.countSync(), true);
+//     //   }
+//     //   return;
+//     // }
+//     // final blacklisted = Dbs.g.blacklisted.blacklistedDirectorys
+//     //     .where()
+//     //     .anyOf(d.cast<Directory>(),
+//     //         (q, element) => q.bucketIdEqualTo(element.bucketId))
+//     //     .findAllSync();
+//     // final map = <String, void>{for (var i in blacklisted) i.bucketId: Null};
+//     // d = List.from(d);
+//     // d.removeWhere((element) => map.containsKey(element!.bucketId));
+
+//     // final out = d
+//     //     .cast<Directory>()
+//     //     .map((e) => SystemGalleryDirectory(
+//     //         bucketId: e.bucketId,
+//     //         name: e.name,
+//     //         volumeName: e.volumeName,
+//     //         relativeLoc: e.relativeLoc,
+//     //         thumbFileId: e.thumbFileId,
+//     //         lastModified: e.lastModified))
+//     //     .toList();
+
+//     // db.writeTxnSync(() {
+//     //   db.systemGalleryDirectorys.putAllSync(out);
+//     // });
+
+//     // _currentApi?.callback
+//     //     ?.call(db.systemGalleryDirectorys.countSync(), inRefresh, false);
+//     // for (final api in _temporaryApis) {
+//     //   api.temporarySet?.call(db.systemGalleryDirectorys.countSync(), false);
+//     // }
+//   }
+
+//   @override
+//   void notify(String? target) {
+//     // if (target == null || target == _currentApi?.currentImages?.target) {
+//     //   _currentApi?.currentImages?.refreshGrid?.call();
+//     // }
+//     // _currentApi?.refreshGrid?.call();
+//     // for (final api in _temporaryApis) {
+//     //   api.refreshGrid?.call();
+//     // }
+//   }
+
+//   // static GalleryImpl get g => _global!;
+
+//   factory _GalleryImpl(bool temporary) {
+//     if (_global != null) {
+//       return _global!;
+//     }
+
+//     _global = _GalleryImpl._new(
+//         DbsOpen.androidGalleryDirectories(temporary: temporary), temporary);
+//     return _global!;
+//   }
+
+//   void _setCurrentApi(_AndroidGallery api) {
+//     _currentApi = api;
+//   }
+
+//   void _unsetCurrentApi() {
+//     _currentApi = null;
+//   }
+
+//   _GalleryImpl._new(this.db, this.temporary);
+// }

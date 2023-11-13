@@ -8,7 +8,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/widgets.dart';
 import 'package:gallery/src/interfaces/contentable.dart';
-import 'package:gallery/src/widgets/grid/cell_data.dart';
+import 'package:gallery/src/widgets/grid/cell/cell_data.dart';
 import 'package:gallery/src/widgets/notifiers/network_configuration.dart';
 import 'package:isar/isar.dart';
 

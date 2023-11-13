@@ -8,9 +8,14 @@
 import 'dart:isolate';
 
 import 'dummy_controller.dart';
-import 'interface.dart';
+import '../../../interfaces/background_data_loader/background_data_loader.dart';
+import '../../../interfaces/background_data_loader/control_message.dart';
+import '../../../interfaces/background_data_loader/data_transformer.dart';
+import '../../../interfaces/background_data_loader/loader_state_controller.dart';
 
 class DummyBackgroundLoader<T, J> implements BackgroundDataLoader<T, J> {
+  const DummyBackgroundLoader();
+
   @override
   void dispose() {}
 

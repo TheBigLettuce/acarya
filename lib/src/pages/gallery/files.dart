@@ -6,9 +6,7 @@
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 import 'dart:async';
-import 'dart:developer';
 
-import 'dart:math' as math;
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:gallery/src/db/post_tags.dart';
@@ -16,33 +14,25 @@ import 'package:gallery/src/db/initalize_db.dart';
 import 'package:gallery/src/plugs/platform_channel.dart';
 import 'package:gallery/src/pages/gallery/directories.dart';
 import 'package:gallery/src/interfaces/gallery.dart';
-import 'package:gallery/src/pages/booru/main.dart';
 import 'package:gallery/src/plugs/notifications.dart';
 import 'package:gallery/src/db/schemas/system_gallery_directory_file.dart';
 import 'package:gallery/src/db/schemas/favorite_media.dart';
 import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
-import 'package:gallery/src/widgets/grid/grid_action.dart';
+import 'package:gallery/src/widgets/grid/metadata/grid_action.dart';
 import 'package:gallery/src/widgets/grid/app_bar/grid_app_bar.dart';
-import 'package:gallery/src/widgets/grid/grid_metadata.dart';
-import 'package:gallery/src/widgets/grid/layouts/grid/grid.dart';
-import 'package:gallery/src/widgets/grid/layouts/list/list.dart';
-import 'package:gallery/src/widgets/grid/search_and_focus.dart';
+import 'package:gallery/src/widgets/grid/metadata/grid_metadata.dart';
+import 'package:gallery/src/widgets/grid/layouts/grid.dart';
+import 'package:gallery/src/widgets/grid/layouts/list.dart';
 import 'package:gallery/src/widgets/skeletons/grid_skeleton_state.dart';
-import 'package:logging/logging.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../db/schemas/settings.dart';
 import '../../db/schemas/system_gallery_directory.dart';
-import '../../interfaces/filtering/filtering_mode.dart';
-import '../../interfaces/filtering/sorting_mode.dart';
 import '../../plugs/gallery.dart';
 import '../../widgets/copy_move_preview.dart';
-import '../../widgets/grid/wrap_grid_page.dart';
-import '../../widgets/search_bar/search_filter_grid.dart';
-import '../../plugs/gallery/android/filters.dart';
-import '../../widgets/skeletons/grid_skeleton_state_filter.dart';
+import '../../widgets/grid/wrapped_grid_page.dart';
 import '../../widgets/skeletons/grid_skeleton.dart';
-import '../booru/grid_settings_button.dart';
+import '../../widgets/grid_settings_button.dart';
 
 bool _isSavingTags = false;
 

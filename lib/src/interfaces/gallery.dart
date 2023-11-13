@@ -7,7 +7,7 @@
 
 import 'package:gallery/src/db/schemas/blacklisted_directory.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/cell_loader.dart';
-import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
+import 'package:gallery/src/interfaces/background_data_loader/background_data_loader.dart';
 
 import '../db/schemas/system_gallery_directory.dart';
 import '../db/schemas/system_gallery_directory_file.dart';

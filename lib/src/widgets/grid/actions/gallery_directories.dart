@@ -13,7 +13,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../interfaces/gallery.dart';
 import '../../../pages/gallery/files.dart';
 import '../../../db/schemas/blacklisted_directory.dart';
-import '../grid_action.dart';
+import '../metadata/grid_action.dart';
 
 class SystemGalleryDirectoriesActions {
   static GridAction<SystemGalleryDirectory> blacklist(

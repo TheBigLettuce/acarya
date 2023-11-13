@@ -7,7 +7,8 @@
 
 import 'package:gallery/src/interfaces/filtering/filtering_mode.dart';
 import 'package:gallery/src/interfaces/filtering/sorting_mode.dart';
-import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
+
+import '../../../interfaces/background_data_loader/data_transformer.dart';
 
 class DummyDataTransformer<T, J> implements DataTransformer<T, J> {
   @override

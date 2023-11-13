@@ -7,7 +7,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:gallery/src/db/post_tags.dart';
-import 'package:gallery/src/widgets/grid/cell_data.dart';
+import 'package:gallery/src/widgets/grid/cell/cell_data.dart';
 import 'package:isar/isar.dart';
 
 import '../../interfaces/cell.dart';

@@ -7,8 +7,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:gallery/src/interfaces/cell.dart';
+import 'package:gallery/src/interfaces/background_data_loader/loader_state_controller.dart';
 
-import '../grid/data_loaders/interface.dart';
+import '../../interfaces/background_data_loader/background_data_loader.dart';
 
 class CellProvider<T extends Cell> extends InheritedWidget {
   final BackgroundDataLoader<T, int> loader;

@@ -7,8 +7,11 @@
 
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
-import 'package:gallery/src/interfaces/booru.dart';
+import 'package:gallery/src/interfaces/booru_api/booru.dart';
+import 'package:gallery/src/interfaces/booru_api/booru_api.dart';
 import 'package:gallery/src/db/schemas/settings.dart';
+import 'package:gallery/src/interfaces/booru_api/strip_html.dart';
+import 'package:gallery/src/interfaces/booru_api/unsaveable_cookie_jar.dart';
 import 'package:html_unescape/html_unescape_small.dart';
 import 'package:path/path.dart' as path;
 import 'package:xml/xml.dart';

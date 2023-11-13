@@ -7,6 +7,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:gallery/src/interfaces/booru_api/booru.dart';
 import 'package:gallery/src/pages/notes_page.dart';
 import 'package:isar/isar.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -16,8 +17,8 @@ import '../db/initalize_db.dart';
 import '../db/post_tags.dart';
 import '../db/schemas/settings.dart';
 import '../db/state_restoration.dart';
-import '../interfaces/booru.dart';
-import '../widgets/grid/selection_glue_state.dart';
+import '../interfaces/booru_api/booru_api.dart';
+import '../widgets/grid/selection/selection_glue_state.dart';
 import '../widgets/skeletons/home_skeleton.dart';
 import '../widgets/skeletons/skeleton_state.dart';
 import 'booru/main.dart';

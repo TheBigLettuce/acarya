@@ -9,7 +9,7 @@ import 'dart:developer';
 
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
-import 'package:gallery/src/widgets/image_view/wrap_image_view_notifiers.dart';
+import 'package:gallery/src/widgets/image_view/wrap/wrap_image_view_notifiers.dart';
 import 'package:gallery/src/widgets/notifiers/cell_provider.dart';
 import 'package:gallery/src/widgets/notifiers/loading_progress.dart';
 import 'package:logging/logging.dart';

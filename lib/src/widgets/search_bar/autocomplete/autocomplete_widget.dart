@@ -11,7 +11,6 @@ import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-import '../../../db/schemas/tags.dart';
 import 'autocomplete_bar_decoration.dart';
 import 'autocomplete_tag.dart';
 

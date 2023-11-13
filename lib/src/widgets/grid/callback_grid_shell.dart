@@ -7,16 +7,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:gallery/src/interfaces/cell.dart';
+import 'package:gallery/src/widgets/notifiers/data_loader_holder.dart';
 import 'package:gallery/src/widgets/notifiers/grid_footer.dart';
+import 'package:gallery/src/widgets/notifiers/selection_data.dart';
 
-import 'app_bar/grid_app_bar_title.dart';
-import 'app_bar/wrap_badge_cell_count_title_widget.dart';
 import 'callback_grid_base.dart';
-import 'data_loaders/interface.dart';
-import 'app_bar/grid_app_bar.dart';
-import 'notifiers/grid_mutation_interface_holder.dart';
-import 'notifiers/grid_selection_holder.dart';
-import 'search_and_focus.dart';
+import '../../interfaces/background_data_loader/background_data_loader.dart';
 
 class CallbackGridShell<T extends Cell> extends StatelessWidget {
   /// The cell includes some keybinds by default.

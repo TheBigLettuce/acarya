@@ -10,27 +10,19 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:gallery/src/db/initalize_db.dart';
 import 'package:gallery/src/db/schemas/settings.dart';
-import 'package:gallery/src/plugs/gallery.dart';
 import 'package:gallery/src/db/schemas/blacklisted_directory.dart';
 import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/dummy_loader.dart';
-import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/read_only_loader.dart';
-import 'package:gallery/src/widgets/grid/grid_action.dart';
+import 'package:gallery/src/widgets/grid/metadata/grid_action.dart';
 import 'package:gallery/src/widgets/grid/app_bar/grid_app_bar.dart';
-import 'package:gallery/src/widgets/grid/grid_metadata.dart';
-import 'package:gallery/src/widgets/grid/layouts/list/list.dart';
-import 'package:gallery/src/widgets/grid/notifiers/notifier_registry_holder.dart';
-import 'package:gallery/src/widgets/grid/search_and_focus.dart';
+import 'package:gallery/src/widgets/grid/metadata/grid_metadata.dart';
+import 'package:gallery/src/widgets/grid/layouts/list.dart';
 import 'package:gallery/src/widgets/notifiers/notifier_registry.dart';
-import 'package:gallery/src/widgets/search_bar/search_filter_grid.dart';
 import 'package:gallery/src/widgets/skeletons/grid_skeleton_state.dart';
 import 'package:isar/isar.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-import '../../db/linear_isar_loader.dart';
-import '../../widgets/grid/wrap_grid_page.dart';
-import '../../widgets/skeletons/grid_skeleton_state_filter.dart';
+import '../../widgets/grid/wrapped_grid_page.dart';
 import '../../widgets/skeletons/grid_skeleton.dart';
 
 class BlacklistedDirectories extends StatefulWidget {

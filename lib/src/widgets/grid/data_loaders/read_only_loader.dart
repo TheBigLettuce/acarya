@@ -9,8 +9,12 @@ import 'dart:async';
 import 'dart:isolate';
 
 import 'package:gallery/src/widgets/grid/data_loaders/dummy_controller.dart';
-import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
+import 'package:gallery/src/interfaces/background_data_loader/background_data_loader.dart';
 import 'package:isar/isar.dart';
+
+import '../../../interfaces/background_data_loader/control_message.dart';
+import '../../../interfaces/background_data_loader/data_transformer.dart';
+import '../../../interfaces/background_data_loader/loader_state_controller.dart';
 
 class ReadOnlyDataLoader<T, J, ID> implements BackgroundDataLoader<T, J> {
   final Isar _instance;

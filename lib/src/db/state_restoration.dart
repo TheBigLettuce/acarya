@@ -6,6 +6,7 @@
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 import 'package:gallery/src/db/schemas/grid_state_booru.dart';
+import 'package:gallery/src/interfaces/booru_api/booru.dart';
 import 'package:isar/isar.dart';
 
 import '../interfaces/tags.dart';
@@ -15,7 +16,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../interfaces/booru.dart';
 import '../pages/booru/random.dart';
 import '../pages/booru/secondary.dart';
 import 'schemas/settings.dart';

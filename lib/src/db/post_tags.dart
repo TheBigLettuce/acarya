@@ -9,7 +9,8 @@ import 'dart:developer';
 import 'dart:io' as io;
 
 import 'package:flutter/material.dart';
-import 'package:gallery/src/interfaces/booru.dart';
+import 'package:gallery/src/interfaces/booru_api/booru.dart';
+import 'package:gallery/src/interfaces/booru_api/booru_api.dart';
 import 'package:gallery/src/db/initalize_db.dart';
 import 'package:gallery/src/plugs/platform_channel.dart';
 import 'package:gallery/src/plugs/download_movers.dart';
@@ -18,7 +19,6 @@ import 'package:gallery/src/db/schemas/local_tag_dictionary.dart';
 import 'package:gallery/src/db/schemas/local_tags.dart';
 import 'package:gallery/src/db/schemas/post.dart';
 import 'package:gallery/src/db/schemas/settings.dart';
-import 'package:gallery/src/db/schemas/tags.dart';
 import 'package:html_unescape/html_unescape_small.dart';
 import 'package:isar/isar.dart';
 import 'package:logging/logging.dart';

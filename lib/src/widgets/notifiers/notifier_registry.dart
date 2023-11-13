@@ -9,14 +9,50 @@ import 'package:flutter/material.dart';
 import 'package:gallery/src/interfaces/cell.dart';
 import 'package:gallery/src/net/network_configuration.dart';
 import 'package:gallery/src/pages/image_view.dart';
-import 'package:gallery/src/widgets/grid/grid_metadata.dart';
-import 'package:gallery/src/widgets/grid/selection_glue.dart';
+import 'package:gallery/src/widgets/grid/metadata/grid_metadata.dart';
+import 'package:gallery/src/widgets/grid/selection/selection_glue.dart';
 import 'package:gallery/src/widgets/notifiers/grid_metadata.dart';
 
 import 'network_configuration.dart';
 import 'notes_interface.dart';
 import 'selection_glue.dart';
 // import 'package:gallery/src/net/network_configuration.dart';
+
+class NotifierRegistryHolder extends StatelessWidget {
+  final List<InheritedWidget Function(Widget)> l;
+  final Widget child;
+
+  const NotifierRegistryHolder(
+      {super.key, required this.l, required this.child});
+
+  static Widget inherit(BuildContext context,
+      List<InheritedWidget Function(Widget)> l, Widget child) {
+    final l1 = NotifierRegistry.inherit(context);
+    final l2 = l1 == null ? l : [...l1, ...l];
+    print(l2);
+
+    return NotifierRegistry(
+      notifiers: l2,
+      child: l.isEmpty
+          ? child
+          : NotifierRegistry.recursion(
+              l,
+              l.length - 1,
+              child,
+            ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return NotifierRegistry(
+      notifiers: l,
+      child: l.isEmpty
+          ? child
+          : NotifierRegistry.recursion(l, l.length - 1, child),
+    );
+  }
+}
 
 class NotifierRegistry extends InheritedWidget {
   final List<InheritedWidget Function(Widget child)> notifiers;

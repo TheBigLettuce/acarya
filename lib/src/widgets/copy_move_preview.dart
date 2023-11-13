@@ -10,8 +10,7 @@ import 'package:flutter/material.dart';
 import '../interfaces/cell.dart';
 import '../pages/image_view.dart';
 import '../db/schemas/system_gallery_directory_file.dart';
-import 'grid/cell.dart';
-import 'grid/grid_action.dart';
+import 'grid/cell/cell.dart';
 
 class CopyMovePreview extends StatefulWidget {
   final List<SystemGalleryDirectoryFile> files;

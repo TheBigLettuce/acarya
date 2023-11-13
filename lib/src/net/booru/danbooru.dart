@@ -8,9 +8,12 @@
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:gallery/src/db/schemas/post.dart';
+import 'package:gallery/src/interfaces/booru_api/booru.dart';
+import 'package:gallery/src/interfaces/booru_api/strip_html.dart';
+import 'package:gallery/src/interfaces/booru_api/unsaveable_cookie_jar.dart';
 
 import '../../db/schemas/settings.dart';
-import '../../interfaces/booru.dart';
+import '../../interfaces/booru_api/booru_api.dart';
 import '../../interfaces/tags.dart';
 
 List<String> _fromDanbooruTags(List<dynamic> l) =>

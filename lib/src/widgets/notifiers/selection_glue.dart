@@ -7,7 +7,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:gallery/src/interfaces/cell.dart';
-import 'package:gallery/src/widgets/grid/selection_glue.dart';
+import 'package:gallery/src/widgets/grid/selection/selection_glue.dart';
 
 class GlueHolder<T extends Cell> extends StatefulWidget {
   final SelectionGlue<T> glue;

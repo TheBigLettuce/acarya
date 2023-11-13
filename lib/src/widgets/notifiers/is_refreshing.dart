@@ -6,6 +6,46 @@
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 import 'package:flutter/material.dart';
+import 'package:gallery/src/interfaces/background_data_loader/loader_state_controller.dart';
+
+class IsRefreshingHolder extends StatefulWidget {
+  final LoaderStateController stateController;
+  final Widget child;
+
+  const IsRefreshingHolder(
+      {super.key, required this.stateController, required this.child});
+
+  @override
+  State<IsRefreshingHolder> createState() => _IsRefreshingHolderState();
+}
+
+class _IsRefreshingHolderState extends State<IsRefreshingHolder> {
+  @override
+  void initState() {
+    super.initState();
+
+    widget.stateController.listen(() {
+      setState(() {});
+    });
+
+    // widget.stateController.reset();
+  }
+
+  @override
+  void dispose() {
+    widget.stateController.dispose();
+
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IsRefreshingNotifier(
+      isRefreshing: widget.stateController.currentState != LoaderState.idle,
+      child: widget.child,
+    );
+  }
+}
 
 class IsRefreshingNotifier extends InheritedWidget {
   final bool isRefreshing;

@@ -11,8 +11,6 @@ import 'package:gallery/src/widgets/notifiers/is_search_showed.dart';
 import 'package:gallery/src/widgets/notifiers/is_selecting.dart';
 
 import 'grid_app_bar_title.dart';
-import 'wrap_badge_cell_count_title_widget.dart';
-import '../search_and_focus.dart';
 
 // void _onTitlePressed() {
 //   if (!_showSearchBar) {

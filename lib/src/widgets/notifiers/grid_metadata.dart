@@ -8,10 +8,8 @@
 import 'package:flutter/material.dart';
 import 'package:gallery/src/db/schemas/settings.dart';
 import 'package:gallery/src/interfaces/cell.dart';
-import 'package:gallery/src/widgets/grid/grid_action.dart';
-import 'package:gallery/src/widgets/grid/grid_metadata.dart';
-
-import '../../db/state_restoration.dart';
+import 'package:gallery/src/widgets/grid/metadata/grid_action.dart';
+import 'package:gallery/src/widgets/grid/metadata/grid_metadata.dart';
 
 enum GridMetadataAspect {
   hideAlias,

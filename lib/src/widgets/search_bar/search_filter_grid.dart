@@ -5,24 +5,24 @@
 // This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
-import 'dart:io';
+// import 'dart:io';
 
-import 'package:flutter/material.dart';
-import 'package:gallery/src/db/post_tags.dart';
-import 'package:gallery/src/interfaces/grid_mutation_interface.dart';
-import 'package:gallery/src/interfaces/search_mixin.dart';
-import 'package:gallery/src/widgets/search_bar/autocomplete/autocomplete_widget.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+// import 'package:flutter/material.dart';
+// import 'package:gallery/src/db/post_tags.dart';
+// import 'package:gallery/src/interfaces/grid_mutation_interface.dart';
+// import 'package:gallery/src/interfaces/search_mixin.dart';
+// import 'package:gallery/src/widgets/search_bar/autocomplete/autocomplete_widget.dart';
+// import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-import '../../interfaces/cell.dart';
-import '../../interfaces/filtering/filtering_mode.dart';
-// import '../notifiers/grid_mutation_interface.dart';
-import '../skeletons/grid_skeleton_state_filter.dart';
-import 'autocomplete/autocomplete_bar_decoration.dart';
+// import '../../interfaces/cell.dart';
+// import '../../interfaces/filtering/filtering_mode.dart';
+// // import '../notifiers/grid_mutation_interface.dart';
+// import '../skeletons/grid_skeleton_state_filter.dart';
+// import 'autocomplete/autocomplete_bar_decoration.dart';
 
-part 'search_widget.dart';
+// part 'search_widget.dart';
 
-/// Search mixin which filters the elements on a grid.
+// Search mixin which filters the elements on a grid.
 // mixin SearchFilterGrid<T extends Cell>
 //     implements SearchMixin<GridSkeletonStateFilter<T>> {
 //   @override

@@ -12,7 +12,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gallery/src/db/schemas/tags.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-import '../interfaces/booru.dart';
+import '../interfaces/booru_api/booru_api.dart';
 import '../db/state_restoration.dart';
 import '../widgets/search_bar/autocomplete/autocomplete_widget.dart';
 import '../widgets/single_post.dart';

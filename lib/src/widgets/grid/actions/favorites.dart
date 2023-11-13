@@ -7,7 +7,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../grid_action.dart';
+import '../metadata/grid_action.dart';
 // import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class FavoritesActions {

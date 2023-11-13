@@ -12,10 +12,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:gallery/src/interfaces/booru_api/booru.dart';
 import 'package:isar/isar.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-import '../../interfaces/booru.dart';
 import '../../interfaces/filtering/filtering_mode.dart';
 import '../../plugs/platform_channel.dart';
 import '../initalize_db.dart';

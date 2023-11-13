@@ -8,7 +8,8 @@
 import 'dart:io';
 
 import '../interfaces/gallery.dart';
-import 'gallery/android/android_api_directories.dart';
+import 'gallery/android/android_gallery.dart';
+import 'gallery/android/initalize_android_gallery.dart';
 import 'gallery/dummy.dart';
 
 abstract class GalleryPlug {

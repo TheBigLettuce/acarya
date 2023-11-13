@@ -13,12 +13,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:gallery/src/db/schemas/thumbnail.dart';
+import 'package:gallery/src/interfaces/booru_api/booru.dart';
 import 'package:gallery/src/plugs/platform_channel.dart';
 
 import '../../db/initalize_db.dart';
 import '../../db/post_tags.dart';
 import '../../db/schemas/settings.dart';
-import '../../interfaces/booru.dart';
 import '../../widgets/radio_dialog.dart';
 import '../../widgets/settings_label.dart';
 import 'settings_widget.dart';

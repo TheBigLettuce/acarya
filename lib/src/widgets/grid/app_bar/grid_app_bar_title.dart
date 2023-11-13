@@ -10,8 +10,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gallery/src/widgets/grid/app_bar/wrap_badge_cell_count_title_widget.dart';
 import 'package:gallery/src/widgets/notifiers/is_search_showed.dart';
 
-import '../../notifiers/is_selecting.dart';
-import '../search_and_focus.dart';
+import '../metadata/search_and_focus.dart';
 
 class SearchCharacterTitle extends StatelessWidget {
   final String? text;

@@ -12,7 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../../net/downloader.dart';
-import '../grid_action.dart';
+import '../metadata/grid_action.dart';
 
 class DownloadsActions {
   static GridAction<DownloadFile> retryOrDelete(BuildContext context) {

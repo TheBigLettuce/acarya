@@ -13,14 +13,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:gallery/src/db/schemas/post.dart';
 import 'package:gallery/src/db/state_restoration.dart';
-import 'package:gallery/src/interfaces/booru.dart';
+import 'package:gallery/src/interfaces/booru_api/booru_api.dart';
 import 'package:gallery/src/net/downloader.dart';
 import 'package:gallery/src/plugs/gallery.dart';
 import 'package:gallery/src/plugs/platform_channel.dart';
 import 'package:gallery/src/pages/gallery/directories.dart';
 import 'package:gallery/src/db/initalize_db.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/cell_loader.dart';
-import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
 import 'package:gallery/src/widgets/restart_widget.dart';
 import 'package:isar/isar.dart';
 // import 'package:google_fonts/google_fonts.dart';
@@ -31,6 +30,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'src/db/schemas/settings.dart';
 import 'src/pages/home.dart';
+import 'src/interfaces/background_data_loader/loader_keys.dart';
 
 late final String azariVersion;
 
