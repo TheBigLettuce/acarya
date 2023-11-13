@@ -91,7 +91,7 @@ class _MainBooruGridState extends State<MainBooruGrid> {
   late final StateRestoration restore;
 
   late final loader =
-      BackgroundCellLoader<Post, String>.cached(kMainGridLoaderKey);
+      BackgroundCellLoader<Post, int>.cached(kMainGridLoaderKey);
 
   late final List<InheritedWidget Function(Widget)> registrer;
 
@@ -195,14 +195,14 @@ class _MainBooruGridState extends State<MainBooruGrid> {
               const BookmarkButton(),
               MainBooruGrid.gridButton(state.settings)
             ],
-            title: GridAppBarTitle(
+            title: GridAppBarTitle.withCount(
               searchWidget: SearchAndFocus(
                 SearchLaunchGrid1(
                     booru: state.settings.selectedBooru,
                     complF: (s) => Future.value([])),
                 state.mainFocus,
               ),
-              child: const SearchCharacterTitle(),
+              // child: const SearchCharacterTitle(),
             ),
           ),
           keybinds: const {},

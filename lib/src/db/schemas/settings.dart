@@ -161,6 +161,7 @@ class Settings {
     for (final post in posts) {
       if (!isFavorite(post.fileUrl)) {
         toAdd.add(FavoriteBooru(
+            isarId: Dbs.g.main.favoriteBoorus.autoIncrement(),
             group: "",
             height: post.height,
             postId: post.postId,
@@ -185,12 +186,19 @@ class Settings {
       return;
     }
 
-    final deleteCopy =
-        toRemove.isEmpty ? null : Dbs.g.main.favoriteBoorus.getAll(toRemove);
+    final deleteCopy = toRemove.isEmpty
+        ? null
+        : Dbs.g.main.favoriteBoorus
+            .where()
+            .allOf(toRemove, (q, element) => q.fileUrlEqualTo(element))
+            .findAll();
 
     Dbs.g.main.write((i) {
       i.favoriteBoorus.putAll(toAdd);
-      i.favoriteBoorus.deleteAll(toRemove.map((e) => e).toList());
+      i.favoriteBoorus
+          .where()
+          .allOf(toRemove, (q, element) => q.fileUrlEqualTo(element))
+          .deleteAll();
     });
 
     if (deleteCopy != null && showDeleteSnackbar) {
@@ -208,7 +216,7 @@ class Settings {
   }
 
   static bool isFavorite(String fileUrl) {
-    return Dbs.g.main.favoriteBoorus.get(fileUrl) != null;
+    return !Dbs.g.main.favoriteBoorus.where().fileUrlEqualTo(fileUrl).isEmpty();
   }
 
   static StreamSubscription<Settings?> watch(void Function(Settings? s) f,

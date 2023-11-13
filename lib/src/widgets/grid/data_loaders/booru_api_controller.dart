@@ -28,7 +28,7 @@ class BooruAPILoaderStateController implements LoaderStateController {
   static void _doNothing(BooruAPIState _) {}
 
   BooruAPILoaderStateController(
-    BackgroundCellLoader<Post, String> loader,
+    BackgroundCellLoader<Post, int> loader,
     this.api,
     this.excluded,
     this.tags,

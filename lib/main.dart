@@ -131,14 +131,14 @@ void main() async {
 
   initalizeGalleryPlug(false);
 
-  await BackgroundCellLoader<Post, String>.cache(kMainGridLoaderKey, () {
+  await BackgroundCellLoader<Post, int>.cache(kMainGridLoaderKey, () {
     final settings = Settings.fromDb();
     final db = DbsOpen.primaryGrid(settings.selectedBooru);
     final state =
         StateRestoration(db, settings.selectedBooru.string, settings.safeMode);
 
     return (
-      (db, idx) => db.posts.where().sortByPostIdDesc().findFirst(offset: idx),
+      (db, idx) => db.posts.get(idx + 1),
       db,
       kPrimaryGridSchemas,
       (loader) {

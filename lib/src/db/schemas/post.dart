@@ -43,7 +43,8 @@ part 'post.g.dart';
 @collection
 class Post extends PostBase {
   const Post(
-      {required super.height,
+      {required super.isarId,
+      required super.height,
       required super.postId,
       required super.md5,
       required super.tags,
@@ -61,8 +62,8 @@ class Post extends PostBase {
 
 @immutable
 class PostBase implements Cell {
-  // @Id()
-  // final int isarId;
+  @Id()
+  final int isarId;
 
   @Index()
   final int postId;
@@ -78,7 +79,7 @@ class PostBase implements Cell {
   @override
   Key uniqueKey() => ValueKey(fileUrl);
 
-  @Id()
+  @Index(unique: true, hash: true)
   final String fileUrl;
   final String previewUrl;
   final String sampleUrl;
@@ -363,6 +364,7 @@ class PostBase implements Cell {
   }
 
   const PostBase({
+    required this.isarId,
     required this.postId,
     required this.height,
     required this.md5,

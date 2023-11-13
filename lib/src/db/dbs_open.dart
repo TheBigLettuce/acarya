@@ -34,13 +34,13 @@ abstract class DbsOpen {
         name: booru.string);
   }
 
-  // static Isar primaryGridInstance(Booru booru) {
-  //   return Isar.open(
-  //       schemas: kPrimaryGridSchemas,
-  //       directory: _dbs.directory,
-  //       name: booru.string,
-  //       inspector: false);
-  // }
+  static Isar primaryGridInstance(Booru booru) {
+    return Isar.open(
+        schemas: kPrimaryGridSchemas,
+        directory: _dbs.directory,
+        name: booru.string,
+        inspector: false);
+  }
 
   static Isar secondaryGrid({bool temporary = true}) {
     return Isar.open(

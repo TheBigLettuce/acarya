@@ -7,6 +7,7 @@
 
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
+import 'package:gallery/src/db/initalize_db.dart';
 import 'package:gallery/src/interfaces/booru_api/booru.dart';
 import 'package:gallery/src/interfaces/booru_api/booru_api_functions.dart';
 import 'package:gallery/src/interfaces/booru_api/booru_api_state.dart';
@@ -223,6 +224,7 @@ class Gelbooru implements BooruAPIState {
           year: int.tryParse(createdAt.substring(createdAt.length - 4)));
 
       list.add(Post(
+          isarId: DbsOpen.primaryGridInstance(booru).posts.autoIncrement(),
           height: post["height"],
           prefix: booru.prefix,
           postId: post["id"],

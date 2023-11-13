@@ -7,6 +7,7 @@
 
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
+import 'package:gallery/src/db/initalize_db.dart';
 import 'package:gallery/src/db/schemas/post.dart';
 import 'package:gallery/src/interfaces/booru_api/booru.dart';
 import 'package:gallery/src/interfaces/booru_api/booru_api_functions.dart';
@@ -194,6 +195,7 @@ class Danbooru implements BooruAPIState {
         }
 
         final post = Post(
+            isarId: DbsOpen.primaryGridInstance(booru).posts.autoIncrement(),
             height: e["image_height"],
             postId: e["id"],
             score: e["score"],

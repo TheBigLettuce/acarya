@@ -19,6 +19,7 @@ class FavoriteBooru extends PostBase {
 
   FavoriteBooru withGroup(String group) {
     return FavoriteBooru(
+        isarId: isarId,
         height: height,
         postId: postId,
         md5: md5,
@@ -37,7 +38,8 @@ class FavoriteBooru extends PostBase {
   }
 
   const FavoriteBooru(
-      {required super.height,
+      {required super.isarId,
+      required super.height,
       required super.postId,
       required super.md5,
       required super.tags,
