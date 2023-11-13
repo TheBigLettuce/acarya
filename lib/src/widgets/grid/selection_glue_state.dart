@@ -43,29 +43,26 @@ class SelectionGlueState {
             }
             actions = addActions
                 .map((e) => WrapGridActionButton(
-                    e.icon,
-                    e.showOnlyWhenSingle && selection.count() != 1
-                        ? null
-                        : () {
-                            // e.onPress(selection.selected.values.toList());
+                      e.icon,
+                      e.showOnlyWhenSingle && selection.count() != 1
+                          ? null
+                          : () {
+                              // e.onPress(selection.selected.values.toList());
 
-                            selection.use((l) {
-                              e.onPress(l);
-                            });
+                              selection.use((l) {
+                                e.onPress(l);
+                              });
 
-                            if (e.closeOnPress) {
-                              selection.reset();
-                              actions = null;
+                              if (e.closeOnPress) {
+                                selection.reset();
+                                actions = null;
 
-                              setState(() {});
-                            }
-                          },
-                    false,
-                    selection.count().toString(),
-                    animate: e.animate,
-                    color: e.color,
-                    play: e.play,
-                    backgroundColor: e.backgroundColor))
+                                setState(() {});
+                              }
+                            },
+                      false,
+                      selection.count().toString(),
+                    ))
                 .toList();
 
             if (_playAnimation != null) {

@@ -5,8 +5,6 @@
 // This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
-import 'dart:async';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/widgets.dart';
 import 'package:gallery/src/interfaces/contentable.dart';
@@ -15,7 +13,6 @@ import 'package:gallery/src/widgets/notifiers/network_configuration.dart';
 import 'package:isar/isar.dart';
 
 import '../../interfaces/cell.dart';
-import '../initalize_db.dart';
 
 part 'download_file.g.dart';
 
@@ -111,12 +108,11 @@ class DownloadFile implements Cell {
   @override
   CellData getCellData(bool isList, {required BuildContext context}) =>
       CellData(
-          thumb:
-              thumbUrl.isEmpty
-                  ? null
-                  : CachedNetworkImageProvider(thumbUrl,
-                      headers:
-                          NetworkConfigurationProvider.of(context).asHeaders()),
-          name: name,
-          stickers: []);
+        thumb: thumbUrl.isEmpty
+            ? null
+            : CachedNetworkImageProvider(thumbUrl,
+                headers: NetworkConfigurationProvider.of(context).asHeaders()),
+        name: name,
+        stickers: [],
+      );
 }

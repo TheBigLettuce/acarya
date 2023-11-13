@@ -11,7 +11,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:gallery/src/db/schemas/favorite_booru.dart';
 import 'package:gallery/src/db/schemas/post.dart';
 import 'package:gallery/src/db/state_restoration.dart';
 import 'package:gallery/src/interfaces/booru.dart';
@@ -138,8 +137,6 @@ void main() async {
     final state =
         StateRestoration(db, settings.selectedBooru.string, settings.safeMode);
 
-    print(db.posts.where().sortByPostId().findFirst()?.postId);
-
     return (
       (db, idx) => db.posts.where().sortByPostIdDesc().findFirst(offset: idx),
       db,
@@ -157,6 +154,7 @@ void main() async {
           state.updatePage(api.currentPage);
         });
       },
+      null
     );
   }).init();
 

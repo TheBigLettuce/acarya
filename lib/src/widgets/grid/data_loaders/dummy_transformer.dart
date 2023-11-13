@@ -5,33 +5,35 @@
 // This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
-import 'dart:isolate';
+import 'package:gallery/src/interfaces/filtering/filtering_mode.dart';
+import 'package:gallery/src/interfaces/filtering/sorting_mode.dart';
+import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
 
-import 'dummy_controller.dart';
-import 'interface.dart';
-
-class DummyBackgroundLoader<T, J> implements BackgroundDataLoader<T, J> {
+class DummyDataTransformer<T, J> implements DataTransformer<T, J> {
   @override
-  void dispose() {}
-
-  @override
-  T? getSingle(J token) => null;
+  Set<FilteringMode> get capabilityFiltering => const {FilteringMode.noFilter};
 
   @override
-  Isolate get isolate => throw UnimplementedError();
+  Set<SortingMode> get capabilitySorting => const {SortingMode.none};
 
   @override
-  void listenStatus(void Function(int p1) f) {}
+  FilteringMode get currentFiltering => FilteringMode.noFilter;
 
   @override
-  Future<void> init() => Future.value();
+  SortingMode get currentSoring => SortingMode.none;
 
   @override
-  void send(ControlMessage m) {}
+  void reset() {}
 
   @override
-  LoaderStateController get state => const DummyLoaderStateController();
+  void setFilteringMode(FilteringMode filtering) {}
 
   @override
-  DataTransformer? get transformer => null;
+  void setSortingMode(SortingMode sorting) {}
+
+  @override
+  T transformCell(T elem) => elem;
+
+  @override
+  void transformStatusCallback(void Function(int count) f) {}
 }

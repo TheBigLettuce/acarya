@@ -13,7 +13,7 @@ import 'app_bar/grid_app_bar_title.dart';
 import 'app_bar/wrap_badge_cell_count_title_widget.dart';
 import 'callback_grid_base.dart';
 import 'data_loaders/interface.dart';
-import 'grid_app_bar.dart';
+import 'app_bar/grid_app_bar.dart';
 import 'notifiers/grid_mutation_interface_holder.dart';
 import 'notifiers/grid_selection_holder.dart';
 import 'search_and_focus.dart';
@@ -73,9 +73,6 @@ class CallbackGridShell<T extends Cell> extends StatelessWidget {
                 loader: loader,
                 child: GridSelectionHolder<T>(
                     child: CallbackGridBase<T>(
-                  onRefresh: () {
-                    return Future.value();
-                  },
                   appBar: appBar,
                   // GridAppBar(
                   //   actions: appBarActions,

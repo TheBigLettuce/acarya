@@ -55,6 +55,12 @@ class BooruAPILoaderStateController implements LoaderStateController {
     }
 
     _currentSubscription = _events.listen((event) {
+      if (event is Poll) {
+        f();
+
+        return;
+      }
+
       event as LoaderState;
 
       if (event == currentState) {

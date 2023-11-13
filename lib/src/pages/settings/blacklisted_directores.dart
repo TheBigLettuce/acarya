@@ -17,7 +17,7 @@ import 'package:gallery/src/widgets/grid/data_loaders/dummy_loader.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/read_only_loader.dart';
 import 'package:gallery/src/widgets/grid/grid_action.dart';
-import 'package:gallery/src/widgets/grid/grid_app_bar.dart';
+import 'package:gallery/src/widgets/grid/app_bar/grid_app_bar.dart';
 import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/layouts/list/list.dart';
 import 'package:gallery/src/widgets/grid/notifiers/notifier_registry_holder.dart';
@@ -108,7 +108,7 @@ class _BlacklistedDirectoriesState extends State<BlacklistedDirectories>
                     onPressed: () {
                       Dbs.g.blacklisted
                           .write((i) => i.blacklistedDirectorys.clear());
-                      chooseGalleryPlug().notify(null);
+                      // chooseGalleryPlug().notify(null);
                     },
                     icon: const Icon(Icons.delete),
                   )

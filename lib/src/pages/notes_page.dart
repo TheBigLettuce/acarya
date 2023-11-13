@@ -14,15 +14,18 @@ import 'package:gallery/src/db/paging_isar_loader.dart';
 import 'package:gallery/src/db/schemas/note.dart';
 import 'package:gallery/src/db/schemas/note_gallery.dart';
 import 'package:gallery/src/db/schemas/settings.dart';
+import 'package:gallery/src/interfaces/filtering/filtering_mode.dart';
+import 'package:gallery/src/interfaces/filtering/sorting_mode.dart';
 import 'package:gallery/src/pages/gallery/directories.dart';
 import 'package:gallery/src/pages/image_view.dart';
 import 'package:gallery/src/widgets/copy_move_preview.dart';
 import 'package:gallery/src/widgets/empty_widget.dart';
 import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
+import 'package:gallery/src/widgets/grid/data_loaders/cell_loader.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/dummy_loader.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/read_only_loader.dart';
-import 'package:gallery/src/widgets/grid/grid_app_bar.dart';
+import 'package:gallery/src/widgets/grid/app_bar/grid_app_bar.dart';
 import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/layouts/notes/notes.dart';
 import 'package:gallery/src/widgets/grid/notifiers/notifier_registry_holder.dart';
@@ -183,11 +186,10 @@ class _NotesPageState extends State<NotesPage>
             //     booruContainer.notes.loadUntil(booruContainer.notes.count()));
           }),
           loader: ReadOnlyDataLoader(
-              Dbs.g.blacklisted,
-              (db, idx) => db.noteBoorus
-                  .where()
-                  .sortByPostIdDesc()
-                  .findFirst(offset: idx)),
+            Dbs.g.blacklisted,
+            (db, idx) =>
+                db.noteBoorus.where().sortByPostIdDesc().findFirst(offset: idx),
+          ),
           filterFnc: (text) {
             return Dbs.g.blacklisted.noteBoorus
                 .where()

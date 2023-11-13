@@ -129,8 +129,3 @@ part 'search_widget.dart';
 //         count: count,
 //       );
 // }
-
-// class _ScrollHack extends ScrollController {
-//   @override
-//   bool get hasClients => false;
-// }

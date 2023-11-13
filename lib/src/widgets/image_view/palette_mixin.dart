@@ -10,9 +10,7 @@ import 'dart:developer';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:gallery/src/interfaces/cell.dart';
-import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/sticker.dart';
-import 'package:gallery/src/widgets/notifiers/grid_metadata.dart';
 import 'package:logging/logging.dart';
 import 'package:palette_generator/palette_generator.dart';
 

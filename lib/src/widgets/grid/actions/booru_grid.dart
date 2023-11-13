@@ -9,14 +9,12 @@ import 'package:flutter/material.dart';
 import 'package:html_unescape/html_unescape_small.dart';
 
 import '../../../net/downloader.dart';
-import '../../../interfaces/booru.dart';
 import '../../../db/post_tags.dart';
 import '../../../db/initalize_db.dart';
 import '../../../db/schemas/download_file.dart';
 import '../../../db/schemas/local_tag_dictionary.dart';
 import '../../../db/schemas/post.dart';
 import '../../../db/schemas/settings.dart';
-import '../../../db/schemas/tags.dart';
 import '../grid_action.dart';
 
 class BooruGridActions {
@@ -39,26 +37,32 @@ class BooruGridActions {
     );
   }
 
-  static GridAction<T> favorites<T extends PostBase>(BuildContext context, T? p,
-      {bool showDeleteSnackbar = false}) {
-    final isFavorite = p != null && Settings.isFavorite(p.fileUrl);
+  static GridAction<T> favorites<T extends PostBase>(BuildContext context) {
     return GridAction(
-        isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+        Icons.favorite_border_rounded,
         (selected) {
-      Settings.addRemoveFavorites(context, selected, showDeleteSnackbar);
-      Dbs.g.main.write(
-        (i) {
-          for (final post in selected) {
-            i.localTagDictionarys.putAll(post.tags
-                .map((e) => LocalTagDictionary(HtmlUnescape().convert(e),
-                    (i.localTagDictionarys.get(e)?.frequency ?? 0) + 1))
-                .toList());
-          }
+          Settings.addRemoveFavorites(context, selected, true);
+          Dbs.g.main.write(
+            (i) {
+              for (final post in selected) {
+                i.localTagDictionarys.putAll(post.tags
+                    .map((e) => LocalTagDictionary(HtmlUnescape().convert(e),
+                        (i.localTagDictionarys.get(e)?.frequency ?? 0) + 1))
+                    .toList());
+              }
+            },
+          );
         },
-      );
-    }, true,
-        color: isFavorite ? Colors.red.shade900 : null,
-        animate: p != null,
-        play: !isFavorite);
+        true,
+        testSingle: (cell) {
+          final isFavorite = Settings.isFavorite(cell.fileUrl);
+
+          return GridActionExtra(
+            overrideIcon: isFavorite ? Icons.favorite_rounded : null,
+            color: isFavorite ? Colors.red.shade900 : null,
+            animate: true,
+            play: !isFavorite,
+          );
+        });
   }
 }

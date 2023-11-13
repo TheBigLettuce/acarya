@@ -7,11 +7,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:gallery/src/widgets/notifiers/is_refreshing.dart';
+import 'package:gallery/src/widgets/notifiers/is_search_showed.dart';
 import 'package:gallery/src/widgets/notifiers/is_selecting.dart';
 
-import 'app_bar/grid_app_bar_title.dart';
-import 'app_bar/wrap_badge_cell_count_title_widget.dart';
-import 'search_and_focus.dart';
+import 'grid_app_bar_title.dart';
+import 'wrap_badge_cell_count_title_widget.dart';
+import '../search_and_focus.dart';
 
 // void _onTitlePressed() {
 //   if (!_showSearchBar) {
@@ -117,16 +118,8 @@ class GridAppBar extends StatelessWidget {
       this.actions = const [],
       this.bottomWidget,
       this.leading = const SizedBox.shrink(),
-      bool showCount = true})
-      : centerTitle = true,
-        title = !showCount
-            ? const GridAppBarTitle.basic(
-                child: SearchCharacterTitle(),
-              )
-            : const GridAppBarTitle.basic(
-                child: WrapBadgeCellCountTitleWidget(
-                child: SearchCharacterTitle(),
-              ));
+      this.title = const GridAppBarTitle.withCount()})
+      : centerTitle = true;
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +130,11 @@ class GridAppBar extends StatelessWidget {
       actions: actions,
       centerTitle: centerTitle,
       title: title,
-      leading: leading,
+      leading: IsSearchShowingNotifier.maybeOf(context) ?? false
+          ? BackButton(
+              onPressed: () => IsSearchShowingNotifier.flipOf(context),
+            )
+          : leading,
       pinned: true,
       stretch: true,
       snap: !IsSelectingNotifier.of(context),

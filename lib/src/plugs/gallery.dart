@@ -12,10 +12,9 @@ import 'gallery/android/android_api_directories.dart';
 import 'gallery/dummy.dart';
 
 abstract class GalleryPlug {
-  GalleryAPIDirectories galleryApi(
-      {bool? temporaryDb, bool setCurrentApi = true});
-  void notify(String? target);
-  bool get temporary;
+  GalleryAPIDirectories galleryApi();
+  // void notify(String? target);
+  // bool get temporary;
 }
 
 GalleryPlug chooseGalleryPlug() {

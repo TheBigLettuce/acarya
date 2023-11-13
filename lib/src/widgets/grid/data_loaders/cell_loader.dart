@@ -8,29 +8,56 @@
 import 'dart:async';
 import 'dart:isolate';
 
+import 'package:gallery/src/db/initalize_db.dart';
 import 'package:gallery/src/db/schemas/post.dart';
+import 'package:gallery/src/db/schemas/system_gallery_directory.dart';
+import 'package:gallery/src/db/schemas/system_gallery_directory_file.dart';
 import 'package:gallery/src/interfaces/booru.dart';
 import 'package:gallery/src/interfaces/cell.dart';
 import 'package:gallery/src/interfaces/tags.dart';
 import 'package:isar/isar.dart';
 import 'package:meta/meta.dart';
-
-import 'interface.dart';
+import 'package:gallery/src/interfaces/filtering/filtering_mode.dart';
+import 'package:gallery/src/interfaces/filtering/sorting_mode.dart';
+import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
 
 part 'cell_controller.dart';
 part 'booru_api_controller.dart';
+part 'cell_transformer.dart';
+part 'binary_controller.dart';
 
 final Map<int, BackgroundCellLoader> _cache = {};
 
 class BackgroundCellLoader<T extends Cell, I>
     implements BackgroundDataLoader<T, int> {
+  BackgroundCellLoader(
+    this._getCell,
+    this._instance,
+    this._schemas, {
+    required LoaderStateController Function(BackgroundCellLoader<T, I>)
+        makeState,
+    required CellDataTransformer<T, I> Function(BackgroundCellLoader<T, I>)?
+        makeTransformer,
+    required this.handler,
+    this.disposable = true,
+  })  : _makeState = makeState,
+        _makeTransformer = makeTransformer {
+    transformer = _makeTransformer?.call(this);
+  }
+
   final Isar _instance;
   final List<IsarGeneratedSchema> _schemas;
   final T? Function(Isar, int) _getCell;
   final bool disposable;
   final LoaderStateController Function(BackgroundCellLoader<T, I>) _makeState;
+  final CellDataTransformer<T, I> Function(BackgroundCellLoader<T, I>)?
+      _makeTransformer;
 
-  bool _initCalled = false;
+  final void Function(HandlerPayload record) handler;
+
+  @override
+  late final CellDataTransformer<T, I>? transformer;
+
   late final ReceivePort _rx;
   late final Stream _isolateEvents;
   late final SendPort _send;
@@ -38,45 +65,8 @@ class BackgroundCellLoader<T extends Cell, I>
 
   late final LoaderStateController _stateController;
 
-  T Function(T)? _transform;
   StreamSubscription<void>? _status;
-
-  BackgroundCellLoader(this._getCell, this._instance, this._schemas,
-      {required LoaderStateController Function(BackgroundCellLoader<T, I>)
-          makeState,
-      this.disposable = true})
-      : _makeState = makeState;
-
-  static void disposeCached(int key) {
-    _cache.remove(key)?.dispose();
-  }
-
-  factory BackgroundCellLoader.cached(int key) =>
-      _cache[key]! as BackgroundCellLoader<T, I>;
-
-  factory BackgroundCellLoader.cache(
-    int key,
-    (
-      T? Function(Isar, int),
-      Isar instance,
-      List<IsarGeneratedSchema> schemas,
-      LoaderStateController Function(BackgroundCellLoader<T, I>) makeState
-    )
-            Function()
-        init,
-  ) {
-    final l = _cache[key];
-    if (l != null) {
-      return l as BackgroundCellLoader<T, I>;
-    }
-
-    final (getCell, instance, schemas, makeState) = init();
-    final loader = BackgroundCellLoader<T, I>(getCell, instance, schemas,
-        disposable: false, makeState: makeState);
-    _cache[key] = loader;
-
-    return loader;
-  }
+  bool _initCalled = false;
 
   @override
   LoaderStateController get state => _stateController;
@@ -95,43 +85,9 @@ class BackgroundCellLoader<T extends Cell, I>
 
     return cell == null
         ? cell
-        : _transform != null
-            ? _transform!(cell)
+        : transformer != null
+            ? transformer!.transformCell(cell)
             : cell;
-  }
-
-  static void _startIsolate<T extends Cell, I>(
-      (
-        SendPort port,
-        List<IsarGeneratedSchema> schemas,
-        String dir,
-        String name
-      ) record) async {
-    final (port, schemas, dir, name) = record;
-
-    final rx = ReceivePort();
-    final db = Isar.open(
-        schemas: schemas, directory: dir, name: name, inspector: false);
-    port.send(rx.sendPort);
-
-    await for (final ControlMessage e in rx) {
-      switch (e) {
-        case Data<T>():
-          db.write((i) => db.collection<I, T>().putAll(e.l));
-          if (e.end) {
-            port.send(LoaderState.idle);
-          } else {
-            port.send(LoaderState.loading);
-          }
-          break;
-        case Reset():
-          db.write((i) => i.collection<I, T>().clear());
-          if (!e.silent) {
-            port.send(LoaderState.idle);
-          }
-        default:
-      }
-    }
   }
 
   @override
@@ -143,7 +99,7 @@ class BackgroundCellLoader<T extends Cell, I>
 
     _rx = ReceivePort("Loader(Port): ${_instance.directory}/${_instance.name}");
     _isolate = await Isolate.spawn(
-      _startIsolate<T, I>,
+      handler,
       (_rx.sendPort, _schemas, _instance.directory, _instance.name),
       debugName: "Loader: ${_instance.directory}/${_instance.name}",
     );
@@ -167,17 +123,12 @@ class BackgroundCellLoader<T extends Cell, I>
         .collection<I, T>()
         .watchLazy(fireImmediately: true)
         .listen((_) {
-      f(_instance.collection<I, T>().count());
+      if (transformer == null) {
+        f(_instance.collection<I, T>().count());
+      } else {
+        transformer!.transformStatusCallback(f);
+      }
     });
-  }
-
-  @override
-  void transformData(T Function(T p1)? f) {
-    assert(_status == null);
-    if (_status != null) {
-      return;
-    }
-    _transform = f;
   }
 
   @override
@@ -196,5 +147,152 @@ class BackgroundCellLoader<T extends Cell, I>
   @override
   void send(ControlMessage m) {
     _send.send(m);
+  }
+
+  static int directoryBinaryType = 0;
+  static int filesBinaryType = 1;
+
+  static int filesResetContextState = 0;
+
+  static void disposeCached(int key) {
+    _cache.remove(key)?.dispose();
+  }
+
+  factory BackgroundCellLoader.cached(int idx) =>
+      _cache[idx] as BackgroundCellLoader<T, I>;
+
+  static DirectoriesLoader directories() =>
+      _cache[kAndroidGalleryLoaderKey] as DirectoriesLoader;
+
+  static FilesLoader filesPrimary() =>
+      _cache[kAndroidFilesPrimaryLoaderKey] as FilesLoader;
+  static FilesLoader filesSecondary() =>
+      _cache[kAndroidFilesSecondaryLoaderKey] as FilesLoader;
+
+  static Future<void> cacheDirectories() async {
+    _cache[kAndroidGalleryLoaderKey] = DirectoriesLoader(
+        (db, idx) => null, DbsOpen.androidGalleryFiles(), kFilesSchemas,
+        makeState: (instance) => CellLoaderStateController(instance),
+        handler: CellLoaderHandlers.directories,
+        makeTransformer: (instance) => CellDataTransformer(
+            instance,
+            (_, cell) => cell,
+            (_) => 0,
+            FilteringMode.noFilter,
+            SortingMode.none));
+
+    await _cache[kAndroidGalleryLoaderKey]!.init();
+
+    return;
+  }
+
+  static Future<void> cacheFiles() async {
+    FilesLoader make() => FilesLoader(
+        (db, idx) => null, DbsOpen.androidGalleryFiles(), kFilesSchemas,
+        handler: CellLoaderHandlers.files,
+        makeState: (instance) => CellLoaderStateController(instance),
+        makeTransformer: (instance) => CellDataTransformer(
+            instance,
+            (_, cell) => cell,
+            (_) => 0,
+            FilteringMode.noFilter,
+            SortingMode.none));
+
+    _cache[kAndroidFilesPrimaryLoaderKey] = make();
+    _cache[kAndroidFilesSecondaryLoaderKey] = make();
+
+    await _cache[kAndroidFilesPrimaryLoaderKey]!.init();
+    await _cache[kAndroidFilesSecondaryLoaderKey]!.init();
+
+    return;
+  }
+
+  factory BackgroundCellLoader.cache(
+      int key,
+      (
+        T? Function(Isar, int),
+        Isar instance,
+        List<IsarGeneratedSchema> schemas,
+        LoaderStateController Function(BackgroundCellLoader<T, I>) makeState,
+        CellDataTransformer<T, I> Function(
+            BackgroundCellLoader<T, I>)? makeTransformer
+      )
+              Function()
+          init,
+      {HandlerFn? handler}) {
+    final l = _cache[key];
+    if (l != null) {
+      return l as BackgroundCellLoader<T, I>;
+    }
+
+    final (getCell, instance, schemas, makeState, makeTransformer) = init();
+    final loader = BackgroundCellLoader<T, I>(getCell, instance, schemas,
+        disposable: false,
+        makeState: makeState,
+        handler: handler ?? CellLoaderHandlers.basic<T, I>,
+        makeTransformer: makeTransformer);
+    _cache[key] = loader;
+
+    return loader;
+  }
+}
+
+typedef DirectoriesLoader = BackgroundCellLoader<SystemGalleryDirectory, int>;
+typedef FilesLoader = BackgroundCellLoader<SystemGalleryDirectoryFile, int>;
+
+typedef HandlerFn = void Function(HandlerPayload);
+
+typedef HandlerPayload = (
+  SendPort port,
+  List<IsarGeneratedSchema> schemas,
+  String dir,
+  String name
+);
+
+abstract class CellLoaderHandlers {
+  static void directories<SystemGalleryDirectory, int>(
+      HandlerPayload record) async {
+    final (port, db, rx) = _normalSequence(record);
+  }
+
+  static void files<SystemGalleryDirectoryFile, int>(
+      HandlerPayload record) async {
+    final (port, db, rx) = _normalSequence(record);
+  }
+
+  static void basic<T extends Cell, I>(HandlerPayload record) async {
+    final (port, db, rx) = _normalSequence(record);
+
+    await for (final ControlMessage e in rx) {
+      switch (e) {
+        case Data<T>():
+          db.write((i) => db.collection<I, T>().putAll(e.l));
+          if (e.end) {
+            port.send(LoaderState.idle);
+          } else {
+            port.send(LoaderState.loading);
+          }
+          break;
+        case Reset():
+          db.write((i) => i.collection<I, T>().clear());
+          if (!e.silent) {
+            port.send(LoaderState.idle);
+          }
+        case Poll():
+          port.send(e);
+        default:
+      }
+    }
+  }
+
+  static (SendPort, Isar, ReceivePort) _normalSequence(HandlerPayload payload) {
+    final (port, schemas, dir, name) = payload;
+
+    final rx = ReceivePort();
+    final db = Isar.open(
+        schemas: schemas, directory: dir, name: name, inspector: false);
+    port.send(rx.sendPort);
+
+    return (port, db, rx);
   }
 }

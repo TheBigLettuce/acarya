@@ -13,6 +13,8 @@ const kPrimaryGridSchemas = [
   PostSchema,
 ];
 
+const kFilesSchemas = [SystemGalleryDirectoryFileSchema];
+
 abstract class DbsOpen {
   static Isar primaryGrid(Booru booru) {
     // final instance = Isar.get(schemas: [
@@ -76,7 +78,7 @@ abstract class DbsOpen {
       );
 
   static Isar androidGalleryFiles() => Isar.open(
-        schemas: [SystemGalleryDirectoryFileSchema],
+        schemas: kFilesSchemas,
         directory: _dbs.temporaryDbDir,
         inspector: false,
         name: _microsecSinceEpoch(),

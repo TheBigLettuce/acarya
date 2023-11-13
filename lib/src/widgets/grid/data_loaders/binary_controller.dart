@@ -7,11 +7,11 @@
 
 part of 'cell_loader.dart';
 
-class CellLoaderStateController<T extends Cell, I>
+class BinaryLoaderStateController<T extends Cell, I>
     implements LoaderStateController {
   final Stream _events;
-  final void Function(CellLoaderStateController<T, I>) onNext;
-  final void Function(CellLoaderStateController<T, I>) onReset;
+  final void Function(BinaryLoaderStateController<T, I>) onNext;
+  final void Function(BinaryLoaderStateController<T, I>) onReset;
 
   LoaderState _state = LoaderState.idle;
   StreamSubscription? _currentSubscription;
@@ -67,9 +67,9 @@ class CellLoaderStateController<T extends Cell, I>
     _currentSubscription?.cancel();
   }
 
-  static void _doNothing(CellLoaderStateController _) {}
+  static void _doNothing(BinaryLoaderStateController _) {}
 
-  CellLoaderStateController(BackgroundCellLoader<T, I> loader,
+  BinaryLoaderStateController(BackgroundCellLoader<T, I> loader,
       {this.onNext = _doNothing, this.onReset = _doNothing})
       : _events = loader._isolateEvents;
 }

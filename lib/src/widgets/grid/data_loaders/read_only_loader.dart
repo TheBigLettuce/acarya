@@ -18,16 +18,33 @@ class ReadOnlyDataLoader<T, J, ID> implements BackgroundDataLoader<T, J> {
 
   StreamSubscription<void>? _subscription;
 
-  ReadOnlyDataLoader(this._instance, this._getCell);
+  void Function(int p1)? _notify;
+
+  @override
+  late final DataTransformer<T, J>? transformer;
+
+  ReadOnlyDataLoader(this._instance, this._getCell,
+      {DataTransformer<T, J> Function(ReadOnlyDataLoader<T, J, ID>)?
+          makeTransformer}) {
+    transformer = makeTransformer?.call(this);
+  }
 
   @override
   void dispose() {
     _subscription?.cancel();
+    _notify = null;
     _subscription = null;
   }
 
   @override
-  T? getSingle(J token) => _getCell(_instance, token);
+  T? getSingle(J token) {
+    final cell = _getCell(_instance, token);
+    if (cell == null) {
+      return null;
+    }
+
+    return transformer != null ? transformer!.transformCell(cell) : cell;
+  }
 
   @override
   Future<void> init() => Future.value();
@@ -38,25 +55,37 @@ class ReadOnlyDataLoader<T, J, ID> implements BackgroundDataLoader<T, J> {
   @override
   void listenStatus(void Function(int p1) f) {
     _subscription?.cancel();
+    _notify = f;
 
     _instance
         .collection<ID, T>()
         .watchLazy(fireImmediately: true)
         .listen((event) {
-      f(_instance.collection<ID, T>().count());
+      _listenStatusCallback(f);
+      // f(_instance.collection<ID, T>().count());
     });
+  }
+
+  void _listenStatusCallback(void Function(int p1) f) {
+    if (transformer != null) {
+      transformer!.transformStatusCallback((count) {
+        f(count);
+      });
+    } else {
+      f(_instance.collection<ID, T>().count());
+    }
   }
 
   @override
   void send(ControlMessage m) {
+    if (m is Poll) {
+      if (_notify != null) {
+        _listenStatusCallback(_notify!);
+      }
+    }
     assert(false, ".send on ReadOnlyDataLoader should not be used");
   }
 
   @override
   LoaderStateController get state => const DummyLoaderStateController();
-
-  @override
-  void transformData(T Function(T p1)? f) {
-    // TODO: implement transformData
-  }
 }

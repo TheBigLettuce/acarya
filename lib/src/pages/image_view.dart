@@ -13,7 +13,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gallery/src/db/schemas/note.dart';
-import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/selection_interface.dart';
 import 'package:gallery/src/widgets/image_view/loading_builder.dart';
 import 'package:gallery/src/widgets/image_view/make_image_view_bindings.dart';
@@ -25,13 +24,11 @@ import 'package:gallery/src/widgets/notifiers/cell_provider.dart';
 import 'package:gallery/src/widgets/notifiers/grid_element_count.dart';
 import 'package:gallery/src/widgets/notifiers/grid_metadata.dart';
 import 'package:gallery/src/widgets/notifiers/notes_interface.dart';
-import 'package:gallery/src/widgets/notifiers/state_restoration.dart';
 import 'package:logging/logging.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-import '../widgets/grid/grid_action.dart';
 import '../widgets/keybinds/keybind_description.dart';
 import '../interfaces/cell.dart';
 import '../interfaces/contentable.dart';
@@ -127,8 +124,6 @@ class ImageViewState<T extends Cell> extends State<ImageView<T>>
 
     WakelockPlus.enable();
 
-    // currentCell = CellProvider.getOf<T>(context, widget.startingCell);
-
     WidgetsBinding.instance.scheduleFrameCallback((_) {
       // if (widget.infoScrollOffset != null) {
       //   key.currentState?.openEndDrawer();
@@ -203,45 +198,45 @@ class ImageViewState<T extends Cell> extends State<ImageView<T>>
     }
   }
 
-  void update(BuildContext context, int count, {bool pop = true}) {
-    if (count == 0) {
-      if (pop) {
-        key.currentState?.closeEndDrawer();
-        Navigator.pop(context);
-      }
-      return;
-    }
+  // void update(BuildContext context, int count, {bool pop = true}) {
+  //   if (count == 0) {
+  //     if (pop) {
+  //       key.currentState?.closeEndDrawer();
+  //       Navigator.pop(context);
+  //     }
+  //     return;
+  //   }
 
-    // cellCount = count;
+  //   // cellCount = count;
 
-    if (count == 1) {
-      final newCell = CellProvider.getOf<T>(context, 0);
-      if (newCell == currentCell) {
-        return;
-      }
-      controller.previousPage(duration: 200.ms, curve: Curves.linearToEaseOut);
+  //   if (count == 1) {
+  //     final newCell = CellProvider.getOf<T>(context, 0);
+  //     if (newCell == currentCell) {
+  //       return;
+  //     }
+  //     controller.previousPage(duration: 200.ms, curve: Curves.linearToEaseOut);
 
-      currentCell = newCell;
-      hardRefresh();
-    } else if (currentPage > count - 1) {
-      controller.previousPage(duration: 200.ms, curve: Curves.linearToEaseOut);
-    } else if (CellProvider.getOf<T>(context, currentPage)
-            .getCellData(false, context: context)
-            .thumb !=
-        currentCell.getCellData(false, context: context).thumb) {
-      if (currentPage == 0) {
-        controller.nextPage(
-            duration: 200.ms, curve: Curves.fastLinearToSlowEaseIn);
-      } else {
-        controller.previousPage(
-            duration: 200.ms, curve: Curves.linearToEaseOut);
-      }
-    } else {
-      currentCell = CellProvider.getOf<T>(context, currentPage);
-    }
+  //     currentCell = newCell;
+  //     hardRefresh();
+  //   } else if (currentPage > count - 1) {
+  //     controller.previousPage(duration: 200.ms, curve: Curves.linearToEaseOut);
+  //   } else if (CellProvider.getOf<T>(context, currentPage)
+  //           .getCellData(false, context: context)
+  //           .thumb !=
+  //       currentCell.getCellData(false, context: context).thumb) {
+  //     if (currentPage == 0) {
+  //       controller.nextPage(
+  //           duration: 200.ms, curve: Curves.fastLinearToSlowEaseIn);
+  //     } else {
+  //       controller.previousPage(
+  //           duration: 200.ms, curve: Curves.linearToEaseOut);
+  //     }
+  //   } else {
+  //     currentCell = CellProvider.getOf<T>(context, currentPage);
+  //   }
 
-    setState(() {});
-  }
+  //   setState(() {});
+  // }
 
   void _loadNext(int index) {
     if (index >= GridElementCountNotifier.of(context) - 3 &&
@@ -339,18 +334,21 @@ class ImageViewState<T extends Cell> extends State<ImageView<T>>
                 showAddNoteButton:
                     NoteInterfaceProvider.maybeOf<T>(context) != null,
                 // widget.noteInterface != null,
-                children: GridMetadataProvider.gridActionsOf<T>(context)
-                    .map(
-                      (e) => WrapGridActionButton(e.icon, () {
-                        e.onPress([currentCell]);
-                      }, false, "",
-                          followColorTheme: true,
-                          color: e.color,
-                          play: e.play,
-                          backgroundColor: e.backgroundColor,
-                          animate: e.animate),
-                    )
-                    .toList()),
+                children: GridMetadataProvider.gridActionsOf<T>(context).map(
+                  (e) {
+                    final extra = e.testSingle?.call(currentCell);
+
+                    return WrapGridActionButton(extra?.overrideIcon ?? e.icon,
+                        () {
+                      e.onPress([currentCell]);
+                    }, false, "",
+                        followColorTheme: true,
+                        color: extra?.color,
+                        play: extra?.play ?? false,
+                        backgroundColor: extra?.backgroundColor,
+                        animate: extra?.animate ?? false);
+                  },
+                ).toList()),
             mainFocus: mainFocus,
             child: ImageViewBody(
               onPageChanged: _onPageChanged,

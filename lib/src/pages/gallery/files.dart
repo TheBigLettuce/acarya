@@ -22,7 +22,7 @@ import 'package:gallery/src/db/schemas/system_gallery_directory_file.dart';
 import 'package:gallery/src/db/schemas/favorite_media.dart';
 import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
 import 'package:gallery/src/widgets/grid/grid_action.dart';
-import 'package:gallery/src/widgets/grid/grid_app_bar.dart';
+import 'package:gallery/src/widgets/grid/app_bar/grid_app_bar.dart';
 import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/layouts/grid/grid.dart';
 import 'package:gallery/src/widgets/grid/layouts/list/list.dart';
@@ -73,7 +73,6 @@ class _GalleryFilesState extends State<GalleryFiles>
   late final StreamSubscription<Settings?> settingsWatcher;
   bool proceed = true;
 
-  late final GalleryFilesExtra extra = widget.api.getExtra();
   // ..setRefreshingStatusCallback((i, inRefresh, empty) {
   //   if (empty) {
   //     // state.gridKey.currentState?.selection.currentBottomSheet?.close();
@@ -196,7 +195,6 @@ class _GalleryFilesState extends State<GalleryFiles>
 
   @override
   void dispose() {
-    widget.api.close();
     // stream.close();
     settingsWatcher.cancel();
     // disposeSearch();
@@ -282,7 +280,7 @@ class _GalleryFilesState extends State<GalleryFiles>
       }
     }
 
-    plug.notify(null);
+    // plug.notify(null);
   }
 
   void _saveTags(
@@ -310,7 +308,7 @@ class _GalleryFilesState extends State<GalleryFiles>
       }
     }
     notifi.done();
-    plug.notify(null);
+    // plug.notify(null);
     _isSavingTags = false;
   }
 
@@ -435,18 +433,23 @@ class _GalleryFilesState extends State<GalleryFiles>
     );
   }
 
-  GridAction<SystemGalleryDirectoryFile> _addToFavoritesAction(
-      SystemGalleryDirectoryFile? f) {
-    final isFavorites = f != null && f.isFavorite;
-
+  GridAction<SystemGalleryDirectoryFile> _addToFavoritesAction() {
+    //  isFavorites ? Icons.star_rounded :
     return GridAction(
-        isFavorites ? Icons.star_rounded : Icons.star_border_rounded,
-        (selected) {
-      _favoriteOrUnfavorite(context, selected);
-    }, false,
-        color: isFavorites ? Colors.yellow.shade900 : null,
-        animate: f != null,
-        play: !isFavorites);
+      Icons.star_border_rounded,
+      (selected) {
+        _favoriteOrUnfavorite(context, selected);
+      },
+      false,
+      testSingle: (cell) {
+        final isFavorites = cell.isFavorite;
+
+        return GridActionExtra(
+            color: isFavorites ? Colors.yellow.shade900 : null,
+            animate: true,
+            play: !isFavorites);
+      },
+    );
   }
 
   GridAction<SystemGalleryDirectoryFile> _deleteAction() {
@@ -506,14 +509,14 @@ class _GalleryFilesState extends State<GalleryFiles>
         //     searchWidget(context, hint: widget.dirName), searchFocus),
         gridActions: widget.callback != null
             ? []
-            : extra.isTrash
+            : widget.api.isTrash
                 ? [
                     _restoreFromTrash(),
                   ]
                 : [
                     _bulkRename(),
                     _saveTagsAction(),
-                    _addToFavoritesAction(null),
+                    _addToFavoritesAction(),
                     _deleteAction(),
                     _copyAction(),
                     _moveAction(),
@@ -527,10 +530,10 @@ class _GalleryFilesState extends State<GalleryFiles>
         child: GridSkeleton<SystemGalleryDirectoryFile>(
           state,
           CallbackGridShell<SystemGalleryDirectoryFile>(
-            loader: extra.loader,
+            loader: widget.api.loader,
             appBar: GridAppBar.basic(
               actions: [
-                if (widget.callback == null && extra.isTrash)
+                if (widget.callback == null && widget.api.isTrash)
                   IconButton(
                       onPressed: () {
                         Navigator.push(

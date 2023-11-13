@@ -9,31 +9,52 @@ part of 'android_api_directories.dart';
 
 class AndroidGallery implements GalleryPlug {
   @override
-  bool get temporary => _global!.temporary;
-
-  @override
-  GalleryAPIDirectories galleryApi(
-      {bool? temporaryDb, bool setCurrentApi = true}) {
-    final api = _AndroidGallery(temporary: temporaryDb);
-    if (setCurrentApi) {
-      _global!._setCurrentApi(api);
-    } else {
-      _global!._temporaryApis.add(api);
-    }
-
-    return api;
-  }
-
-  @override
-  void notify(String? target) {
-    _global!.notify(target);
-  }
+  GalleryAPIDirectories galleryApi() =>
+      _AndroidGallery(BackgroundCellLoader.directories());
 
   const AndroidGallery();
 }
 
-void initalizeAndroidGallery(bool temporary) {
-  if (_global == null) {
-    GalleryApi.setup(_GalleryImpl(temporary));
+Future<void> initalizeAndroidGallery(bool temporary) async {
+  await BackgroundCellLoader.cacheDirectories();
+  await BackgroundCellLoader.cacheFiles();
+
+  {
+    ServicesBinding.instance.defaultBinaryMessenger.setMessageHandler(
+        "lol.bruh19.azari.gallery.api.updateDirectories", (message) async {
+      BackgroundCellLoader.directories().send(
+          Binary(message!, type: BackgroundCellLoader.directoryBinaryType));
+
+      return const StandardMessageCodec().encodeMessage(<Object?>[]);
+    });
+  }
+  {
+    ServicesBinding.instance.defaultBinaryMessenger.setMessageHandler(
+        "lol.bruh19.azari.gallery.api.updateFiles", (message) {
+      if (message!.getUint8(0) == 0) {
+        BackgroundCellLoader.filesPrimary()
+            .send(Binary(message, type: BackgroundCellLoader.filesBinaryType));
+      } else {
+        BackgroundCellLoader.filesSecondary()
+            .send(Binary(message, type: BackgroundCellLoader.filesBinaryType));
+      }
+
+      return Future.value(
+          const StandardMessageCodec().encodeMessage(<Object?>[]));
+    });
+  }
+  {
+    ServicesBinding.instance.defaultBinaryMessenger.setMessageHandler(
+        "lol.bruh19.azari.gallery.api.notify", (message) async {
+      BackgroundCellLoader.directories().send(const Poll());
+
+      if (message!.getUint8(0) == 0) {
+        BackgroundCellLoader.filesPrimary().state.reset();
+      } else if (message.getUint8(0) == 1) {
+        BackgroundCellLoader.filesSecondary().state.reset();
+      }
+
+      return const StandardMessageCodec().encodeMessage(<Object?>[]);
+    });
   }
 }

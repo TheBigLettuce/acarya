@@ -16,13 +16,9 @@ import '../notifiers/state_restoration.dart';
 class CallbackGridBase<T extends Cell> extends StatefulWidget {
   final Widget? appBar;
   final Widget child;
-  final Future<void> Function() onRefresh;
 
   const CallbackGridBase(
-      {super.key,
-      required this.onRefresh,
-      required this.appBar,
-      required this.child});
+      {super.key, required this.appBar, required this.child});
 
   @override
   State<CallbackGridBase<T>> createState() => _CallbackGridBaseState();
@@ -77,7 +73,10 @@ class _CallbackGridBaseState<T extends Cell>
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-        onRefresh: widget.onRefresh,
+        onRefresh: () {
+          CellProvider.stateOf<T>(context).reset();
+          return Future.value();
+        },
         child: CustomScrollView(
           controller: scrollController,
           physics: const AlwaysScrollableScrollPhysics(),

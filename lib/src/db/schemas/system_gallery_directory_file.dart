@@ -7,23 +7,21 @@
 
 import 'dart:developer';
 import 'dart:io';
-import 'dart:ui' as ui;
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
+import 'package:gallery/src/db/schemas/favorite_media.dart';
+import 'package:gallery/src/db/schemas/note_gallery.dart';
 import 'package:gallery/src/db/schemas/thumbnail.dart';
 import 'package:gallery/src/net/downloader.dart';
 import 'package:gallery/src/interfaces/booru.dart';
 import 'package:gallery/src/db/post_tags.dart';
 import 'package:gallery/src/interfaces/cell.dart';
-import 'package:gallery/src/plugs/gallery.dart';
 import 'package:gallery/src/widgets/grid/cell_data.dart';
 import 'package:gallery/src/db/initalize_db.dart';
 import 'package:gallery/src/plugs/platform_channel.dart';
 import 'package:gallery/src/db/schemas/download_file.dart';
 import 'package:gallery/src/db/schemas/post.dart';
-import 'package:gallery/src/db/schemas/tags.dart';
 import 'package:isar/isar.dart';
 import 'package:logging/logging.dart';
 import 'package:transparent_image/transparent_image.dart';
@@ -236,7 +234,7 @@ class SystemGalleryDirectoryFile implements Cell {
       res = PostTags.g.dissassembleFilename(name);
     } catch (_) {}
 
-    final plug = chooseGalleryPlug();
+    // final plug = chooseGalleryPlug();
 
     return PostBase.wrapTagsSearch(
       context,
@@ -247,9 +245,11 @@ class SystemGalleryDirectoryFile implements Cell {
             colors: colors,
             title: AppLocalizations.of(context)!.nameTitle,
             subtitle: name,
-            trailing: plug.temporary
-                ? null
-                : IconButton(
+            trailing:
+                //  plug.temporary
+                // ? null
+                // :
+                IconButton(
                     onPressed: () {
                       Navigator.push(
                           context,
@@ -305,21 +305,23 @@ class SystemGalleryDirectoryFile implements Cell {
               () => BooruAPI.fromEnum(res!.booru, page: null)),
       ],
       name,
-      temporary: plug.temporary,
+      // temporary: plug.temporary,
       showDeleteButton: true,
-      launchGrid: plug.temporary
-          ? null
-          : (t) {
-              try {
-                final res = PostTags.g.dissassembleFilename(name);
-                final tagManager = TagManager.fromEnum(res.booru, true);
+      launchGrid:
+          // plug.temporary
+          // ? null
+          // :
+          (t) {
+        try {
+          final res = PostTags.g.dissassembleFilename(name);
+          final tagManager = TagManager.fromEnum(res.booru, true);
 
-                tagManager.onTagPressed(context, t, res.booru, false);
-              } catch (e) {
-                log("launching local tag random booru",
-                    level: Level.SEVERE.value, error: e);
-              }
-            },
+          tagManager.onTagPressed(context, t, res.booru, false);
+        } catch (e) {
+          log("launching local tag random booru",
+              level: Level.SEVERE.value, error: e);
+        }
+      },
     );
   }
 
@@ -363,6 +365,48 @@ class SystemGalleryDirectoryFile implements Cell {
 
   Thumbnail? getThumbnail() {
     return Dbs.g.thumbnail!.thumbnails.get(id);
+  }
+
+  // .cast<DirectoryFile>()
+  //       .map((e) => SystemGalleryDirectoryFile(
+  //           id: e.id,
+  //           bucketId: e.bucketId,
+  // notesFlat:
+  //           name: e.name,
+  //           size: e.size,
+  //           lastModified: e.lastModified,
+  //           height: e.height,
+  //           width: e.width,
+  //           isGif: e.isGif,
+  //           isOriginal: PostTags.g.isOriginal(e.name),
+  //           originalUri: e.originalUri,
+  //           isVideo: e.isVideo,
+  //       .toList();
+
+  static SystemGalleryDirectoryFile decode(Object result) {
+    result as List<Object?>;
+
+    final id = result[0]! as int;
+    final name = result[2]! as String;
+
+    return SystemGalleryDirectoryFile(
+      isOriginal: PostTags.g.isOriginal(name),
+      isDuplicate: RegExp(r'[(][0-9].*[)][.][a-zA-Z0-9].*').hasMatch(name),
+      isFavorite: Dbs.g.blacklisted.favoriteMedias.get(id) != null,
+      tagsFlat: PostTags.g.getTagsPost(name).join(" "),
+      notesFlat:
+          Dbs.g.main.noteGallerys.get(id)?.text.join().toLowerCase() ?? "",
+      id: id,
+      bucketId: result[1]! as String,
+      name: name,
+      originalUri: result[3]! as String,
+      lastModified: result[4]! as int,
+      height: result[5]! as int,
+      width: result[6]! as int,
+      size: result[7]! as int,
+      isVideo: result[8]! as bool,
+      isGif: result[9]! as bool,
+    );
   }
 }
 
@@ -467,7 +511,7 @@ class ThumbnailProvider extends ImageProvider {
 //     required Future<ui.Codec> Function(ui.ImmutableBuffer buffer) decode,
 //   }) async {
 //     assert(key == this);
-//     // TODO(jonahwilliams): making this sync caused test failures that seem to
+//     // (jonahwilliams): making this sync caused test failures that seem to
 //     // indicate that we can fail to call evict unless at least one await has
 //     // occurred in the test.
 //     // https://github.com/flutter/flutter/issues/113044

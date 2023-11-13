@@ -9,6 +9,31 @@ import 'package:flutter/material.dart';
 import 'package:gallery/src/interfaces/cell.dart';
 import 'package:gallery/src/widgets/grid/selection_glue.dart';
 
+class GlueHolder<T extends Cell> extends StatefulWidget {
+  final SelectionGlue<T> glue;
+  final Widget child;
+
+  const GlueHolder({super.key, required this.glue, required this.child});
+
+  @override
+  State<GlueHolder<T>> createState() => _GlueHolderState();
+}
+
+class _GlueHolderState<T extends Cell> extends State<GlueHolder<T>> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SelectionGlueNotifier<T>(
+      glue: widget.glue,
+      child: widget.child,
+    );
+  }
+}
+
 class SelectionGlueNotifier<T extends Cell> extends InheritedWidget {
   final SelectionGlue<T> glue;
 

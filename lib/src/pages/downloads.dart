@@ -16,7 +16,7 @@ import 'package:gallery/src/db/schemas/settings.dart';
 import 'package:gallery/src/db/schemas/download_file.dart';
 import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/read_only_loader.dart';
-import 'package:gallery/src/widgets/grid/grid_app_bar.dart';
+import 'package:gallery/src/widgets/grid/app_bar/grid_app_bar.dart';
 import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/layouts/grid/grid.dart';
 import 'package:gallery/src/widgets/grid/notifiers/notifier_registry_holder.dart';

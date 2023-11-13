@@ -7,11 +7,16 @@
 
 import 'dart:async';
 import 'dart:isolate';
+import 'dart:typed_data';
 
+import 'package:gallery/src/interfaces/filtering/filtering_mode.dart';
+import 'package:gallery/src/interfaces/filtering/sorting_mode.dart';
 import 'package:meta/meta.dart';
 
 const kAndroidGalleryLoaderKey = 0;
 const kMainGridLoaderKey = 1;
+const kAndroidFilesPrimaryLoaderKey = 2;
+const kAndroidFilesSecondaryLoaderKey = 3;
 
 /// Load data in a background isolate.
 /// Depends on the ability of writing to the source on a different Isolate.
@@ -19,6 +24,8 @@ abstract interface class BackgroundDataLoader<T, J> {
   /// Isolate associated with the loader.
   /// [listenStatus] should be called before accessing [isolate].
   Isolate get isolate;
+
+  DataTransformer? get transformer;
 
   Future<void> init();
 
@@ -28,9 +35,6 @@ abstract interface class BackgroundDataLoader<T, J> {
   /// Trying to access [listenStatus], [send] or [dispose] before [listenStatus]'s future
   /// complete is undefined behaviour.
   void listenStatus(void Function(int) f);
-
-  /// Apply transformations to the data before it is emitted by [getSingle].
-  void transformData(T Function(T)? f);
 
   /// Return the single piece of data.
   /// This is used in the widget builders.
@@ -50,6 +54,24 @@ abstract interface class BackgroundDataLoader<T, J> {
   LoaderStateController get state;
 
   const BackgroundDataLoader();
+}
+
+abstract interface class DataTransformer<T, J> {
+  Set<FilteringMode> get capabilityFiltering;
+  Set<SortingMode> get capabilitySorting;
+
+  FilteringMode get currentFiltering;
+  SortingMode get currentSoring;
+
+  T transformCell(T elem);
+  void transformStatusCallback(void Function(int count) f);
+
+  void setSortingMode(SortingMode sorting);
+  void setFilteringMode(FilteringMode filtering);
+
+  void reset();
+
+  const DataTransformer();
 }
 
 enum LoaderState { loading, idle }
@@ -83,4 +105,25 @@ class Data<T> extends ControlMessage {
   final bool end;
 
   const Data(this.l, {this.end = false});
+}
+
+@immutable
+class Poll extends ControlMessage {
+  const Poll();
+}
+
+@immutable
+class Binary extends ControlMessage {
+  final int type;
+  final ByteData data;
+
+  const Binary(this.data, {required this.type});
+}
+
+@immutable
+class ChangeContext extends ControlMessage {
+  final int contextStage;
+  final dynamic data;
+
+  const ChangeContext(this.contextStage, this.data);
 }

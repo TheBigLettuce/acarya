@@ -21,7 +21,7 @@ import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/cell_loader.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/read_only_loader.dart';
-import 'package:gallery/src/widgets/grid/grid_app_bar.dart';
+import 'package:gallery/src/widgets/grid/app_bar/grid_app_bar.dart';
 import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/layouts/grid/grid.dart';
 import 'package:gallery/src/widgets/grid/notifiers/notifier_registry_holder.dart';
@@ -224,6 +224,12 @@ class _FavoritesPageState extends State<FavoritesPage>
     Dbs.g.main,
     (db, idx) =>
         db.favoriteBoorus.where().sortByPostIdDesc().findFirst(offset: idx),
+    makeTransformer: (instance) => CellDataTransformer<FavoriteBooru, int>(
+        instance,
+        (instance, cell) => cell,
+        (instance) => 0,
+        FilteringMode.noFilter,
+        SortingMode.none),
   );
 
   @override

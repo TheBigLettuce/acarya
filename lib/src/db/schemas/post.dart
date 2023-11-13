@@ -36,7 +36,6 @@ import '../../widgets/make_tags.dart';
 import '../../widgets/notifiers/filter.dart';
 import '../../widgets/notifiers/tag_manager.dart';
 import '../../widgets/search_bar/search_text_field.dart';
-import 'tags.dart';
 
 part 'post.g.dart';
 

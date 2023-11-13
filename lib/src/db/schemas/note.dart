@@ -10,7 +10,6 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:gallery/src/net/network_configuration.dart';
 import 'package:gallery/src/widgets/notifiers/network_configuration.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as path_util;

@@ -6,60 +6,36 @@
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:gallery/src/db/schemas/favorite_booru.dart';
-import 'package:gallery/src/db/schemas/grid_state_booru.dart';
 import 'package:gallery/src/db/schemas/note.dart';
-import 'package:gallery/src/db/schemas/tags.dart';
-import 'package:gallery/src/interfaces/cell.dart';
-import 'package:gallery/src/net/network_configuration.dart';
-import 'package:gallery/src/pages/booru/random.dart';
+import 'package:gallery/src/widgets/bookmark_button.dart';
+import 'package:gallery/src/widgets/grid/app_bar/grid_app_bar_title.dart';
+import 'package:gallery/src/widgets/grid/app_bar/search_grid.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/cell_loader.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
-import 'package:gallery/src/widgets/grid/grid_app_bar.dart';
+import 'package:gallery/src/widgets/grid/app_bar/grid_app_bar.dart';
 import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/layouts/grid/grid.dart';
 import 'package:gallery/src/widgets/grid/layouts/list/list.dart';
-import 'package:gallery/src/widgets/notifiers/cell_provider.dart';
-import 'package:gallery/src/widgets/notifiers/grid_metadata.dart';
-import 'package:gallery/src/widgets/notifiers/notes_interface.dart';
+import 'package:gallery/src/widgets/grid/search_and_focus.dart';
+import 'package:gallery/src/widgets/notifiers/is_search_showed.dart';
 import 'package:gallery/src/widgets/notifiers/notifier_registry.dart';
 import 'package:gallery/src/widgets/notifiers/state_restoration.dart';
-import 'package:gallery/src/widgets/notifiers/network_configuration.dart';
-import 'package:gallery/src/widgets/notifiers/selection_glue.dart';
 import 'package:isar/isar.dart';
-import 'package:logging/logging.dart';
+import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
 
 import '../../widgets/grid/actions/booru_grid.dart';
-import '../../net/downloader.dart';
-import '../../interfaces/booru.dart';
-import '../../db/post_tags.dart';
 import '../../db/initalize_db.dart';
 import '../../db/state_restoration.dart';
-import '../../db/schemas/download_file.dart';
 import '../../db/schemas/post.dart';
 import '../../db/schemas/settings.dart';
 import '../../widgets/grid/notifiers/notifier_registry_holder.dart';
 import '../../widgets/grid/selection_glue.dart';
-import '../../widgets/search_bar/search_launch_grid_data.dart';
 import '../../widgets/skeletons/grid_skeleton_state.dart';
-import '../../widgets/notifiers/booru_api.dart';
-import '../../widgets/notifiers/tag_manager.dart';
-import '../../widgets/radio_dialog.dart';
-import '../../widgets/search_bar/search_launch_grid.dart';
-
 import '../../widgets/skeletons/grid_skeleton.dart';
-
-import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
-import 'package:url_launcher/url_launcher.dart';
-
-import '../../widgets/time_label.dart';
 import 'grid_settings_button.dart';
-import 'secondary.dart';
 
 class MainBooruGrid extends StatefulWidget {
   final Isar mainGrid;
@@ -161,7 +137,9 @@ class _MainBooruGridState extends State<MainBooruGrid> {
     registrer = [
       (child) => StateRestorationProvider(
             state: restore,
-            child: child,
+            child: IsSearchShowingHolder(
+              child: child,
+            ),
           ),
       ...NotifierRegistry.genericNotifiers<Post>(
         context,
@@ -174,7 +152,7 @@ class _MainBooruGridState extends State<MainBooruGrid> {
           hideAlias: false,
           gridActions: [
             BooruGridActions.download(context),
-            BooruGridActions.favorites(context, null, showDeleteSnackbar: true)
+            BooruGridActions.favorites(context)
           ],
         ),
         NoteBooru.interface(setState),
@@ -214,11 +192,19 @@ class _MainBooruGridState extends State<MainBooruGrid> {
         CallbackGridShell<Post>(
           loader: loader,
           appBar: GridAppBar.basic(
-            showCount: false,
             actions: [
               const BookmarkButton(),
               MainBooruGrid.gridButton(state.settings)
             ],
+            title: GridAppBarTitle(
+              searchWidget: SearchAndFocus(
+                SearchLaunchGrid1(
+                    booru: state.settings.selectedBooru,
+                    complF: (s) => Future.value([])),
+                state.mainFocus,
+              ),
+              child: const SearchCharacterTitle(),
+            ),
           ),
           keybinds: const {},
           mainFocus: state.mainFocus,
@@ -247,27 +233,7 @@ class _MainBooruGridState extends State<MainBooruGrid> {
   }
 }
 
-// Future<int> _clearAndRefresh() async {
-//   try {
-//     restore.updateTime();
-
-//     final list = await api.page(0, "", tagManager.excluded);
-//     restore.updateScrollPosition(0, page: api.currentPage);
-//     currentSkipped = list.$2;
-//     widget.mainGrid.writeTxnSync(() {
-//       widget.mainGrid.posts.clearSync();
-//       return widget.mainGrid.posts.putAllByFileUrlSync(list.$1);
-//     });
-
-//     reachedEnd = false;
-//   } catch (e) {
-//     rethrow;
-//   }
-
-//   return widget.mainGrid.posts.count();
-// }
-
-// Future<void> _download(int i) async {
+//   Future<void> _download(int i) async {
 //   final p = widget.mainGrid.posts.getSync(i + 1);
 //   if (p == null) {
 //     return Future.value();
@@ -396,161 +362,7 @@ class _MainBooruGridState extends State<MainBooruGrid> {
 //     });
 //   }
 // },
-// searchWidget: SearchAndFocus(
-//     searchWidget(context, hint: api.booru.name), searchFocus,
-//     onPressed: () {
-//   if (currentlyHighlightedTag != "") {
-//     state.mainFocus.unfocus();
-//     tagManager.onTagPressed(
-//         context,
-//         Tag.string(tag: currentlyHighlightedTag),
-//         api.booru,
-//         true);
-//   }
-// }),
 // pageViewScrollingOffset: restore.copy.scrollPositionTags,
 // initalCell: restore.copy.selectedPost,
 
-class GlueHolder<T extends Cell> extends StatefulWidget {
-  final SelectionGlue<T> glue;
-  final Widget child;
 
-  const GlueHolder({super.key, required this.glue, required this.child});
-
-  @override
-  State<GlueHolder<T>> createState() => _GlueHolderState();
-}
-
-class _GlueHolderState<T extends Cell> extends State<GlueHolder<T>> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SelectionGlueNotifier<T>(
-      glue: widget.glue,
-      child: widget.child,
-    );
-  }
-}
-
-class BookmarkButton extends StatefulWidget {
-  const BookmarkButton({super.key});
-
-  @override
-  State<BookmarkButton> createState() => _BookmarkButtonState();
-}
-
-class _BookmarkButtonState extends State<BookmarkButton> {
-  @override
-  Widget build(BuildContext context) {
-    return PopupMenuButton(
-        itemBuilder: (context) {
-          final timeNow = DateTime.now();
-          final list = <PopupMenuEntry>[];
-          final l =
-              Dbs.g.main.gridStateBoorus.where().sortByTimeDesc().findAll();
-
-          if (l.isEmpty) {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(SnackBar(content: Text("No bookmarks")));
-            return [];
-          }
-
-          final titleStyle = Theme.of(context)
-              .textTheme
-              .titleSmall!
-              .copyWith(color: Theme.of(context).colorScheme.secondary);
-
-          (int, int, int)? time;
-
-          for (final e in l) {
-            if (time == null ||
-                time != (e.time.day, e.time.month, e.time.year)) {
-              time = (e.time.day, e.time.month, e.time.year);
-
-              list.add(PopupMenuItem(
-                enabled: false,
-                padding: const EdgeInsets.all(0),
-                child: TimeLabel(time, titleStyle, timeNow),
-              ));
-            }
-
-            list.add(PopupMenuItem(
-                enabled: false,
-                padding: const EdgeInsets.only(left: 16),
-                child: ListTile(
-                  shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(5))),
-                  title: Text(e.tags,
-                      style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary)),
-                  subtitle: Text(e.booru.string),
-                  onLongPress: () {
-                    Navigator.push(
-                        context,
-                        DialogRoute(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: const Text(
-                                "Delete", // TODO: change
-                              ),
-                              content: ListTile(
-                                title: Text(e.tags),
-                                subtitle: Text(e.time.toString()),
-                              ),
-                              actions: [
-                                TextButton(
-                                    onPressed: () {
-                                      // .then((value) {
-                                      if (DbsOpen.secondaryGridName(e.name)
-                                          .close(deleteFromDisk: true)) {
-                                        Dbs.g.main.write((i) =>
-                                            i.gridStateBoorus.delete(e.name));
-                                      }
-
-                                      Navigator.pop(context);
-                                      Navigator.pop(context);
-                                      // }
-                                      // );
-                                    },
-                                    child: Text(
-                                        AppLocalizations.of(context)!.yes)),
-                                TextButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child:
-                                        Text(AppLocalizations.of(context)!.no)),
-                              ],
-                            );
-                          },
-                        ));
-                  },
-                  onTap: () {
-                    Navigator.pop(context);
-
-                    Dbs.g.main.write((i) => i.gridStateBoorus
-                        .put(e.copy(false, time: DateTime.now())));
-
-                    Navigator.push(context, MaterialPageRoute(
-                      builder: (context) {
-                        return Placeholder();
-                        // RandomBooruGrid(
-                        //   api: BooruAPI.fromEnum(e.booru, page: e.page),
-                        //   tagManager: TagManager.fromEnum(e.booru, true),
-                        //   tags: e.tags,
-                        //   state: e,
-                        // );
-                      },
-                    ));
-                  },
-                )));
-          }
-
-          return list;
-        },
-        icon: const Icon(Icons.bookmark_rounded));
-  }
-}

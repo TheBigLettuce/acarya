@@ -7,6 +7,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:gallery/src/widgets/grid/app_bar/wrap_badge_cell_count_title_widget.dart';
+import 'package:gallery/src/widgets/notifiers/is_search_showed.dart';
 
 import '../../notifiers/is_selecting.dart';
 import '../search_and_focus.dart';
@@ -35,13 +37,15 @@ class GridAppBarTitle extends StatelessWidget {
   final Widget child;
 
   const GridAppBarTitle(
-      {super.key,
-      // required this.onPressed,
-      required this.searchWidget,
-      required this.child});
+      {super.key, required this.searchWidget, required this.child});
 
   const GridAppBarTitle.basic({super.key, required this.child})
       : searchWidget = null;
+
+  const GridAppBarTitle.withCount({super.key, this.searchWidget})
+      : child = const WrapBadgeCellCountTitleWidget(
+          child: SearchCharacterTitle(),
+        );
 
   @override
   Widget build(BuildContext context) {
@@ -59,9 +63,9 @@ class GridAppBarTitle extends StatelessWidget {
           );
         })
       ],
-      target: IsSelectingNotifier.of(context) ? 1 : 0,
+      target: IsSearchShowingNotifier.of(context) ? 1 : 0,
       child: GestureDetector(
-        // onTap: onPressed,
+        onTap: () => IsSearchShowingNotifier.flipOf(context),
         child: AbsorbPointer(
           child: SizedBox(
             width: 64,

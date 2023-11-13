@@ -6,6 +6,7 @@
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 import 'package:flutter/material.dart';
+import 'package:gallery/src/db/post_tags.dart';
 import 'package:gallery/src/widgets/grid/cell_data.dart';
 import 'package:isar/isar.dart';
 
@@ -70,5 +71,21 @@ class SystemGalleryDirectory implements Cell {
   CellData getCellData(bool isList, {BuildContext? context}) {
     return CellData(
         thumb: ThumbnailProvider(thumbFileId), name: name, stickers: []);
+  }
+
+  static SystemGalleryDirectory decode(Object result) {
+    result as List<Object?>;
+
+    final bucketId = result[1]! as String;
+
+    return SystemGalleryDirectory(
+      tag: PostTags.g.directoryTag(bucketId) ?? "",
+      thumbFileId: result[0]! as int,
+      bucketId: bucketId,
+      name: result[2]! as String,
+      relativeLoc: result[3]! as String,
+      volumeName: result[4]! as String,
+      lastModified: result[5]! as int,
+    );
   }
 }

@@ -25,15 +25,29 @@ class GridAction<T> {
   /// element is currently selected.
   final bool showOnlyWhenSingle;
 
+  final GridActionExtra Function(T)? testSingle;
+
+  const GridAction(
+    this.icon,
+    this.onPress,
+    this.closeOnPress, {
+    this.showOnlyWhenSingle = false,
+    this.testSingle,
+  });
+}
+
+class GridActionExtra {
   final Color? backgroundColor;
   final Color? color;
   final bool animate;
   final bool play;
+  final IconData? overrideIcon;
 
-  const GridAction(this.icon, this.onPress, this.closeOnPress,
-      {this.showOnlyWhenSingle = false,
-      this.backgroundColor,
-      this.color,
-      this.animate = false,
-      this.play = true});
+  const GridActionExtra({
+    this.backgroundColor,
+    this.color,
+    this.overrideIcon,
+    required this.animate,
+    required this.play,
+  });
 }

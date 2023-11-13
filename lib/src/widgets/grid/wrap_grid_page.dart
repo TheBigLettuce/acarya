@@ -8,6 +8,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gallery/src/pages/booru/main.dart';
+import 'package:gallery/src/widgets/notifiers/selection_glue.dart';
 
 import '../../interfaces/cell.dart';
 import 'selection_glue.dart';

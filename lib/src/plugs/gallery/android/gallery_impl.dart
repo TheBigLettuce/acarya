@@ -7,155 +7,158 @@
 
 part of 'android_api_directories.dart';
 
-_GalleryImpl? _global;
+// _GalleryImpl? _global;
 
-/// Callbacks related to the gallery.
-class _GalleryImpl implements GalleryApi {
-  final Isar db;
-  final bool temporary;
-  final List<_AndroidGallery> _temporaryApis = [];
+// /// Callbacks related to the gallery.
+// class _GalleryImpl implements GalleryApi {
+//   final Isar db;
+//   final bool temporary;
+//   final List<_AndroidGallery> _temporaryApis = [];
 
-  bool isSavingTags = false;
+//   bool isSavingTags = false;
 
-  _AndroidGallery? _currentApi;
+//   _AndroidGallery? _currentApi;
 
-  @override
-  void updatePictures(List<DirectoryFile?> f, String bucketId, int startTime,
-      bool inRefresh, bool empty) {
-    // final st = _currentApi?.currentImages?.startTime;
+//   void setup() {
+  
+//   }
 
-    // if (st == null || st > startTime) {
-    //   return;
-    // }
+//   @override
+//   void updatePictures(List<DirectoryFile?> f, String bucketId, int startTime,
+//       bool inRefresh, bool empty) {
+//     // final st = _currentApi?.currentImages?.startTime;
 
-    // if (_currentApi?.currentImages?.isBucketId(bucketId) != true) {
-    //   return;
-    // }
+//     // if (st == null || st > startTime) {
+//     //   return;
+//     // }
 
-    // final db = _currentApi?.currentImages?.db;
-    // if (db == null) {
-    //   return;
-    // }
+//     // if (_currentApi?.currentImages?.isBucketId(bucketId) != true) {
+//     //   return;
+//     // }
 
-    // if (empty) {
-    //   _currentApi?.currentImages?.callback
-    //       ?.call(db.systemGalleryDirectoryFiles.countSync(), inRefresh, true);
-    //   return;
-    // }
+//     // final db = _currentApi?.currentImages?.db;
+//     // if (db == null) {
+//     //   return;
+//     // }
 
-    // if (f.isEmpty) {
-    //   return;
-    // }
+//     // if (empty) {
+//     //   _currentApi?.currentImages?.callback
+//     //       ?.call(db.systemGalleryDirectoryFiles.countSync(), inRefresh, true);
+//     //   return;
+//     // }
 
-    // try {
-    //   final out = f
-    //       .cast<DirectoryFile>()
-    //       .map((e) => SystemGalleryDirectoryFile(
-    //           id: e.id,
-    //           bucketId: e.bucketId,
-    //           notesFlat: Dbs.g.main.noteGallerys
-    //                   .getByIdSync(e.id)
-    //                   ?.text
-    //                   .join()
-    //                   .toLowerCase() ??
-    //               "",
-    //           name: e.name,
-    //           size: e.size,
-    //           isDuplicate:
-    //               RegExp(r'[(][0-9].*[)][.][a-zA-Z0-9].*').hasMatch(e.name),
-    //           isFavorite:
-    //               Dbs.g.blacklisted.favoriteMedias.getSync(e.id) != null,
-    //           lastModified: e.lastModified,
-    //           height: e.height,
-    //           width: e.width,
-    //           isGif: e.isGif,
-    //           isOriginal: PostTags.g.isOriginal(e.name),
-    //           originalUri: e.originalUri,
-    //           isVideo: e.isVideo,
-    //           tagsFlat: PostTags.g.getTagsPost(e.name).join(" ")))
-    //       .toList();
+//     // if (f.isEmpty) {
+//     //   return;
+//     // }
 
-    //   db.writeTxnSync(() => db.systemGalleryDirectoryFiles.putAllSync(out));
-    // } catch (e) {
-    //   log("updatePictures", level: Level.WARNING.value, error: e);
-    // }
+//     // try {
+//     //   final out = f
+//     //       .cast<DirectoryFile>()
+//     //       .map((e) => SystemGalleryDirectoryFile(
+//     //           id: e.id,
+//     //           bucketId: e.bucketId,
+//     //           notesFlat: Dbs.g.main.noteGallerys
+//     //                   .getByIdSync(e.id)
+//     //                   ?.text
+//     //                   .join()
+//     //                   .toLowerCase() ??
+//     //               "",
+//     //           name: e.name,
+//     //           size: e.size,
+//     //           isDuplicate:
+//     //               RegExp(r'[(][0-9].*[)][.][a-zA-Z0-9].*').hasMatch(e.name),
+//     //           isFavorite:
+//     //               Dbs.g.blacklisted.favoriteMedias.getSync(e.id) != null,
+//     //           lastModified: e.lastModified,
+//     //           height: e.height,
+//     //           width: e.width,
+//     //           isGif: e.isGif,
+//     //           isOriginal: PostTags.g.isOriginal(e.name),
+//     //           originalUri: e.originalUri,
+//     //           isVideo: e.isVideo,
+//     //           tagsFlat: PostTags.g.getTagsPost(e.name).join(" ")))
+//     //       .toList();
 
-    // _currentApi?.currentImages?.callback
-    //     ?.call(db.systemGalleryDirectoryFiles.countSync(), inRefresh, false);
-  }
+//     //   db.writeTxnSync(() => db.systemGalleryDirectoryFiles.putAllSync(out));
+//     // } catch (e) {
+//     //   log("updatePictures", level: Level.WARNING.value, error: e);
+//     // }
 
-  @override
-  void updateDirectories(List<Directory?> d, bool inRefresh, bool empty) {
-    // if (empty) {
-    //   _currentApi?.callback
-    //       ?.call(db.systemGalleryDirectorys.countSync(), inRefresh, true);
-    //   for (final api in _temporaryApis) {
-    //     api.temporarySet?.call(db.systemGalleryDirectorys.countSync(), true);
-    //   }
-    //   return;
-    // }
-    // final blacklisted = Dbs.g.blacklisted.blacklistedDirectorys
-    //     .where()
-    //     .anyOf(d.cast<Directory>(),
-    //         (q, element) => q.bucketIdEqualTo(element.bucketId))
-    //     .findAllSync();
-    // final map = <String, void>{for (var i in blacklisted) i.bucketId: Null};
-    // d = List.from(d);
-    // d.removeWhere((element) => map.containsKey(element!.bucketId));
+//     // _currentApi?.currentImages?.callback
+//     //     ?.call(db.systemGalleryDirectoryFiles.countSync(), inRefresh, false);
+//   }
 
-    // final out = d
-    //     .cast<Directory>()
-    //     .map((e) => SystemGalleryDirectory(
-    //         bucketId: e.bucketId,
-    //         name: e.name,
-    //         tag: PostTags.g.directoryTag(e.bucketId) ?? "",
-    //         volumeName: e.volumeName,
-    //         relativeLoc: e.relativeLoc,
-    //         thumbFileId: e.thumbFileId,
-    //         lastModified: e.lastModified))
-    //     .toList();
+//   @override
+//   void updateDirectories(List<Directory?> d, bool inRefresh, bool empty) {
+//     // if (empty) {
+//     //   _currentApi?.callback
+//     //       ?.call(db.systemGalleryDirectorys.countSync(), inRefresh, true);
+//     //   for (final api in _temporaryApis) {
+//     //     api.temporarySet?.call(db.systemGalleryDirectorys.countSync(), true);
+//     //   }
+//     //   return;
+//     // }
+//     // final blacklisted = Dbs.g.blacklisted.blacklistedDirectorys
+//     //     .where()
+//     //     .anyOf(d.cast<Directory>(),
+//     //         (q, element) => q.bucketIdEqualTo(element.bucketId))
+//     //     .findAllSync();
+//     // final map = <String, void>{for (var i in blacklisted) i.bucketId: Null};
+//     // d = List.from(d);
+//     // d.removeWhere((element) => map.containsKey(element!.bucketId));
 
-    // db.writeTxnSync(() {
-    //   db.systemGalleryDirectorys.putAllSync(out);
-    // });
+//     // final out = d
+//     //     .cast<Directory>()
+//     //     .map((e) => SystemGalleryDirectory(
+//     //         bucketId: e.bucketId,
+//     //         name: e.name,
+//     //         volumeName: e.volumeName,
+//     //         relativeLoc: e.relativeLoc,
+//     //         thumbFileId: e.thumbFileId,
+//     //         lastModified: e.lastModified))
+//     //     .toList();
 
-    // _currentApi?.callback
-    //     ?.call(db.systemGalleryDirectorys.countSync(), inRefresh, false);
-    // for (final api in _temporaryApis) {
-    //   api.temporarySet?.call(db.systemGalleryDirectorys.countSync(), false);
-    // }
-  }
+//     // db.writeTxnSync(() {
+//     //   db.systemGalleryDirectorys.putAllSync(out);
+//     // });
 
-  @override
-  void notify(String? target) {
-    // if (target == null || target == _currentApi?.currentImages?.target) {
-    //   _currentApi?.currentImages?.refreshGrid?.call();
-    // }
-    // _currentApi?.refreshGrid?.call();
-    // for (final api in _temporaryApis) {
-    //   api.refreshGrid?.call();
-    // }
-  }
+//     // _currentApi?.callback
+//     //     ?.call(db.systemGalleryDirectorys.countSync(), inRefresh, false);
+//     // for (final api in _temporaryApis) {
+//     //   api.temporarySet?.call(db.systemGalleryDirectorys.countSync(), false);
+//     // }
+//   }
 
-  // static GalleryImpl get g => _global!;
+//   @override
+//   void notify(String? target) {
+//     // if (target == null || target == _currentApi?.currentImages?.target) {
+//     //   _currentApi?.currentImages?.refreshGrid?.call();
+//     // }
+//     // _currentApi?.refreshGrid?.call();
+//     // for (final api in _temporaryApis) {
+//     //   api.refreshGrid?.call();
+//     // }
+//   }
 
-  factory _GalleryImpl(bool temporary) {
-    if (_global != null) {
-      return _global!;
-    }
+//   // static GalleryImpl get g => _global!;
 
-    _global = _GalleryImpl._new(
-        DbsOpen.androidGalleryDirectories(temporary: temporary), temporary);
-    return _global!;
-  }
+//   factory _GalleryImpl(bool temporary) {
+//     if (_global != null) {
+//       return _global!;
+//     }
 
-  void _setCurrentApi(_AndroidGallery api) {
-    _currentApi = api;
-  }
+//     _global = _GalleryImpl._new(
+//         DbsOpen.androidGalleryDirectories(temporary: temporary), temporary);
+//     return _global!;
+//   }
 
-  void _unsetCurrentApi() {
-    _currentApi = null;
-  }
+//   void _setCurrentApi(_AndroidGallery api) {
+//     _currentApi = api;
+//   }
 
-  _GalleryImpl._new(this.db, this.temporary);
-}
+//   void _unsetCurrentApi() {
+//     _currentApi = null;
+//   }
+
+//   _GalleryImpl._new(this.db, this.temporary);
+// }

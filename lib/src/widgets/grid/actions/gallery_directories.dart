@@ -17,11 +17,13 @@ import '../grid_action.dart';
 
 class SystemGalleryDirectoriesActions {
   static GridAction<SystemGalleryDirectory> blacklist(
-      BuildContext context, GalleryDirectoriesExtra extra) {
+    BuildContext context,
+    GalleryAPIDirectories api,
+  ) {
     return GridAction(
       Icons.hide_image_outlined,
       (selected) {
-        extra.addBlacklisted(selected
+        api.addBlacklisted(selected
             .map((e) => BlacklistedDirectory(e.bucketId, e.name))
             .toList());
       },
@@ -31,7 +33,8 @@ class SystemGalleryDirectoriesActions {
 
   static GridAction<SystemGalleryDirectory> joinedDirectories(
       BuildContext context,
-      GalleryDirectoriesExtra extra,
+      GalleryAPIDirectories api,
+      // GalleryDirectoriesExtra extra,
       CallbackDescriptionNested? callback) {
     return GridAction(
       Icons.merge_rounded,
@@ -42,7 +45,7 @@ class SystemGalleryDirectoriesActions {
                 ? selected.first.name
                 : "${selected.length} ${AppLocalizations.of(context)!.directoriesPlural}",
             selected,
-            extra,
+            api,
             callback);
       },
       true,
@@ -53,12 +56,16 @@ class SystemGalleryDirectoriesActions {
       BuildContext context,
       String label,
       List<SystemGalleryDirectory> dirs,
-      GalleryDirectoriesExtra extra,
+      GalleryAPIDirectories api,
       CallbackDescriptionNested? callback) {
     Navigator.push(context, MaterialPageRoute(
       builder: (context) {
         return GalleryFiles(
-            api: extra.joinedDir(dirs.map((e) => e.bucketId).toList()),
+            api: api.joinedDir(
+                dirs.map((e) => e.bucketId).toList(),
+                callback == null
+                    ? GalleryFilesKind.primary
+                    : GalleryFilesKind.secondary),
             callback: callback,
             dirName: label,
             bucketId: "joinedDir");

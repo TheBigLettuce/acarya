@@ -10,7 +10,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gallery/src/interfaces/cell.dart';
 import 'package:gallery/src/widgets/notifiers/cell_provider.dart';
-import 'package:gallery/src/widgets/notifiers/grid_metadata.dart';
 import 'package:gallery/src/widgets/notifiers/selection_glue.dart';
 
 class SelectionInterface<T extends Cell> {
@@ -104,7 +103,7 @@ class SelectionInterface<T extends Cell> {
 
   void selectOrUnselect(BuildContext context, int index) {
     if (!isSelected(context, index)) {
-      add(context, index, CellProvider.getOf<T>(context, index)!);
+      add(context, index, CellProvider.getOf<T>(context, index));
     } else {
       remove(context, index);
     }
@@ -132,8 +131,8 @@ class WrapGridActionButton extends StatefulWidget {
       this.followColorTheme,
       this.backgroundColor,
       this.color,
-      required this.play,
-      required this.animate});
+      this.play = false,
+      this.animate = false});
 
   @override
   State<WrapGridActionButton> createState() => _WrapGridActionButtonState();

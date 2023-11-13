@@ -22,6 +22,13 @@ class CellProvider<T extends Cell> extends InheritedWidget {
     return widget!.loader.state;
   }
 
+  // static void refreshOf<T extends Cell>(BuildContext context) {
+  //     final widget =
+  //       context.dependOnInheritedWidgetOfExactType<CellProvider<T>>();
+
+  //       widget.loader.
+  // }
+
   static T getOf<T extends Cell>(BuildContext context, int token) {
     final widget =
         context.dependOnInheritedWidgetOfExactType<CellProvider<T>>();

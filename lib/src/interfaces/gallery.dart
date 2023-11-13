@@ -6,22 +6,44 @@
 // You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 import 'package:gallery/src/db/schemas/blacklisted_directory.dart';
+import 'package:gallery/src/widgets/grid/data_loaders/cell_loader.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
-import 'package:isar/isar.dart';
 
 import '../db/schemas/system_gallery_directory.dart';
 import '../db/schemas/system_gallery_directory_file.dart';
-import 'filtering/filtering_interface.dart';
 
-abstract class GalleryDirectoriesExtra {
-  // FilterInterface<SystemGalleryDirectory> get filter;
-  // Isar get db;
+enum GalleryFilesKind {
+  primary,
+  secondary;
 
-  GalleryAPIFiles joinedDir(List<String> bucketIds);
-  GalleryAPIFiles trash();
-  GalleryAPIFiles favorites();
+  BackgroundCellLoader<SystemGalleryDirectoryFile, int> fromCache() =>
+      this == primary
+          ? BackgroundCellLoader.filesPrimary()
+          : BackgroundCellLoader.filesSecondary();
+}
+
+abstract class GalleryAPIFiles {
+  bool get isTrash;
+  bool get isFavorites;
+
+  BackgroundDataLoader<SystemGalleryDirectoryFile, int> get loader;
+}
+
+abstract class GalleryAPIDirectories {
+  GalleryAPIFiles joinedDir(List<String> bucketIds, GalleryFilesKind kind);
+  GalleryAPIFiles trash(GalleryFilesKind kind);
+  GalleryAPIFiles favorites(GalleryFilesKind kind);
 
   void addBlacklisted(List<BlacklistedDirectory> bucketIds);
+
+  BackgroundDataLoader<SystemGalleryDirectory, int> get loader;
+
+  GalleryAPIFiles files(SystemGalleryDirectory d, GalleryFilesKind kind);
+}
+
+
+  // FilterInterface<SystemGalleryDirectory> get filter;
+  // Isar get db;
 
   // void setRefreshGridCallback(void Function() callback);
   // void setTemporarySet(void Function(int, bool) callback);
@@ -33,16 +55,12 @@ abstract class GalleryDirectoriesExtra {
   //             Iterable<SystemGalleryDirectory>, dynamic, bool)?
   //         filter);
 
-  BackgroundDataLoader<SystemGalleryDirectory, int> get loader;
-}
 
-abstract class GalleryFilesExtra {
+
   // FilterInterface<SystemGalleryDirectoryFile> get filter;
   // Isar get db;
 
   // bool get supportsDirectRefresh;
-  bool get isTrash;
-  bool get isFavorites;
 
   // void setRefreshGridCallback(void Function() callback);
   // Future<void> loadNextThumbnails(void Function() callback);
@@ -54,19 +72,3 @@ abstract class GalleryFilesExtra {
   //             dynamic data,
   //             bool end)
   //         f);
-
-  BackgroundDataLoader<SystemGalleryDirectoryFile, int> get loader;
-}
-
-abstract class GalleryAPIFiles {
-  GalleryFilesExtra getExtra();
-
-  void close();
-}
-
-abstract class GalleryAPIDirectories {
-  GalleryDirectoriesExtra getExtra();
-  GalleryAPIFiles files(SystemGalleryDirectory d);
-
-  void close();
-}

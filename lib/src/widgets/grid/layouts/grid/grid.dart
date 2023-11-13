@@ -10,7 +10,7 @@ import 'package:gallery/src/db/schemas/settings.dart';
 import 'package:gallery/src/interfaces/cell.dart';
 import 'package:gallery/src/widgets/grid/callback_grid_base.dart';
 import 'package:gallery/src/widgets/grid/data_loaders/interface.dart';
-import 'package:gallery/src/widgets/grid/grid_app_bar.dart';
+import 'package:gallery/src/widgets/grid/app_bar/grid_app_bar.dart';
 import 'package:gallery/src/widgets/grid/app_bar/grid_app_bar_title.dart';
 import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/search_and_focus.dart';

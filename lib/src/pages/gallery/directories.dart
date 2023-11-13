@@ -22,7 +22,7 @@ import 'package:gallery/src/db/schemas/favorite_media.dart';
 import 'package:gallery/src/db/schemas/pinned_directories.dart';
 import 'package:gallery/src/db/schemas/tags.dart';
 import 'package:gallery/src/widgets/grid/callback_grid_shell.dart';
-import 'package:gallery/src/widgets/grid/grid_app_bar.dart';
+import 'package:gallery/src/widgets/grid/app_bar/grid_app_bar.dart';
 import 'package:gallery/src/widgets/grid/grid_metadata.dart';
 import 'package:gallery/src/widgets/grid/layouts/grid/grid.dart';
 import 'package:gallery/src/widgets/grid/notifiers/notifier_registry_holder.dart';
@@ -100,7 +100,6 @@ class GalleryDirectories extends StatefulWidget {
 class _GalleryDirectoriesState extends State<GalleryDirectories> {
   late StreamSubscription<Settings?> settingsWatcher;
   // bool proceed = true;
-  late final extra = api.getExtra();
   // ..setRefreshGridCallback(() {
   //   if (widget.callback != null) {
   //     stream.add(0);
@@ -118,9 +117,7 @@ class _GalleryDirectoriesState extends State<GalleryDirectories> {
           // transform: (cell, _) => cell,
           // filter: extra.filter,
           );
-  late final api = chooseGalleryPlug().galleryApi(
-      temporaryDb: widget.callback != null || widget.nestedCallback != null,
-      setCurrentApi: widget.callback == null);
+  late final api = chooseGalleryPlug().galleryApi();
   // final stream = StreamController<int>(sync: true);
 
   // bool isThumbsLoading = false;
@@ -172,7 +169,6 @@ class _GalleryDirectoriesState extends State<GalleryDirectories> {
 
   @override
   void dispose() {
-    api.close();
     // stream.close();
     settingsWatcher.cancel();
     // disposeSearch();
@@ -264,7 +260,7 @@ class _GalleryDirectoriesState extends State<GalleryDirectories> {
             ? null
             : (label, children) =>
                 SystemGalleryDirectoriesActions.joinedDirectoriesFnc(
-                    context, label, children, extra, widget.nestedCallback),
+                    context, label, children, api, widget.nestedCallback),
       );
 
   @override
@@ -286,7 +282,7 @@ class _GalleryDirectoriesState extends State<GalleryDirectories> {
       child: GridSkeleton<SystemGalleryDirectory>(
           state,
           CallbackGridShell<SystemGalleryDirectory>(
-            loader: extra.loader,
+            loader: api.loader,
             appBar: GridAppBar.basic(
               actions: [
                 if (widget.callback != null)
