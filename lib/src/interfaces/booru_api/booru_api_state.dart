@@ -49,14 +49,14 @@ abstract class BooruAPIState {
   /// The boorus which do not support geting posts down a certain post number should keep a page number internally,
   /// and return it in [currentPage].
   Future<(List<Post>, int?)> page(int p, String tags, BooruTagging excludedTags,
-      {SafeMode? overrideSafeMode});
+      {SafeMode? overrideSafeMode, required int Function() nextId});
 
   /// Get posts down a certain post number.
   /// The boorus which do not support geting posts down a certain post number should keep a page number internally,
   /// and use paging to load the posts.
   Future<(List<Post>, int?)> fromPost(
       int postId, String tags, BooruTagging excludedTags,
-      {SafeMode? overrideSafeMode});
+      {SafeMode? overrideSafeMode, required int Function() nextId});
 
   /// Sets the cookies for all the requests done with the [client].
   /// This is useful with Cloudlfare, but currently is usesless.

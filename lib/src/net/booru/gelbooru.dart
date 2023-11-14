@@ -7,7 +7,6 @@
 
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
-import 'package:gallery/src/db/initalize_db.dart';
 import 'package:gallery/src/interfaces/booru_api/booru.dart';
 import 'package:gallery/src/interfaces/booru_api/booru_api_functions.dart';
 import 'package:gallery/src/interfaces/booru_api/booru_api_state.dart';
@@ -101,7 +100,7 @@ class GelbooruFunctions implements BooruAPIFunctions {
         throw "The post has been not found.";
       }
 
-      return Gelbooru._fromJson([json[0]], _booru).$1[0];
+      return Gelbooru._fromJson([json[0]], _booru, () => 0).$1[0];
     } catch (e) {
       if (e is DioException) {
         if (e.response?.statusCode == 403) {
@@ -141,15 +140,16 @@ class Gelbooru implements BooruAPIState {
 
   @override
   Future<(List<Post>, int?)> page(int p, String tags, BooruTagging excludedTags,
-      {SafeMode? overrideSafeMode}) {
+      {SafeMode? overrideSafeMode, required int Function() nextId}) {
     _page = p + 1;
     return _commonPosts(tags, p, excludedTags,
-        overrideSafeMode: overrideSafeMode);
+        overrideSafeMode: overrideSafeMode, nextId: nextId);
   }
 
   Future<(List<Post>, int?)> _commonPosts(
       String tags, int p, BooruTagging excludedTags,
-      {required SafeMode? overrideSafeMode}) async {
+      {required SafeMode? overrideSafeMode,
+      required int Function() nextId}) async {
     late final String excludedTagsString;
 
     final excluded = excludedTags.get().map((e) => "-${e.tag} ").toList();
@@ -189,7 +189,7 @@ class Gelbooru implements BooruAPIState {
         return Future.value((<Post>[], null));
       }
 
-      return _fromJson(json, booru);
+      return _fromJson(json, booru, nextId);
     } catch (e) {
       if (e is DioException) {
         if (e.response?.statusCode == 403) {
@@ -203,9 +203,9 @@ class Gelbooru implements BooruAPIState {
   @override
   Future<(List<Post>, int?)> fromPost(
           int _, String tags, BooruTagging excludedTags,
-          {SafeMode? overrideSafeMode}) =>
+          {SafeMode? overrideSafeMode, required int Function() nextId}) =>
       _commonPosts(tags, _page, excludedTags,
-              overrideSafeMode: overrideSafeMode)
+              overrideSafeMode: overrideSafeMode, nextId: nextId)
           .then((value) {
         if (value.$1.isNotEmpty) {
           _page++;
@@ -213,7 +213,8 @@ class Gelbooru implements BooruAPIState {
         return Future.value(value);
       });
 
-  static (List<Post>, int?) _fromJson(List<dynamic> m, Booru booru) {
+  static (List<Post>, int?) _fromJson(
+      List<dynamic> m, Booru booru, int Function() nextId) {
     final List<Post> list = [];
 
     final dateFormatter = DateFormat("EEE MMM dd HH:mm:ss");
@@ -224,7 +225,7 @@ class Gelbooru implements BooruAPIState {
           year: int.tryParse(createdAt.substring(createdAt.length - 4)));
 
       list.add(Post(
-          isarId: DbsOpen.primaryGridInstance(booru).posts.autoIncrement(),
+          isarId: nextId(),
           height: post["height"],
           prefix: booru.prefix,
           postId: post["id"],

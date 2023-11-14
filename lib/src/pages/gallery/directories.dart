@@ -229,6 +229,7 @@ class _GalleryDirectoriesState extends State<GalleryDirectories> {
         injectedSegments: [
           if (Dbs.g.blacklisted.favoriteMedias.count() != 0)
             SystemGalleryDirectory(
+                isarId: 0,
                 bucketId: "favorites",
                 name: "Favorites", // change
                 tag: "",
@@ -242,6 +243,7 @@ class _GalleryDirectoriesState extends State<GalleryDirectories> {
                     .id),
           if (trashThumbId != null)
             SystemGalleryDirectory(
+                isarId: 1,
                 bucketId: "trash",
                 name: "Trash", // change
                 tag: "",

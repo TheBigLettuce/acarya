@@ -209,14 +209,14 @@ class _FavoritesPageState extends State<FavoritesPage>
         state.settings);
   }
 
-  final loader = ReadOnlyDataLoader<FavoriteBooru, int, String>(
+  final loader = ReadOnlyDataLoader<FavoriteBooru, int, int>(
     Dbs.g.main,
     (db, idx) =>
         db.favoriteBoorus.where().sortByPostIdDesc().findFirst(offset: idx),
     makeTransformer: (instance) => CellDataTransformer<FavoriteBooru, int>(
         instance,
         (instance, cell) => cell,
-        (instance) => 0,
+        (instance) => Dbs.g.main.favoriteBoorus.count(),
         FilteringMode.noFilter,
         SortingMode.none),
   );

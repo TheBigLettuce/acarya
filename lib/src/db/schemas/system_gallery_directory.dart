@@ -19,8 +19,11 @@ part 'system_gallery_directory.g.dart';
 @immutable
 @collection
 class SystemGalleryDirectory implements Cell {
-  final int thumbFileId;
   @Id()
+  final int isarId;
+
+  final int thumbFileId;
+  @Index(unique: true, hash: true)
   final String bucketId;
 
   @override
@@ -39,7 +42,8 @@ class SystemGalleryDirectory implements Cell {
   final String tag;
 
   const SystemGalleryDirectory(
-      {required this.bucketId,
+      {required this.isarId,
+      required this.bucketId,
       required this.name,
       required this.tag,
       required this.volumeName,
@@ -73,12 +77,13 @@ class SystemGalleryDirectory implements Cell {
         thumb: ThumbnailProvider(thumbFileId), name: name, stickers: []);
   }
 
-  static SystemGalleryDirectory decode(Object result) {
+  static SystemGalleryDirectory decode(Object result, int id) {
     result as List<Object?>;
 
     final bucketId = result[1]! as String;
 
     return SystemGalleryDirectory(
+      isarId: id,
       tag: "",
       thumbFileId: result[0]! as int,
       bucketId: bucketId,

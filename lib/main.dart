@@ -150,6 +150,7 @@ void main() async {
                 page: state.copy.page),
             tagManager.excluded,
             "",
+            db.posts.count(),
             db.posts.where().sortByPostId().findFirst()?.postId,
             onPostsLoaded: (api) {
           state.updatePage(api.currentPage);

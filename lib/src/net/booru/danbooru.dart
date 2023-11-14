@@ -7,7 +7,6 @@
 
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
-import 'package:gallery/src/db/initalize_db.dart';
 import 'package:gallery/src/db/schemas/post.dart';
 import 'package:gallery/src/interfaces/booru_api/booru.dart';
 import 'package:gallery/src/interfaces/booru_api/booru_api_functions.dart';
@@ -74,7 +73,8 @@ class DanbooruFunctions implements BooruAPIFunctions {
         throw "no post";
       }
 
-      return (await Danbooru._fromJson([resp.data], null, _booru)).$1[0];
+      return (await Danbooru._fromJson([resp.data], null, _booru, () => 0))
+          .$1[0];
     } catch (e) {
       if (e is DioException) {
         if (e.response?.statusCode == 403) {
@@ -111,20 +111,23 @@ class Danbooru implements BooruAPIState {
 
   @override
   Future<(List<Post>, int?)> page(int i, String tags, BooruTagging excludedTags,
-          {SafeMode? overrideSafeMode}) =>
+          {SafeMode? overrideSafeMode, required int Function() nextId}) =>
       _commonPosts(tags, excludedTags,
-          page: i, overrideSafeMode: overrideSafeMode);
+          page: i, overrideSafeMode: overrideSafeMode, nextId: nextId);
 
   @override
   Future<(List<Post>, int?)> fromPost(
           int postId, String tags, BooruTagging excludedTags,
-          {SafeMode? overrideSafeMode}) =>
+          {SafeMode? overrideSafeMode, required int Function() nextId}) =>
       _commonPosts(tags, excludedTags,
-          postid: postId, overrideSafeMode: overrideSafeMode);
+          postid: postId, overrideSafeMode: overrideSafeMode, nextId: nextId);
 
   Future<(List<Post>, int?)> _commonPosts(
       String tags, BooruTagging excludedTags,
-      {int? postid, int? page, required SafeMode? overrideSafeMode}) async {
+      {int? postid,
+      int? page,
+      required SafeMode? overrideSafeMode,
+      required int Function() nextId}) async {
     if (postid == null && page == null) {
       throw "postid or page should be set";
     } else if (postid != null && page != null) {
@@ -163,7 +166,7 @@ class Danbooru implements BooruAPIState {
         throw "status not ok";
       }
 
-      return _fromJson(resp.data, excludedTags, booru);
+      return _fromJson(resp.data, excludedTags, booru, nextId);
     } catch (e) {
       if (e is DioException) {
         if (e.response?.statusCode == 403) {
@@ -175,8 +178,8 @@ class Danbooru implements BooruAPIState {
     }
   }
 
-  static Future<(List<Post>, int?)> _fromJson(
-      List<dynamic> m, BooruTagging? excludedTags, Booru booru) async {
+  static Future<(List<Post>, int?)> _fromJson(List<dynamic> m,
+      BooruTagging? excludedTags, Booru booru, int Function() nextId) async {
     final List<Post> list = [];
     int? currentSkipped;
     final exclude = excludedTags?.get();
@@ -195,7 +198,7 @@ class Danbooru implements BooruAPIState {
         }
 
         final post = Post(
-            isarId: DbsOpen.primaryGridInstance(booru).posts.autoIncrement(),
+            isarId: nextId(),
             height: e["image_height"],
             postId: e["id"],
             score: e["score"],

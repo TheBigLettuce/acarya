@@ -93,7 +93,7 @@ class _MainBooruGridState extends State<MainBooruGrid> {
   late final loader =
       BackgroundCellLoader<Post, int>.cached(kMainGridLoaderKey);
 
-  late final List<InheritedWidget Function(Widget)> registrer;
+  // late final List<InheritedWidget Function(Widget)> registrer;
 
   final state = GridSkeletonState<Post>();
 
@@ -133,30 +133,7 @@ class _MainBooruGridState extends State<MainBooruGrid> {
     //   // restore.updateTime();
     // }
 
-    registrer = [
-      (child) => StateRestorationProvider(
-            state: restore,
-            child: IsSearchShowingHolder(
-              child: child,
-            ),
-          ),
-      ...NotifierRegistry.genericNotifiers<Post>(
-        context,
-        widget.glue,
-        GridMetadata(
-          isList: false,
-          aspectRatio: state.settings.booru.aspectRatio,
-          columns: state.settings.booru.columns,
-          onPressed: GridMetadata.launchImageView<Post>,
-          hideAlias: false,
-          gridActions: [
-            BooruGridActions.download(context),
-            BooruGridActions.favorites(context)
-          ],
-        ),
-        NoteBooru.interface(setState),
-      )
-    ];
+    // registrer = ;
 
     settingsWatcher = Settings.watch((s) {
       state.settings = s!;
@@ -185,7 +162,30 @@ class _MainBooruGridState extends State<MainBooruGrid> {
   @override
   Widget build(BuildContext context) {
     return NotifierRegistryHolder(
-      l: registrer,
+      l: [
+        (child) => StateRestorationProvider(
+              state: restore,
+              child: IsSearchShowingHolder(
+                child: child,
+              ),
+            ),
+        ...NotifierRegistry.genericNotifiers<Post>(
+          context,
+          widget.glue,
+          GridMetadata(
+            isList: false,
+            aspectRatio: state.settings.booru.aspectRatio,
+            columns: state.settings.booru.columns,
+            onPressed: GridMetadata.launchImageView<Post>,
+            hideAlias: false,
+            gridActions: [
+              BooruGridActions.download(context),
+              BooruGridActions.favorites(context)
+            ],
+          ),
+          NoteBooru.interface(setState),
+        )
+      ],
       child: GridSkeleton(
         state,
         CallbackGridShell<Post>(

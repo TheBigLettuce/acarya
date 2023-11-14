@@ -7,6 +7,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:gallery/src/interfaces/cell.dart';
+import 'package:gallery/src/widgets/grid/fab.dart';
 import 'package:gallery/src/widgets/notifiers/data_loader_holder.dart';
 import 'package:gallery/src/widgets/notifiers/grid_footer.dart';
 import 'package:gallery/src/widgets/notifiers/selection_data.dart';
@@ -26,7 +27,7 @@ class CallbackGridShell<T extends Cell> extends StatelessWidget {
   /// on top of the [child].
   final PreferredSizeWidget? footer;
 
-  final Widget? fab;
+  // final Widget? fab;
 
   // final List<Widget> appBarActions;
 
@@ -52,7 +53,7 @@ class CallbackGridShell<T extends Cell> extends StatelessWidget {
     // this.leading,
     // this.search,
     this.footer,
-    this.fab,
+    // this.fab,
     required this.child,
   });
 
@@ -81,30 +82,24 @@ class CallbackGridShell<T extends Cell> extends StatelessWidget {
                   //         child: SearchCharacterTitle(),
                   //       )),
                   // ),
-                  child: fab == null && footer == null
-                      ? child
-                      : Stack(
-                          children: [
-                            child,
-                            if (footer != null)
-                              Align(
-                                alignment: Alignment.bottomLeft,
-                                child: Padding(
-                                  padding: EdgeInsets.only(
-                                    bottom: MediaQuery.systemGestureInsetsOf(
-                                            context)
-                                        .bottom,
-                                  ),
-                                  child: footer!,
-                                ),
-                              ),
-                            if (fab != null)
-                              Align(
-                                alignment: Alignment.bottomRight,
-                                child: fab,
-                              ),
-                          ],
-                        ),
+                  child: child,
+                  // Stack(
+                  //   children: [
+                  //     child,
+                  //     if (footer != null)
+                  //       Align(
+                  //         alignment: Alignment.bottomLeft,
+                  //         child: Padding(
+                  //           padding: EdgeInsets.only(
+                  //             bottom: MediaQuery.systemGestureInsetsOf(context)
+                  //                 .bottom,
+                  //           ),
+                  //           child: footer!,
+                  //         ),
+                  //       ),
+
+                  //   ],
+                  // ),
                 )),
               )),
         ));

@@ -8,6 +8,8 @@
 part of 'cell_loader.dart';
 
 class BooruAPILoaderStateController implements LoaderStateController {
+  final _Incrementer _incrementer;
+
   final Stream _events;
   final SendPort _send;
 
@@ -32,10 +34,12 @@ class BooruAPILoaderStateController implements LoaderStateController {
     this.api,
     this.excluded,
     this.tags,
+    int initalCount,
     int? lastId, {
     this.onPostsLoaded = _doNothing,
   })  : _events = loader._isolateEvents,
         currentLast = lastId,
+        _incrementer = _Incrementer(initalCount == 0 ? 0 : initalCount - 1),
         _send = loader._send;
 
   void _stateChange(LoaderState s) {
@@ -110,7 +114,9 @@ class BooruAPILoaderStateController implements LoaderStateController {
 
       _stateChange(LoaderState.loading);
 
-      api.fromPost(last!, tags, excluded).then(_sendPosts);
+      api
+          .fromPost(last!, tags, excluded, nextId: _incrementer.next)
+          .then(_sendPosts);
     }
   }
 
@@ -119,9 +125,10 @@ class BooruAPILoaderStateController implements LoaderStateController {
   void reset() {
     if (currentState == LoaderState.idle && _currentSubscription != null) {
       _stateChange(LoaderState.loading);
+      _incrementer.reset();
       _send.send(const Reset(true));
       end = false;
-      api.page(0, tags, excluded).then(_sendPosts);
+      api.page(0, tags, excluded, nextId: _incrementer.next).then(_sendPosts);
     }
   }
 

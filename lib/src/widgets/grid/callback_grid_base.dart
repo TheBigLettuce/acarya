@@ -7,6 +7,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:gallery/src/interfaces/cell.dart';
+import 'package:gallery/src/widgets/grid/fab.dart';
 import 'package:gallery/src/widgets/notifiers/cell_provider.dart';
 import 'package:gallery/src/widgets/notifiers/grid_footer.dart';
 
@@ -77,16 +78,40 @@ class _CallbackGridBaseState<T extends Cell>
           CellProvider.stateOf<T>(context).reset();
           return Future.value();
         },
-        child: CustomScrollView(
-          controller: scrollController,
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            if (widget.appBar != null) widget.appBar!,
-            _Padding<T>(
-                child: PrimaryScrollController(
+        child: Stack(
+          children: [
+            CustomScrollView(
               controller: scrollController,
-              child: widget.child,
-            )),
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                if (widget.appBar != null) widget.appBar!,
+                _Padding<T>(
+                    child: PrimaryScrollController(
+                  controller: scrollController,
+                  child: widget.child,
+                )),
+              ],
+            ),
+            Padding(
+              padding: EdgeInsets.only(
+                  bottom: (MediaQuery.of(context).viewInsets.bottom) +
+                      (SelectionGlueNotifier.isOpenOf<T>(context)
+                          ? 84
+                          : Scaffold.maybeOf(context)
+                                      ?.widget
+                                      .bottomNavigationBar !=
+                                  null
+                              ? 84
+                              : 0) +
+                      (GridFooterNotifier.sizeOf(context) ?? 0)),
+              child: PrimaryScrollController(
+                controller: scrollController,
+                child: Align(
+                  alignment: Alignment.bottomRight,
+                  child: CallbackGridFab(),
+                ),
+              ),
+            )
           ],
         ));
   }

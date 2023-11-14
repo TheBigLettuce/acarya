@@ -13,6 +13,8 @@ import 'package:gallery/src/db/initalize_db.dart';
 import 'package:gallery/src/db/schemas/post.dart';
 import 'package:gallery/src/db/schemas/system_gallery_directory.dart';
 import 'package:gallery/src/db/schemas/system_gallery_directory_file.dart';
+import 'package:gallery/src/db/state_restoration.dart';
+import 'package:gallery/src/interfaces/booru_api/booru.dart';
 import 'package:gallery/src/interfaces/booru_api/booru_api_state.dart';
 import 'package:gallery/src/interfaces/cell.dart';
 import 'package:gallery/src/interfaces/tags.dart';
@@ -161,10 +163,13 @@ class BackgroundCellLoader<T extends Cell, I>
     _send.send(m);
   }
 
-  static int directoryBinaryType = 0;
-  static int filesBinaryType = 1;
+  static const int directoryBinaryType = 0;
+  static const int filesBinaryType = 1;
 
-  static int filesResetContextState = 0;
+  static const int filesResetContextState = 0;
+  static const int booruInitContextState = 1;
+  static const int booruResetPostsContextState = 2;
+  static const int booruNextPostsContextState = 3;
 
   static void disposeCached(int key) {
     _cache.remove(key)?.dispose();
@@ -188,10 +193,7 @@ class BackgroundCellLoader<T extends Cell, I>
 
     final db = DbsOpen.androidGalleryDirectories(temporary: true);
     _cache[kAndroidGalleryLoaderKey] = DirectoriesLoader(
-        (db, idx) => db.systemGalleryDirectorys
-            .where()
-            .sortByLastModifiedDesc()
-            .findFirst(offset: idx),
+        (db, idx) => db.systemGalleryDirectorys.get(idx + 1),
         db,
         kDirectoriesSchemas,
         makeState: (instance) =>
@@ -276,8 +278,7 @@ class BackgroundCellLoader<T extends Cell, I>
   }
 }
 
-typedef DirectoriesLoader
-    = BackgroundCellLoader<SystemGalleryDirectory, String>;
+typedef DirectoriesLoader = BackgroundCellLoader<SystemGalleryDirectory, int>;
 typedef FilesLoader = BackgroundCellLoader<SystemGalleryDirectoryFile, int>;
 
 typedef HandlerFn = void Function(HandlerPayload);
@@ -293,10 +294,14 @@ abstract class CellLoaderHandlers {
   static void directories(HandlerPayload record) async {
     final (port, db, rx) = _normalSequence(record);
 
+    final incrementer = _Incrementer(db.systemGalleryDirectorys.count());
+    final codec = _GalleryApiCodec(incrementer);
+
     await for (final ControlMessage e in rx) {
       switch (e) {
         case Reset():
           db.write((i) => i.systemGalleryDirectorys.clear());
+          incrementer.reset();
           if (!e.silent) {
             port.send(LoaderState.idle);
           }
@@ -305,18 +310,21 @@ abstract class CellLoaderHandlers {
             throw "directories handler supports binary messages only of type BackgroundCellLoader.directoryBinaryType";
           }
 
-          final decoded = const _GalleryApiCodec().decodeMessage(e.data);
+          final decoded = codec.decodeMessage(e.data);
 
           final directories = decoded[0] as List<Object?>;
           final inRefresh = decoded[1] as bool;
           final empty = decoded[2] as bool;
 
           if (empty) {
+            incrementer.currentValue = db.systemGalleryDirectorys.count();
+
             port.send(LoaderState.idle);
             continue;
           }
 
           db.write((i) => i.systemGalleryDirectorys.putAll(directories.cast()));
+          incrementer.currentValue = db.systemGalleryDirectorys.count();
 
           if (inRefresh) {
             port.send(LoaderState.loading);
@@ -336,27 +344,35 @@ abstract class CellLoaderHandlers {
 
   static void files(HandlerPayload record) async {
     final (port, db, rx) = _normalSequence(record);
+
+    final incrementer = _Incrementer(db.systemGalleryDirectoryFiles.count());
+    final codec = _GalleryApiCodec(incrementer);
     String currentContext = "";
 
     await for (final ControlMessage e in rx) {
       switch (e) {
         case Reset():
           db.write((i) => i.systemGalleryDirectoryFiles.clear());
+          incrementer.reset();
           if (!e.silent) {
             port.send(LoaderState.idle);
           }
         case ChangeContext():
-          if (e.contextStage == BackgroundCellLoader.filesResetContextState) {
-            currentContext = e.data;
-            db.write((i) => i.systemGalleryDirectoryFiles.clear());
-            port.send(LoaderState.idle);
+          if (e.contextStage != BackgroundCellLoader.filesResetContextState) {
+            assert(false,
+                "files handler supports only BackgroundCellLoader.filesResetContextState context stage");
+            continue;
           }
+
+          currentContext = e.data;
+          db.write((i) => i.systemGalleryDirectoryFiles.clear());
+          incrementer.reset();
+          port.send(LoaderState.idle);
         case Binary():
           if (e.type != BackgroundCellLoader.filesBinaryType) {
             throw "files handler supports binary messages only of type BackgroundCellLoader.filesBinaryType";
           }
-          final decoded =
-              const _GalleryApiCodec().decodeMessage(e.data) as List<Object?>;
+          final decoded = codec.decodeMessage(e.data) as List<Object?>;
 
           final files = decoded[0] as List<SystemGalleryDirectoryFile>;
           final bucketId = decoded[1] as String;
@@ -365,15 +381,20 @@ abstract class CellLoaderHandlers {
           final empty = decoded[4] as bool;
 
           if (currentContext != bucketId) {
+            incrementer.currentValue = db.systemGalleryDirectoryFiles.count();
+
             continue;
           }
 
           if (empty) {
+            incrementer.currentValue = db.systemGalleryDirectoryFiles.count();
+
             port.send(LoaderState.idle);
             continue;
           }
 
           db.write((i) => i.systemGalleryDirectoryFiles.putAll(files));
+          incrementer.currentValue = db.systemGalleryDirectoryFiles.count();
 
           if (inRefresh) {
             port.send(LoaderState.loading);
@@ -388,6 +409,58 @@ abstract class CellLoaderHandlers {
       }
     }
   }
+
+  // static void booruApi(HandlerPayload record) async {
+  //   final (port, db, rx) = _normalSequence(record);
+
+  //   final incrementer = _Incrementer(db.posts.count());
+  //   late final BooruAPIState currentApi;
+  //   late final BooruTagging excludedTags;
+
+  //   void reset() {
+  //     db.write((i) => i.posts.clear());
+  //     incrementer.reset();
+  //   }
+
+  //   int? lastId;
+
+  //   await for (final ControlMessage e in rx) {
+  //     switch (e) {
+  //       case ChangeContext():
+  //         switch (e.contextStage) {
+  //           case BackgroundCellLoader.booruInitContextState:
+  //             final (booru, page) = (e.data as (Booru, int?));
+  //             currentApi = BooruAPIState.fromEnum(booru, page: page);
+  //             excludedTags = TagManager.fromEnum(booru, true).excluded;
+  //             port.send(LoaderState.idle);
+  //           case BackgroundCellLoader.booruResetPostsContextState:
+  //             reset();
+
+  //             final (posts, lid) = await currentApi.page(0, "", excludedTags);
+  //             db.write((i) => i.posts.putAll(posts));
+  //             lastId = lid;
+  //             port.send(LoaderState.idle);
+  //           case BackgroundCellLoader.booruNextPostsContextState:
+  //           final (posts, lid) = await currentApi.fromPost(postId, tags, excludedTags);
+  //           default:
+  //             assert(false, "Unknown context stage ${e.contextStage}");
+  //             continue;
+  //         }
+
+  //       case Reset():
+  //         reset();
+
+  //         if (!e.silent) {
+  //           port.send(LoaderState.idle);
+  //         }
+  //       case Poll():
+  //         port.send(e);
+  //       default:
+  //         assert(
+  //             false, "Received unsupported message of type ${e.runtimeType}");
+  //     }
+  //   }
+  // }
 
   static void basic<T extends Cell, I>(HandlerPayload record) async {
     final (port, db, rx) = _normalSequence(record);
@@ -427,8 +500,24 @@ abstract class CellLoaderHandlers {
   }
 }
 
+class _Incrementer {
+  _Incrementer(this.currentValue);
+  int currentValue = 0;
+
+  // void increment() => currentValue += 1;
+  int next() {
+    currentValue += 1;
+
+    return currentValue;
+  }
+
+  void reset() => currentValue = 0;
+}
+
 class _GalleryApiCodec extends StandardMessageCodec {
-  const _GalleryApiCodec();
+  final _Incrementer _incrementer;
+
+  const _GalleryApiCodec(this._incrementer);
   // @override
   // void writeValue(WriteBuffer buffer, Object? value) {
   //   if (value is SystemGalleryDirectory) {
@@ -446,7 +535,9 @@ class _GalleryApiCodec extends StandardMessageCodec {
   Object? readValueOfType(int type, ReadBuffer buffer) {
     switch (type) {
       case 128:
-        return SystemGalleryDirectory.decode(readValue(buffer)!);
+        final i = _incrementer.next();
+        print("_c,$i");
+        return SystemGalleryDirectory.decode(readValue(buffer)!, i);
       case 129:
         return SystemGalleryDirectoryFile.decode(readValue(buffer)!);
       default:
